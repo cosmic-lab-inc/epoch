@@ -33,16 +33,13 @@ impl ArchiveLoader {
         let len_gb = len / 1024 / 1024 / 1024;
         info!("Stream snapshot from HTTP ({} Gb)", len_gb);
         let loader = ArchiveSnapshotExtractor::from_reader(resp)?;
-        info!("Archive loader loaded!");
         Ok(ArchiveLoader::ArchiveDownload(loader))
     }
 
     fn new_file(path: &Path) -> anyhow::Result<ArchiveLoader> {
         Ok(if path.is_dir() {
-            info!("Reading unpacked snapshot");
             ArchiveLoader::Unpacked(UnpackedSnapshotExtractor::open(path)?)
         } else {
-            info!("Reading snapshot archive");
             ArchiveLoader::ArchiveFile(ArchiveSnapshotExtractor::open(path)?)
         })
     }

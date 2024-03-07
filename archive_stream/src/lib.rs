@@ -12,20 +12,14 @@ pub use errors::*;
 pub use extract_snapshot::*;
 pub use loader::*;
 
-use log::info;
-
 // TODO: parallelize stream
 pub fn stream_archived_accounts(source: String, callback: ArchiveCallback) -> anyhow::Result<()> {
     let mut loader = ArchiveLoader::new(source)?;
-    info!("loader created");
     let mut archiver = Archiver::new(callback)?;
-    info!("archiver created");
 
-    info!("Iterating snapshot...");
     for append_vec in loader.iter() {
         archiver.extract_accounts(append_vec?)?
     }
-    info!("Done!");
     // drop(archiver);
 
     Ok(())

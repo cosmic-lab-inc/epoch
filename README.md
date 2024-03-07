@@ -18,7 +18,7 @@ spacetime start
 ```
 Deploy spacetime module to instance:
 ```shell
-spacetime publish --project-path spacetime/module test-project
+spacetime publish --project-path spacetime/server test-project
 ```
 
 ### Start Backfill

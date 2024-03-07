@@ -270,4 +270,4 @@ slots:
 
 gcs_bucket: mainnet-beta-ledger-us-ny5
 
-#gcs_local_file: gcs_snapshots.json
+gcs_local_file: gcs_snapshots.json
