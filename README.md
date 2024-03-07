@@ -35,10 +35,7 @@ With the default `backfill.yaml` you should see this output: `snapshot range: 66
 
 ## TODO:
 
-1. `spacetime/client/src/lib.rs` has `SpacetimeAccount`. Cast the `ArchiveAccount` epoch gets from the snapshot into 
-`SpacetimeAccount` so spacetime can use it.
-
-1.`spacetime/client/src/lib.rs` is a library that has callbacks that the user (you) can execute. 
+1. `spacetime/client/src/lib.rs` is a library that has callbacks that the user (you) can execute. 
 See `SPACETIME.md` for commands to talk to the database and send `Hello, world!` messages.
 You need to create some reducer/callback that does the same thing (sending a message) but it's the 
 `SpacetimeAccount` rather than the `Message` as it is right now.
