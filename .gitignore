@@ -1,0 +1,13 @@
+**/target
+/.idea
+/test-ledger
+/ledger
+.env
+**/.DS_Store
+.DS_Store
+test-ledger
+snapshots
+*.tar
+*.zst
+*.csv
+*.json

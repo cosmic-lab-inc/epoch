@@ -1,0 +1,8 @@
+[config]
+default_to_workspace = false
+
+[tasks.backfill-dev]
+script = "cargo build && ./target/debug/epoch --config-file-path ./backfill.yaml"
+
+[tasks.backfill]
+script = "cargo build -r && ./target/release/epoch --config-file-path ./backfill.yaml"

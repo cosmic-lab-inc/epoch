@@ -1,0 +1,18 @@
+[package]
+name = "spacetime-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description.workspace = true
+authors.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+spacetimedb = "0.8.2"
+log = "0.4"
