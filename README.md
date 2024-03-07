@@ -35,17 +35,17 @@ With the default `backfill.yaml` you should see this output: `snapshot range: 66
 
 ## TODO:
 
-1. `spacetime/module/src/lib.rs` has `SpacetimeAccount`. Cast the `ArchiveAccount` epoch gets from the snapshot into 
+1. `spacetime/client/src/lib.rs` has `SpacetimeAccount`. Cast the `ArchiveAccount` epoch gets from the snapshot into 
 `SpacetimeAccount` so spacetime can use it.
 
-2. `spacetime/client/src/main.rs` is a binary that is run and has callbacks that the user (you) can execute. 
+1.`spacetime/client/src/lib.rs` is a library that has callbacks that the user (you) can execute. 
 See `SPACETIME.md` for commands to talk to the database and send `Hello, world!` messages.
 You need to create some reducer/callback that does the same thing (sending a message) but it's the 
 `SpacetimeAccount` rather than the `Message` as it is right now.
 Then `epoch` can import that callback function and send every `SpacetimeAccount` to it.
 
-3. Once the `SpacetimeAccount` is in a callback that `spacetime-client` can use, you need to write the function 
+2. Once the `SpacetimeAccount` is in a callback that `spacetime-client` can use, you need to write the function 
 in `spacetime/client/src/main.rs` that uploads to the database in the `SpacetimeAccount` table.
 
-4. Write some function that can be called the same way you can send the `Hello, world!` message in the `SPACETIME.md`
+3. Write some function that can be called the same way you can send the `Hello, world!` message in the `SPACETIME.md`
 command guide. This function should fetch a `SpacetimeAccount` from the table by identity/key (account pubkey).
