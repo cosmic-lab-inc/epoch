@@ -5,8 +5,29 @@
 </p>
 
 
-# Epoch
+<h1 align="center">
+    Epoch ⏳
+</h1>
 
+Epoch improves upon Solana RPC infrastructure to provide a smoother user experience.
+
+Solana RPC serves real-time **account** data only (historical transactions aren't meaningful in this context).
+Epoch provides **historical account state** back to genesis.
+
+Solana RPC serves raw accounts only, with the account data as an incomprehensible byte array.
+Epoch provides **deserialized accounts** that are human-readable and what the end-user often wants.
+
+Solana RPC serves simple requests for accounts, such as "get all accounts for the Jupiter program".
+Epoch provides **complex queries** such as "get all accounts for the Jupiter program that have a balance greater 
+than 1000 and an average positive account change over the past 60 days".
+
+Solana RPCs are validators that filled in the role of data servers while the Solana ecosystem grew. 
+Validators are designed to validatee blocks, not to store Terabytes of history and serve complex requests.
+
+Solana created **Geyser** to let the validators push data to infrastructure that is better designed to 
+store and serve it to end users.
+
+This is Epoch. 
 
 ## Development
 
