@@ -5,7 +5,7 @@
 </p>
 
 
-<h1 align="center">
+<h1 align="center" style="font-size: 50px">
     Epoch ⏳
 </h1>
 
