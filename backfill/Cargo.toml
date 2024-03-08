@@ -1,0 +1,29 @@
+[package]
+name = "backfill"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description.workspace = true
+authors.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+archive_stream = { path = "../archive_stream" }
+chrono = { workspace = true }
+clap = { workspace = true }
+cloud-storage = { workspace = true }
+futures-util = { workspace = true }
+gcs = { path = "../gcs" }
+log = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+simplelog = { workspace = true }
+solana-sdk = { workspace = true }
+spacetime-client = { path = "../spacetime/client" }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-retry = { workspace = true }
+tokio-stream = { workspace = true }

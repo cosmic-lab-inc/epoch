@@ -11,6 +11,7 @@ use spacetimedb_sdk::{
     table::{TableIter, TableType, TableWithPrimaryKey},
     Address,
 };
+use crate::module::ReducerEvent;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct Message {
@@ -21,7 +22,7 @@ pub struct Message {
 
 impl TableType for Message {
     const TABLE_NAME: &'static str = "Message";
-    type ReducerEvent = super::ReducerEvent;
+    type ReducerEvent = ReducerEvent;
 }
 
 impl Message {

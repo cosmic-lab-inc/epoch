@@ -11,6 +11,7 @@ use spacetimedb_sdk::{
     table::{TableIter, TableType, TableWithPrimaryKey},
     Address,
 };
+use crate::module::ReducerEvent;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct User {
@@ -21,7 +22,7 @@ pub struct User {
 
 impl TableType for User {
     const TABLE_NAME: &'static str = "User";
-    type ReducerEvent = super::ReducerEvent;
+    type ReducerEvent = ReducerEvent;
 }
 
 impl TableWithPrimaryKey for User {

@@ -1,8 +1,8 @@
 use crate::tables::*;
 use spacetimedb::{spacetimedb, ReducerContext};
 
-#[spacetimedb(reducer)]
 /// Clients invoke this reducer to set their user names.
+#[spacetimedb(reducer)]
 pub fn set_name(ctx: ReducerContext, name: String) -> Result<(), String> {
     let name = validate_name(name)?;
     if let Some(user) = User::filter_by_identity(&ctx.sender) {
