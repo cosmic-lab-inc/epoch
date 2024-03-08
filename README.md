@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://cosmiclab.io">
-    <img alt="Epoch" src="./assets/logo.png" width="300px" style="border-radius: 50%;"/>
+    <img alt="Epoch" src="./assets/logo.png" width="250px" style="border-radius: 50%;"/>
   </a>
 </p>
 
