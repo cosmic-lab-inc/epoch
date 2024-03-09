@@ -30,6 +30,21 @@ store and serve it to end users.
 This is Epoch. 
 
 ## Development
+If on Mac M1, you need to modify the Rust to WASM compilation to emulate x86_64, otherwise you get nasty build errors.
+Add this to your `~/.cargo/config.toml`
+```toml
+[target.x86_64-apple-darwin]
+rustflags = [
+  "-C", "link-arg=-undefined",
+  "-C", "link-arg=dynamic_lookup",
+]
+
+[target.aarch64-apple-darwin]
+rustflags = [
+  "-C", "link-arg=-undefined",
+  "-C", "link-arg=dynamic_lookup",
+]
+```
 
 ### Start Spacetime Instance (server/database)
 For more spacetime information see `SPACETIME.md`.
@@ -39,7 +54,7 @@ spacetime start
 ```
 Deploy spacetime module to instance:
 ```shell
-spacetime publish --project-path spacetime/server test-project
+spacetime publish --project-path spacetime/server epoch
 ```
 
 ### Start Backfill

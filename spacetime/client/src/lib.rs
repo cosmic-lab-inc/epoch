@@ -1,11 +1,12 @@
 extern crate core;
 
+pub mod callbacks;
 pub mod identity;
 pub mod module;
 pub mod reducers;
 pub mod tables;
 
-use crate::module::callbacks::*;
+use crate::callbacks::*;
 
 #[derive(Debug, Default)]
 pub struct SpacetimeClient;

@@ -21,11 +21,8 @@ pub struct Message {
 /// However, this crate can be imported to epoch just fine.
 #[spacetimedb(table)]
 pub struct SpacetimeAccount {
-    /// spacetime Identity cast of account key
-    #[primarykey]
-    pub identity: Identity,
     /// account key
-    pub key: Identity,
+    pub key: String,
     /// historical snapshot slot at which this state existed
     pub slot: u64,
     /// lamports in the account
@@ -33,7 +30,7 @@ pub struct SpacetimeAccount {
     /// data held in this account
     pub data: Vec<u8>,
     /// the program that owns this account. If executable, the program that loads this account.
-    pub owner: Identity,
+    pub owner: String,
     /// this account's data contains a loaded program (and is now read-only)
     pub executable: bool,
     /// the epoch at which this account will next owe rent

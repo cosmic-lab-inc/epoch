@@ -22,7 +22,6 @@ serde = { workspace = true }
 serde_yaml = { workspace = true }
 simplelog = { workspace = true }
 solana-sdk = { workspace = true }
-spacetime-client = { path = "../spacetime/client" }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-retry = { workspace = true }

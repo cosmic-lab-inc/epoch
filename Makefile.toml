@@ -2,4 +2,13 @@
 default_to_workspace = false
 
 [tasks.backfill]
+script = "cargo run -p backfill"
+
+[tasks.spacetime]
+script = "spacetime start"
+
+[tasks.publish]
+script = "spacetime publish --project-path spacetime/server epoch"
+
+[tasks.epoch]
 script = "cargo run -p epoch"
