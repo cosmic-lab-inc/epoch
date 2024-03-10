@@ -3,7 +3,7 @@ use crate::decode_accounts::{
     deserialize_from, AccountsDbFields, AppendVec, DeserializableVersionedBank,
     SerializableAccountStorageEntry,
 };
-use crate::{SnapshotError, SNAPSHOTS_DIR};
+use crate::SnapshotError;
 use itertools::Itertools;
 use log::info;
 use solana_runtime::snapshot_utils::SNAPSHOT_STATUS_CACHE_FILENAME;
@@ -12,6 +12,8 @@ use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::Instant;
+
+pub const SNAPSHOTS_DIR: &str = "snapshots";
 
 /// Extracts account data from snapshots that were unarchived to a file system.
 pub struct UnpackedSnapshotExtractor {

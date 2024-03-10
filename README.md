@@ -29,33 +29,51 @@ store and serve it to end users.
 
 This is Epoch. 
 
-## Development
-If on Mac M1, you need to modify the Rust to WASM compilation to emulate x86_64, otherwise you get nasty build errors.
-Add this to your `~/.cargo/config.toml`
-```toml
-[target.x86_64-apple-darwin]
-rustflags = [
-  "-C", "link-arg=-undefined",
-  "-C", "link-arg=dynamic_lookup",
-]
+## Local Development
 
-[target.aarch64-apple-darwin]
-rustflags = [
-  "-C", "link-arg=-undefined",
-  "-C", "link-arg=dynamic_lookup",
-]
+Install cargo make to run pre-configured commands in `Makefile.toml`.
+```shell
+cargo install cargo-make
 ```
 
-### Start Spacetime Instance (server/database)
-For more spacetime information see `SPACETIME.md`.
-Start spacetime instance:
+Install PostgreSQL to start database and create superuser
 ```shell
-spacetime start
+# For MacOS
+cargo make install_postgresql_macos && cargo make start_postgresql_macos
+# For Linux
+cargo make install_postgresql_linux && cargo make start_postgresql_linux
+
+# If getting the error: 
+# psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: FATAL
+# run this to debug:
+rm /opt/homebrew/var/postgresql@13/postmaster.pid
+brew services restart postgresql@13
+
+# create supseruser
+createuser -s postgres
+# check that superuser exists
+psql -U postgres -c "SELECT * FROM pg_user;"
+psql -U postgres
+
+# quit psql shell
+\q
 ```
-Deploy spacetime module to instance:
+
+Initialize Postgres database
 ```shell
-spacetime publish --project-path spacetime/server epoch
+# reset and recreate database
+cargo make reset_database
+
+# just update database with migrations, do not reset
+cargo make update_database
 ```
+
+Initialize and copy migrations (SQL tables)
+```shell
+cargo make create_migrations && cargo make copy_migrations
+```
+
+
 
 ### Start Backfill
 Epoch reads the `backfill.yaml` config file which defines the snapshots to pull from Google Cloud Storage (GCS), the 
@@ -74,11 +92,11 @@ With the default `backfill.yaml` you should see this output: `snapshot range: 66
 1. `spacetime/client/src/lib.rs` is a library that has callbacks that the user (you) can execute. 
 See `SPACETIME.md` for commands to talk to the database and send `Hello, world!` messages.
 You need to create some reducer/callback that does the same thing (sending a message) but it's the 
-`SpacetimeAccount` rather than the `Message` as it is right now.
-Then `epoch` can import that callback function and send every `SpacetimeAccount` to it.
+`Account` rather than the `Message` as it is right now.
+Then `epoch` can import that callback function and send every `Account` to it.
 
-2. Once the `SpacetimeAccount` is in a callback that `spacetime-client` can use, you need to write the function 
-in `spacetime/client/src/main.rs` that uploads to the database in the `SpacetimeAccount` table.
+2. Once the `Account` is in a callback that `spacetime-client` can use, you need to write the function 
+in `spacetime/client/src/main.rs` that uploads to the database in the `Account` table.
 
 3. Write some function that can be called the same way you can send the `Hello, world!` message in the `SPACETIME.md`
-command guide. This function should fetch a `SpacetimeAccount` from the table by identity/key (account pubkey).
+command guide. This function should fetch a `Account` from the table by identity/key (account pubkey).

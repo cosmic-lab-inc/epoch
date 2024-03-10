@@ -46,11 +46,11 @@ impl ArchiveLoader {
 }
 
 impl ArchiveIterator for ArchiveLoader {
-    fn iter(&mut self) -> AppendVecIterator<'_> {
+    fn iter(&mut self) -> AppendVecIterator {
         match self {
-            ArchiveLoader::Unpacked(loader) => Box::new(loader.iter()),
-            ArchiveLoader::ArchiveFile(loader) => Box::new(loader.iter()),
-            ArchiveLoader::ArchiveDownload(loader) => Box::new(loader.iter()),
+            ArchiveLoader::Unpacked(loader) => loader.iter(),
+            ArchiveLoader::ArchiveFile(loader) => loader.iter(),
+            ArchiveLoader::ArchiveDownload(loader) => loader.iter(),
         }
     }
 }

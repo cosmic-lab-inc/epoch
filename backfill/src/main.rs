@@ -1,19 +1,18 @@
 mod config;
 mod errors;
 mod logger;
-mod utils;
 
-use archive_stream::archive::ArchiveAccount;
-use archive_stream::archiver::ArchiveCallback;
-use archive_stream::stream_archived_accounts;
+use archive_stream::{shorten_address, stream_archived_accounts, AccountCallback, ArchiveAccount};
+use async_trait::async_trait;
 use clap::Parser;
 use config::*;
 use errors::*;
 use gcs::bucket::*;
 use log::*;
 use logger::*;
+use postgres_client::{DbAccount, PostgresClient};
+use solana_sdk::pubkey::Pubkey;
 use std::path::PathBuf;
-use utils::*;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -25,6 +24,7 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    dotenv::dotenv().ok();
     init_logger()?;
     let args: Args = Args::parse();
     info!("Starting with args: {:?}", args);
@@ -61,20 +61,13 @@ async fn main() -> anyhow::Result<()> {
     let snapshot_meta = metas.first().unwrap().clone();
     let source = snapshot_meta.snapshot.url;
 
-    let callback: ArchiveCallback = Box::new(move |account: ArchiveAccount| {
-        if backfill_config.programs.contains(&account.owner) {
-            info!(
-                "key: {}, slot: {}, owner: {}",
-                &account.key,
-                account.slot,
-                shorten_address(&account.owner)
-            );
-            // send to spacetime
-        }
-        Ok(())
-    });
+    let db_url = std::env::var("DATABASE_URL")?;
+    let backfill = Box::leak(Box::new(BackfillHandler {
+        programs: backfill_config.programs,
+        client: PostgresClient::new_from_url(db_url).await?,
+    }));
 
-    tokio::task::spawn_blocking(|| match stream_archived_accounts(source, callback) {
+    match stream_archived_accounts(source, backfill).await {
         Ok(_) => {
             info!("Done!");
             Result::<_, anyhow::Error>::Ok(())
@@ -83,6 +76,28 @@ async fn main() -> anyhow::Result<()> {
             error!("Error: {}", e);
             Result::<_, anyhow::Error>::Err(e)
         }
-    })
-    .await?
+    }
+}
+
+struct BackfillHandler {
+    programs: Vec<Pubkey>,
+    client: PostgresClient,
+}
+
+#[async_trait]
+impl AccountCallback for BackfillHandler {
+    async fn callback(&self, account: ArchiveAccount) -> anyhow::Result<()> {
+        if self.programs.contains(&account.owner) {
+            info!(
+                "key: {}, slot: {}, owner: {}",
+                &account.key,
+                account.slot,
+                shorten_address(&account.owner)
+            );
+            // send to postgres
+            let db_account = DbAccount::try_from(account)?;
+            self.client.account_upsert(&db_account).await?;
+        }
+        Ok(())
+    }
 }

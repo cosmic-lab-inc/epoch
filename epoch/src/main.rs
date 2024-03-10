@@ -3,18 +3,12 @@ mod errors;
 mod logger;
 mod utils;
 
-use archive_stream::archive::ArchiveAccount;
-use archive_stream::archiver::ArchiveCallback;
-use archive_stream::stream_archived_accounts;
 use clap::Parser;
 use config::*;
 use errors::*;
-use gcs::bucket::*;
 use log::*;
 use logger::*;
-use spacetime_client::SpacetimeClient;
 use std::path::PathBuf;
-use utils::*;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -27,14 +21,9 @@ struct Args {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     init_logger()?;
-    let args: Args = Args::parse();
-    info!("Starting with args: {:?}", args);
-
-    let backfill_config = BackfillConfig::read_backfill_config(&args.config_file_path)?;
-
-    let spacetime = SpacetimeClient::new();
-
-    spacetime.run();
+    // let args: Args = Args::parse();
+    // info!("Starting with args: {:?}", args);
+    // let backfill_config = BackfillConfig::read_backfill_config(&args.config_file_path)?;
 
     Ok(())
 }

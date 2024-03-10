@@ -1,7 +1,5 @@
 use thiserror::Error;
 
-pub const SNAPSHOTS_DIR: &str = "snapshots";
-
 #[derive(Error, Debug)]
 pub enum SnapshotError {
     #[error("{0}")]
@@ -14,4 +12,6 @@ pub enum SnapshotError {
     NoSnapshotManifest,
     #[error("Unexpected AppendVec")]
     UnexpectedAppendVec,
+    #[error("Snapshot account access failed")]
+    AccountAccessFailed,
 }

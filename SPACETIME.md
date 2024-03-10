@@ -11,22 +11,22 @@ spacetime start
 
 3. Publish `module` project to local Spacetime instance
 ```shell
-spacetime publish --project-path spacetime/module test-project
+spacetime publish --project-path spacetime/server epoch
 ```
 
 4. Send message from client
 ```shell
-spacetime call test-project send_message 'Hello, World!' 
+spacetime call epoch send_message 'Hello, World!' 
 ```
 
 5. Print server logs to see message
 ```shell
-spacetime logs test-project
+spacetime logs epoch
 ```
 
 6. Print db table to see Message row
 ```shell
-spacetime sql test-project "SELECT * FROM Message"
+spacetime sql epoch "SELECT * FROM Message"
 ```
 
 7. In a separate terminal from the running server, run the client

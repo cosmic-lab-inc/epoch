@@ -10,6 +10,7 @@ keywords.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
+async-trait = { workspace = true }
 bincode = { workspace = true }
 borsh = { workspace = true }
 crossbeam = { workspace = true }
@@ -17,6 +18,7 @@ itertools = { workspace = true }
 log = { workspace = true }
 memmap2 = { workspace = true }
 num_cpus = { workspace = true }
+rayon = "1.9.0"
 reqwest = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

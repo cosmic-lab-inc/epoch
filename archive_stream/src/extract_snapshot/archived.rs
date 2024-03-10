@@ -7,7 +7,6 @@ use crate::SnapshotError;
 use log::info;
 use std::fs::File;
 use std::io::{BufReader, Read};
-use std::ops::DerefMut;
 use std::path::{Component, Path};
 use std::pin::Pin;
 use std::time::Instant;
@@ -30,7 +29,7 @@ impl<Source> ArchiveIterator for ArchiveSnapshotExtractor<Source>
 where
     Source: Read + Send + Sync + Unpin + 'static,
 {
-    fn iter(&mut self) -> AppendVecIterator<'_> {
+    fn iter(&mut self) -> AppendVecIterator {
         Box::new(self.unboxed_iter())
     }
 }
@@ -115,7 +114,7 @@ where
 
     fn process_entry(
         &self,
-        entry: &mut Entry<'static, zstd::Decoder<'static, BufReader<Source>>>,
+        entry: &mut Entry<'static, Decoder<'static, BufReader<Source>>>,
         slot: u64,
         id: u64,
     ) -> anyhow::Result<AppendVecMeta> {

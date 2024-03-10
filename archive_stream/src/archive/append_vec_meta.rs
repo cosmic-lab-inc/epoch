@@ -1,9 +1,11 @@
-use crate::archive::ArchiveAccount;
 use crate::decode_accounts::{AppendVec, StoredAccountMeta};
+use crate::{ArchiveAccount, BytesWrapper};
 use solana_sdk::clock::Slot;
+use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::rc::Rc;
 use std::str::FromStr;
+use std::sync::Arc;
 
 pub struct AppendVecMeta {
     pub append_vec: AppendVec,
@@ -11,12 +13,12 @@ pub struct AppendVecMeta {
 }
 
 pub struct StoredAccountMetaHandle {
-    meta: Rc<AppendVecMeta>,
+    meta: Arc<AppendVecMeta>,
     offset: usize,
 }
 
 impl StoredAccountMetaHandle {
-    pub fn new(meta: Rc<AppendVecMeta>, offset: usize) -> StoredAccountMetaHandle {
+    pub fn new(meta: Arc<AppendVecMeta>, offset: usize) -> StoredAccountMetaHandle {
         Self { meta, offset }
     }
 
@@ -31,10 +33,10 @@ impl StoredAccountMetaHandle {
             key: account.meta.pubkey,
             slot: self.meta.slot,
             lamports: account.account_meta.lamports,
-            data: account.data.to_vec(),
             owner: account.account_meta.owner,
             executable: account.account_meta.executable,
             rent_epoch: account.account_meta.rent_epoch,
+            data: account.data.to_vec(),
         })
     }
 }

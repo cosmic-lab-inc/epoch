@@ -1,5 +1,6 @@
 use solana_sdk::pubkey::Pubkey;
 
+#[allow(dead_code)]
 pub fn shorten_address(key: &Pubkey) -> String {
     // shorten address to 4 characters ... 4 characters
     let str = key.to_string();
