@@ -14,4 +14,6 @@ pub enum SnapshotError {
     UnexpectedAppendVec,
     #[error("Snapshot account access failed")]
     AccountAccessFailed,
+    #[error("Failed to parse append vec name")]
+    ParseAppendVecName,
 }

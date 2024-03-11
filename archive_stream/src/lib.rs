@@ -14,14 +14,15 @@ pub use decode_accounts::*;
 pub use errors::*;
 pub use extract_snapshot::*;
 pub use loader::*;
-use std::sync::Arc;
 pub use utils::*;
+
+use std::sync::Arc;
 
 pub async fn stream_archived_accounts(
     source: String,
     listener: &'static dyn AccountCallback,
 ) -> anyhow::Result<()> {
-    let mut loader = ArchiveLoader::new(source)?;
+    let mut loader = ArchiveLoader::new(source).await?;
 
     // TODO: parallelize stream
     for append_vec in loader.iter() {

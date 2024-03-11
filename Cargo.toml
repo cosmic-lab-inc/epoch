@@ -50,7 +50,7 @@ solana-runtime = { version = "1.17.2", features = ["dev-context-only-utils"] }
 solana-sdk = { version = "1.17.2", features = ["dev-context-only-utils"] }
 tar = "0.4.38"
 thiserror = "1.0.44"
-tokio = { version = "1.29.1", features = ["full"] }
+tokio = { version = "1.36.0", features = ["full"] }
 tokio-retry = "0.3.0"
 tokio-stream = { version = "0.1.14", features = ["net"] }
 zstd = "0.11.2"

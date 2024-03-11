@@ -34,13 +34,13 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::slot_history::Slot;
 use solana_sdk::stake::state::Delegation;
 use std::collections::{HashMap, HashSet};
-use std::io::Read;
+use tokio::io::{AsyncBufRead, AsyncRead};
 
 const MAX_STREAM_SIZE: u64 = 32 * 1024 * 1024 * 1024;
 
 pub fn deserialize_from<R, T>(reader: R) -> bincode::Result<T>
 where
-    R: Read,
+    R: AsyncRead,
     T: DeserializeOwned,
 {
     bincode::options()
