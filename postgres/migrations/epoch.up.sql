@@ -1,7 +1,7 @@
 -- Add migration script here
 
 CREATE TABLE accounts(
-     hash BIGINT PRIMARY KEY ,
+     hash BIGINT PRIMARY KEY,
      key BYTEA,
      slot BIGINT NOT NULL,
      lamports BIGINT NOT NULL,

@@ -11,12 +11,11 @@ keywords.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 archive_stream = { path = "../archive_stream" }
-async-trait = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true }
 cloud-storage = { workspace = true }
+crossbeam-channel = { workspace = true }
 dotenv = { workspace = true }
-futures-util = { workspace = true }
 gcs = { path = "../gcs" }
 log = { workspace = true }
 postgres-client = { path = "../postgres" }
@@ -28,4 +27,3 @@ solana-sdk = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-retry = { workspace = true }
-tokio-stream = { workspace = true }

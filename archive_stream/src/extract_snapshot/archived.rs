@@ -4,50 +4,50 @@ use crate::decode_accounts::{
     SerializableAccountStorageEntry,
 };
 use crate::SnapshotError;
-use async_compression::tokio::bufread::ZstdDecoder;
 use log::info;
+use std::fs::File;
+use std::io::{BufReader, Read};
 use std::path::{Component, Path};
+use std::pin::Pin;
 use std::time::Instant;
-use tokio::fs::File;
-use tokio::io::{AsyncBufRead, AsyncReadExt, BufReader};
-use tokio_stream::*;
-use tokio_tar::{Archive, Entries, Entry};
+use tar::{Archive, Entries, Entry};
+use zstd::Decoder;
 
 /// Extracts account data from a .tar.zst HTTP stream or local file.
 pub struct ArchiveSnapshotExtractor<Source>
 where
-    Source: AsyncBufRead + Send + Sync + Unpin + 'static,
+    Source: Read + Send + Sync + Unpin + 'static,
 {
     accounts_db_fields: AccountsDbFields<SerializableAccountStorageEntry>,
-    archive: Archive<ZstdDecoder<Source>>,
-    entries: Option<Entries<ZstdDecoder<Source>>>,
+    _archive: Pin<Box<Archive<Decoder<'static, BufReader<Source>>>>>,
+    entries: Option<Entries<'static, Decoder<'static, BufReader<Source>>>>,
+    // slot: Slot,
 }
 
 /// Extracts account data from a .tar.zst HTTP stream
 impl<Source> ArchiveIterator for ArchiveSnapshotExtractor<Source>
 where
-    Source: AsyncBufRead + Send + Sync + Unpin + 'static,
+    Source: Read + Send + Sync + Unpin + 'static,
 {
-    fn iter(&mut self) -> AppendVecIterator {
+    fn iter(&mut self) -> AppendVecIterator<'_> {
         Box::new(self.unboxed_iter())
     }
 }
 
 impl<Source> ArchiveSnapshotExtractor<Source>
 where
-    Source: AsyncBufRead + Send + Sync + Unpin + 'static,
+    Source: Read + Send + Sync + Unpin + 'static,
 {
-    pub async fn from_reader(source: Source) -> anyhow::Result<Self> {
-        let tar_stream = ZstdDecoder::new(source);
-        info!("tar stream");
-        let mut archive = Archive::new(tar_stream);
-        info!("archive");
-        let mut entries = archive.entries()?;
-        info!("entries");
+    pub fn from_reader(source: Source) -> anyhow::Result<Self> {
+        let tar_stream = zstd::stream::read::Decoder::new(source)?;
+        let mut archive = Box::pin(Archive::new(tar_stream));
+        // This is safe as long as we guarantee that entries never gets accessed past drop.
+        // TODO: get rid of this C bullshit. Rust can do better.
+        let archive_static = unsafe { &mut *((&mut *archive) as *mut Archive<_>) };
+        let mut entries = archive_static.entries()?;
 
         let mut snapshot_file: Option<Entry<_>> = None;
-        while let Some(entry) = entries.next().await {
-            info!("iter");
+        for entry in entries.by_ref() {
             let entry = entry?;
             let path = entry.path()?;
             if Self::is_snapshot_manifest_file(&path) {
@@ -60,7 +60,6 @@ where
         }
 
         let snapshot_file = snapshot_file.ok_or(SnapshotError::NoSnapshotManifest)?;
-        info!("snapshot file ok");
         let snapshot_file_path = snapshot_file.path()?.as_ref().to_path_buf();
 
         info!("Opening snapshot manifest: {:?}", &snapshot_file_path);
@@ -71,10 +70,6 @@ where
         let versioned_bank: DeserializableVersionedBank = deserialize_from(&mut snapshot_file)?;
         drop(versioned_bank);
         let versioned_bank_post_time = Instant::now();
-        info!(
-            "Read bank fields in {:?}",
-            versioned_bank_post_time - pre_unpack
-        );
 
         info!("Deserializing accounts DB fields");
         let accounts_db_fields: AccountsDbFields<SerializableAccountStorageEntry> =
@@ -83,40 +78,43 @@ where
         drop(snapshot_file);
 
         info!(
+            "Read bank fields in {:?}",
+            versioned_bank_post_time - pre_unpack
+        );
+        info!(
             "Read accounts DB fields in {:?}",
             accounts_db_fields_post_time - versioned_bank_post_time
         );
 
         Ok(ArchiveSnapshotExtractor {
-            archive,
+            _archive: archive,
             accounts_db_fields,
             entries: Some(entries),
         })
     }
 
-    async fn unboxed_iter(&mut self) -> impl Iterator<Item = anyhow::Result<AppendVecMeta>> + '_ {
-        let mut collector = Vec::<anyhow::Result<AppendVecMeta>>::new();
-        match self.entries.take() {
-            None => collector.into_iter(),
-            Some(mut entries) => {
-                while let Some(entry) = entries.next().await {
-                    if let Ok(mut entry) = entry {
-                        if let Ok(path) = entry.path() {
-                            let res = path.file_name().and_then(parse_append_vec_name);
-                            if let Some((slot, id)) = res {
-                                collector.push(self.process_entry(&mut entry, slot, id));
-                            }
-                        };
-                    }
-                }
-                collector.into_iter()
-            }
-        }
+    fn unboxed_iter(&mut self) -> impl Iterator<Item = anyhow::Result<AppendVecMeta>> + '_ {
+        self.entries
+            .take()
+            .into_iter()
+            .flatten()
+            .filter_map(|entry| {
+                let mut entry = match entry {
+                    Ok(x) => x,
+                    Err(e) => return Some(Err(e.into())),
+                };
+                let path = match entry.path() {
+                    Ok(x) => x,
+                    Err(e) => return Some(Err(e.into())),
+                };
+                let (slot, id) = path.file_name().and_then(parse_append_vec_name)?;
+                Some(self.process_entry(&mut entry, slot, id))
+            })
     }
 
     fn process_entry(
         &self,
-        entry: &mut Entry<Archive<ZstdDecoder<Source>>>,
+        entry: &mut Entry<'static, zstd::Decoder<'static, BufReader<Source>>>,
         slot: u64,
         id: u64,
     ) -> anyhow::Result<AppendVecMeta> {
@@ -174,10 +172,8 @@ where
 }
 
 /// Extracts account data from a .tar.zst local file.
-impl ArchiveSnapshotExtractor<BufReader<File>> {
-    pub async fn open(path: &Path) -> anyhow::Result<Self> {
-        let f = File::open(path).await?;
-        let t = BufReader::new(f);
-        Self::from_reader(t).await
+impl ArchiveSnapshotExtractor<File> {
+    pub fn open(path: &Path) -> anyhow::Result<Self> {
+        Self::from_reader(File::open(path)?)
     }
 }

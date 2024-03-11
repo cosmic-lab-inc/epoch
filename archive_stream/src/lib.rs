@@ -18,15 +18,15 @@ pub use utils::*;
 
 use std::sync::Arc;
 
-pub async fn stream_archived_accounts(
+pub fn stream_archived_accounts(
     source: String,
-    listener: &'static dyn AccountCallback,
+    sender: crossbeam_channel::Sender<ArchiveAccount>,
 ) -> anyhow::Result<()> {
-    let mut loader = ArchiveLoader::new(source).await?;
+    let mut loader = ArchiveLoader::new(source)?;
 
     // TODO: parallelize stream
     for append_vec in loader.iter() {
-        Archiver::extract_accounts(Arc::new(append_vec?), listener).await?
+        Archiver::extract_accounts(Arc::new(append_vec?), sender.clone())?
     }
 
     Ok(())

@@ -5,28 +5,6 @@ use tokio_postgres::{Client, Statement};
 pub struct StatementBuilder {}
 
 impl StatementBuilder {
-    pub async fn accounts_statement(
-        client: &Client,
-        config: &DatabaseSettings,
-    ) -> anyhow::Result<Statement> {
-        let stmt = include_str!("../statements/accounts.sql");
-        let stmt = client.prepare(stmt).await;
-
-        match stmt {
-            Ok(stmt) => Ok(stmt),
-            Err(error) => {
-                let error = anyhow!(
-                    "Failed to prepare accounts statement: {} host: {:?}, user: {:?}, config{:?}",
-                    error,
-                    config.host,
-                    config.username,
-                    config
-                );
-                Err(error)
-            }
-        }
-    }
-
     pub async fn account_statement(
         client: &Client,
         config: &DatabaseSettings,
@@ -93,7 +71,7 @@ impl StatementBuilder {
         }
     }
 
-    pub async fn accounts_by_hash_statement(
+    pub async fn accounts_statement(
         client: &Client,
         config: &DatabaseSettings,
     ) -> anyhow::Result<Statement> {

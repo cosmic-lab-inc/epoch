@@ -2,10 +2,8 @@ use crate::account::DbAccount;
 use crate::settings::DatabaseSettings;
 use crate::statement_builder::StatementBuilder;
 use anyhow::anyhow;
-use archive_stream::shorten_address;
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
-use log::info;
 use solana_sdk::pubkey::Pubkey;
 use tokio_postgres::*;
 
@@ -113,19 +111,6 @@ impl PostgresClient {
     }
 
     pub async fn account_upsert(&self, account: &DbAccount) -> anyhow::Result<Vec<Row>> {
-        let mut owner_arr = [0u8; 32];
-        owner_arr.copy_from_slice(&account.owner);
-        let owner = Pubkey::from(owner_arr);
-
-        let mut key_arr = [0u8; 32];
-        key_arr.copy_from_slice(&account.owner);
-        let key = Pubkey::from(key_arr);
-        info!(
-            "upsert account: {}, slot: {}, owner: {}",
-            shorten_address(&key),
-            account.slot,
-            shorten_address(&owner)
-        );
         let statement = &self.account_upsert_stmt;
         let client = &self.client;
         let result = client
