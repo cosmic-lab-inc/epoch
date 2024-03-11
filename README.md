@@ -59,20 +59,11 @@ psql -U postgres
 \q
 ```
 
-Initialize Postgres database
+Initialize Postgres database and migrate tables
 ```shell
-# reset and recreate database
-cargo make reset_database
-
-# just update database with migrations, do not reset
-cargo make update_database
+# reset and recreate database, create migrations, copy migrations to proper directory, and load migrations to database
+cargo make init_database
 ```
-
-Initialize and copy migrations (SQL tables)
-```shell
-cargo make create_migrations && cargo make copy_migrations
-```
-
 
 
 ### Start Backfill
@@ -86,17 +77,13 @@ cargo make backfill
 With the default `backfill.yaml` you should see this output: `snapshot range: 66958784 - 251844968`
 
 
+### Start Epoch Server
+After running the backfill client to dump accounts into the Postgres database, you may run the Epoch server
+```shell
+cargo make epoch
+```
+The server defaults to http://localhost:3333 where you should see a welcome message.
+The general API routes are behind `http://localhost:333/api`.
 
-## TODO:
-
-1. `spacetime/client/src/lib.rs` is a library that has callbacks that the user (you) can execute. 
-See `SPACETIME.md` for commands to talk to the database and send `Hello, world!` messages.
-You need to create some reducer/callback that does the same thing (sending a message) but it's the 
-`Account` rather than the `Message` as it is right now.
-Then `epoch` can import that callback function and send every `Account` to it.
-
-2. Once the `Account` is in a callback that `spacetime-client` can use, you need to write the function 
-in `spacetime/client/src/main.rs` that uploads to the database in the `Account` table.
-
-3. Write some function that can be called the same way you can send the `Hello, world!` message in the `SPACETIME.md`
-command guide. This function should fetch a `Account` from the table by identity/key (account pubkey).
+To see all accounts loaded by the backfill (careful is is a massive payload), 
+check out http://localhost:3333/api/accounts.

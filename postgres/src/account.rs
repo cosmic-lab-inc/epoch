@@ -91,3 +91,21 @@ impl TryFrom<ArchiveAccount> for DbAccount {
         Ok(DbAccount::new(account))
     }
 }
+
+pub trait FromDbAccount: Sized {
+    fn from_db_account(account: DbAccount) -> anyhow::Result<Self>;
+}
+
+impl FromDbAccount for ArchiveAccount {
+    fn from_db_account(account: DbAccount) -> anyhow::Result<Self> {
+        Ok(ArchiveAccount {
+            key: Pubkey::new_from_array(account.key.as_slice().try_into()?),
+            slot: account.slot as u64,
+            lamports: account.lamports as u64,
+            owner: Pubkey::new_from_array(account.owner.as_slice().try_into()?),
+            executable: account.executable,
+            rent_epoch: account.rent_epoch as u64,
+            data: account.data,
+        })
+    }
+}

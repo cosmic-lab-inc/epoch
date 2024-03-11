@@ -1,5 +1,5 @@
 [config]
-default_to_workspace = false
+default_to_workspace = true
 
 #
 #
@@ -8,10 +8,10 @@ default_to_workspace = false
 #
 
 [tasks.backfill]
-script = "cargo run -p backfill"
+script = "cargo run -r -p backfill"
 
 [tasks.epoch]
-script = "cargo run -p epoch"
+script = "cargo run -r -p epoch"
 
 #
 #
@@ -38,7 +38,7 @@ script = "sudo systemctl start postgresql && sudo systemctl enable postgresql"
 command = "cargo"
 args = ["install", "sqlx-cli", "--no-default-features", "--features", "native-tls,postgres"]
 
-[tasks.create_database]
+[tasks.recreate_database]
 dependencies = ["install_sqlx_cli"]
 env = { DATABASE_URL = "postgres://postgres:password@localhost:5432/epoch" }
 script = "echo 'y' | sqlx database drop && sqlx database create"
@@ -54,7 +54,7 @@ dependencies = ["install_sqlx_cli"]
 env = { DATABASE_URL = "postgres://postgres:password@localhost:5432/epoch" }
 script = "sqlx migrate revert"
 
-[tasks.create_migration]
+[tasks.create_migrations]
 dependencies = ["install_sqlx_cli"]
 env = { DATABASE_URL = "postgres://postgres:password@localhost:5432/epoch" }
 command = "sqlx"
@@ -65,8 +65,9 @@ dependencies = ["install_sqlx_cli"]
 env = { DATABASE_URL = "postgres://postgres:password@localhost:5432/epoch" }
 script = "sqlx migrate run"
 
-[tasks.reset_database]
-dependencies = ["wipe_migrations", "create_database", "create_migration", "copy_migrations", "migrate_database"]
-
 [tasks.update_database]
 dependencies = ["create_database", "migrate_database"]
+
+[tasks.init_database]
+dependencies = ["wipe_migrations", "create_database", "create_migrations", "copy_migrations", "migrate_database"]
+

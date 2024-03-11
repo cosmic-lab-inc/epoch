@@ -9,13 +9,14 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+actix-web = "4.5.1"
+actix-web-httpauth = "0.8.1"
+actix-cors = "0.7.0"
 anyhow = { workspace = true }
 archive_stream = { path = "../archive_stream" }
 chrono = { workspace = true }
 clap = { workspace = true }
-cloud-storage = { workspace = true }
-futures-util = { workspace = true }
-gcs = { path = "../gcs" }
+dotenv = { workspace = true }
 log = { workspace = true }
 postgres-client = { path = "../postgres" }
 reqwest = { workspace = true }
@@ -25,5 +26,8 @@ simplelog = { workspace = true }
 solana-sdk = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
-tokio-retry = { workspace = true }
-tokio-stream = { workspace = true }
+tungstenite = { version = "0.21.0", features = ["native-tls"] }
+futures = "0.3.30"
+lazy_static = "1.4.0"
+derive_more = "0.99.17"
+
