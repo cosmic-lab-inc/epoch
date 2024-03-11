@@ -9,8 +9,10 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Component, Path};
 use std::pin::Pin;
+use std::sync::Arc;
 use std::time::Instant;
 use tar::{Archive, Entries, Entry};
+use tokio::sync::{Mutex, RwLock};
 use zstd::Decoder;
 
 /// Extracts account data from a .tar.zst HTTP stream or local file.
@@ -19,9 +21,7 @@ where
     Source: Read + Send + Sync + Unpin + 'static,
 {
     accounts_db_fields: AccountsDbFields<SerializableAccountStorageEntry>,
-    _archive: Pin<Box<Archive<Decoder<'static, BufReader<Source>>>>>,
-    entries: Option<Entries<'static, Decoder<'static, BufReader<Source>>>>,
-    // slot: Slot,
+    entries: Option<RwLock<Entries<'static, Decoder<'static, BufReader<Source>>>>>,
 }
 
 /// Extracts account data from a .tar.zst HTTP stream
@@ -38,32 +38,47 @@ impl<Source> ArchiveSnapshotExtractor<Source>
 where
     Source: Read + Send + Sync + Unpin + 'static,
 {
-    pub fn from_reader(source: Source) -> anyhow::Result<Self> {
-        let tar_stream = zstd::stream::read::Decoder::new(source)?;
-        let mut archive = Box::pin(Archive::new(tar_stream));
-        // This is safe as long as we guarantee that entries never gets accessed past drop.
-        // TODO: get rid of this C bullshit. Rust can do better.
-        let archive_static = unsafe { &mut *((&mut *archive) as *mut Archive<_>) };
-        let mut entries = archive_static.entries()?;
+    pub async fn from_reader(source: Source) -> anyhow::Result<Self> {
+        let tar_stream =
+            tokio::task::spawn_blocking(|| zstd::stream::read::Decoder::new(source)).await??;
+        info!("tar stream");
 
-        let mut snapshot_file: Option<Entry<_>> = None;
-        for entry in entries.by_ref() {
+        let archive = RwLock::new(Archive::new(tar_stream));
+        let mut archive_guard = archive.write().await;
+        info!("archive lock");
+
+        let snapshot_file: RwLock<Option<Entry<_>>> = RwLock::new(None);
+        let mut snapshot_guard = snapshot_file.write().await;
+        info!("snapshot lock");
+
+        while let Some(entry) = archive_guard.entries()?.next() {
+            info!("while");
             let entry = entry?;
-            let path = entry.path()?;
+            let path = entry.path()?.into_owned();
             if Self::is_snapshot_manifest_file(&path) {
-                snapshot_file = Some(entry);
+                *snapshot_guard = Some(entry);
                 break;
             } else if Self::is_appendvec_file(&path) {
-                // TODO Support archives where AppendVecs precede snapshot manifests
                 return Err(anyhow::Error::from(SnapshotError::UnexpectedAppendVec));
             }
         }
+        drop(archive_guard);
+        // let entries = archive_guard.entries()?;
+        // let entries = RwLock::new(entries);
+        info!("end while");
 
-        let snapshot_file = snapshot_file.ok_or(SnapshotError::NoSnapshotManifest)?;
-        let snapshot_file_path = snapshot_file.path()?.as_ref().to_path_buf();
-
+        let snapshot_file_path = match snapshot_file.read().await.as_ref() {
+            Some(snapshot) => Ok(snapshot.path()?.as_ref().to_path_buf()),
+            None => Err(anyhow::Error::from(SnapshotError::NoSnapshotManifest)),
+        }?;
         info!("Opening snapshot manifest: {:?}", &snapshot_file_path);
-        let mut snapshot_file = BufReader::new(snapshot_file);
+
+        // drop RwLock since it was only needed for spawn blocking
+        let mut write_lock = snapshot_file.write().await;
+        let mut snapshot_file = match std::mem::replace(&mut *write_lock, None) {
+            Some(snapshot) => snapshot,
+            None => return Err(anyhow::Error::from(SnapshotError::NoSnapshotManifest)),
+        };
 
         info!("Deserializing versioned bank");
         let pre_unpack = Instant::now();
@@ -87,7 +102,7 @@ where
         );
 
         Ok(ArchiveSnapshotExtractor {
-            _archive: archive,
+            // _archive: archive,
             accounts_db_fields,
             entries: Some(entries),
         })
@@ -173,7 +188,7 @@ where
 
 /// Extracts account data from a .tar.zst local file.
 impl ArchiveSnapshotExtractor<File> {
-    pub fn open(path: &Path) -> anyhow::Result<Self> {
-        Self::from_reader(File::open(path)?)
+    pub async fn open(path: &Path) -> anyhow::Result<Self> {
+        Self::from_reader(File::open(path)?).await
     }
 }

@@ -67,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
         client: PostgresClient::new_from_url(db_url).await?,
     }));
 
-    match stream_archived_accounts(source, backfill).await {
+    match tokio::task::spawn_blocking(|| stream_archived_accounts(source, backfill)).await? {
         Ok(_) => {
             info!("Done!");
             Result::<_, anyhow::Error>::Ok(())

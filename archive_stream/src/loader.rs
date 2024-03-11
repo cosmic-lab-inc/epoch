@@ -18,21 +18,21 @@ pub enum ArchiveLoader {
 
 /// Load a snapshot from a file or HTTP stream
 impl ArchiveLoader {
-    pub fn new(source: String) -> anyhow::Result<Self> {
+    pub async fn new(source: String) -> anyhow::Result<Self> {
         if source.starts_with("http://") || source.starts_with("https://") {
-            ArchiveLoader::new_download(source)
+            ArchiveLoader::new_download(source).await
         } else {
             ArchiveLoader::new_file(source.as_ref()).map_err(Into::into)
         }
     }
 
-    fn new_download(url: String) -> anyhow::Result<ArchiveLoader> {
+    async fn new_download(url: String) -> anyhow::Result<ArchiveLoader> {
         let resp = reqwest::blocking::get(url)?;
         // compute number of Gb in resp
         let len = resp.content_length().unwrap_or(0);
         let len_gb = len / 1024 / 1024 / 1024;
         info!("Stream snapshot from HTTP ({} Gb)", len_gb);
-        let loader = ArchiveSnapshotExtractor::from_reader(resp)?;
+        let loader = ArchiveSnapshotExtractor::from_reader(resp).await?;
         Ok(ArchiveLoader::ArchiveDownload(loader))
     }
 
