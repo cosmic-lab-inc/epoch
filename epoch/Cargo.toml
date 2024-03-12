@@ -17,6 +17,7 @@ archive_stream = { path = "../archive_stream" }
 chrono = { workspace = true }
 clap = { workspace = true }
 dotenv = { workspace = true }
+gcs = { path = "../gcs" }
 log = { workspace = true }
 postgres-client = { path = "../postgres" }
 reqwest = { workspace = true }

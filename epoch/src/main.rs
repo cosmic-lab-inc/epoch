@@ -1,16 +1,18 @@
 mod account;
 mod auth;
 mod errors;
-mod handler;
+// mod handler;
+mod postgres_handler;
 mod logger;
 mod utils;
 
 use auth::*;
 use clap::Parser;
 use errors::EpochError;
-use handler::*;
+// use handler::*;
 use log::*;
 use logger::*;
+use postgres_handler::EpochHandler;
 
 use crate::errors::EpochResult;
 use actix_cors::Cors;

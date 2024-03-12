@@ -600,6 +600,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-stream"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd56dd203fef61ac097dd65721a419ddccb106b2d2b70ba60a6b529f03961a51"
+dependencies = [
+ "async-stream-impl",
+ "futures-core",
+ "pin-project-lite",
+]
+
+[[package]]
+name = "async-stream-impl"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16e62a023e7c117e27523144c5d2459f4397fcc3cab0085af8e2224f643a0193"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.52",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.77"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -692,6 +714,12 @@ name = "base64"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
+
+[[package]]
+name = "base64"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
 
 [[package]]
 name = "bb8"
@@ -1409,6 +1437,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
 dependencies = [
  "powerfmt",
+ "serde",
 ]
 
 [[package]]
@@ -1538,6 +1567,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1435fa1053d8b2fbbe9be7e97eca7f33d37b28409959813daefc1446a14247f1"
 
 [[package]]
+name = "dyn-clone"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
+
+[[package]]
 name = "eager"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1640,6 +1675,7 @@ dependencies = [
  "derive_more",
  "dotenv",
  "futures",
+ "gcs",
  "lazy_static",
  "log",
  "postgres-client",
@@ -1868,17 +1904,45 @@ dependencies = [
 ]
 
 [[package]]
+name = "gcp-bigquery-client"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0ce6fcbdaca0a4521a734f2bc7f2f6bd872fe40576e24f8bd0b05732c19a74f"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "dyn-clone",
+ "hyper",
+ "hyper-rustls",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "url",
+ "yup-oauth2",
+]
+
+[[package]]
 name = "gcs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "archive_stream",
+ "base64 0.22.0",
  "cloud-storage",
  "futures-util",
+ "gcp-bigquery-client",
  "log",
+ "rayon",
  "regex",
  "reqwest",
  "serde",
  "serde_json",
+ "solana-sdk",
  "thiserror",
  "tokio",
 ]
@@ -2174,7 +2238,9 @@ dependencies = [
  "futures-util",
  "http 0.2.12",
  "hyper",
+ "log",
  "rustls 0.21.10",
+ "rustls-native-certs",
  "tokio",
  "tokio-rustls 0.24.1",
 ]
@@ -3622,6 +3688,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustls-native-certs"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9aace74cb666635c918e9c12bc0d348266037aa8eb599b5cba565709a8dff00"
+dependencies = [
+ "openssl-probe",
+ "rustls-pemfile",
+ "schannel",
+ "security-framework",
+]
+
+[[package]]
 name = "rustls-pemfile"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3705,6 +3783,12 @@ dependencies = [
  "ring 0.17.8",
  "untrusted 0.9.0",
 ]
+
+[[package]]
+name = "seahash"
+version = "4.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b"
 
 [[package]]
 name = "security-framework"
@@ -5727,6 +5811,33 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
 dependencies = [
  "linked-hash-map",
+]
+
+[[package]]
+name = "yup-oauth2"
+version = "8.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24bea7df5a9a74a9a0de92f22e5ab3fb9505dd960c7f1f00de5b7231d9d97206"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64 0.13.1",
+ "futures",
+ "http 0.2.12",
+ "hyper",
+ "hyper-rustls",
+ "itertools 0.10.5",
+ "log",
+ "percent-encoding",
+ "rustls 0.21.10",
+ "rustls-pemfile",
+ "seahash",
+ "serde",
+ "serde_json",
+ "time",
+ "tokio",
+ "tower-service",
+ "url",
 ]
 
 [[package]]

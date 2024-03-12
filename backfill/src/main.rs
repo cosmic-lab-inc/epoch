@@ -6,11 +6,11 @@ use archive_stream::{shorten_address, stream_archived_accounts, ArchiveAccount};
 use clap::Parser;
 use config::*;
 use errors::*;
+use gcs::bq::{BigQueryClient, BqAccount};
 use gcs::bucket::*;
 use log::*;
 use logger::*;
-use postgres_client::{DbAccount, PostgresClient};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 #[derive(Parser, Debug)]
@@ -34,13 +34,28 @@ fn main() -> anyhow::Result<()> {
 
     let backfill_config = BackfillConfig::read_backfill_config(&args.config_file_path)?;
 
+    let client = rt.block_on(async move {
+        let client = BigQueryClient::new(Path::new(&backfill_config.gcs_sa_key)).await?;
+        Result::<_, anyhow::Error>::Ok(client)
+    })?;
+
+    // check backfill_config.gcs_file file is not empty
+    let mut needs_remote_fetch = true;
+    if let Some(path) = &backfill_config.gcs_local_file {
+        if Path::new(path).exists() {
+            needs_remote_fetch = false;
+        }
+    }
+
     let bucket = backfill_config.gcs_bucket;
-    let gcs_file = backfill_config.gcs_local_file;
     let metas: Vec<SnapshotMeta> = rt.block_on(async move {
         info!("Fetching snapshots from GCS, this usually takes 60-90s");
-        let metas = match gcs_file {
+        let metas = match &backfill_config.gcs_local_file {
+            Some(path) => match Path::new(path).exists() {
+                false => get_snapshot_metas(&bucket).await,
+                true => get_snapshot_metas_from_local(&path).await,
+            },
             None => get_snapshot_metas(&bucket).await,
-            Some(path) => get_snapshot_metas_from_local(&path).await,
         }?;
         Result::<_, anyhow::Error>::Ok(metas)
     })?;
@@ -68,9 +83,6 @@ fn main() -> anyhow::Result<()> {
     let snapshot_meta = metas.first().unwrap().clone();
     let source = snapshot_meta.snapshot.url;
 
-    let db_url = std::env::var("DATABASE_URL")?;
-    let client = rt.block_on(PostgresClient::new_from_url(db_url))?;
-
     let (tx, rx) = crossbeam_channel::unbounded::<ArchiveAccount>();
 
     let programs = Arc::new(backfill_config.programs);
@@ -84,20 +96,20 @@ fn main() -> anyhow::Result<()> {
                     account.slot,
                     shorten_address(&account.owner)
                 );
-                // send to postgres
-                let db_account = match DbAccount::try_from(account) {
+                // send to BigQuery
+                let bq_account = match BqAccount::try_from(account) {
                     Ok(db_account) => db_account,
                     Err(e) => {
-                        error!("Error converting account to DbAccount: {:?}", e);
+                        error!("Error converting account to BqAccount: {:?}", e);
                         return;
                     }
                 };
-                match client.account_upsert(&db_account).await {
+                match client.upsert_accounts(vec![bq_account]).await {
                     Ok(_row) => {
                         info!("Upserted account: {:?}", msg);
                     }
                     Err(e) => {
-                        error!("Error upserting account: {:?}", e);
+                        error!("{:?}", e);
                     }
                 }
             }

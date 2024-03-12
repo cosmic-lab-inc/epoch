@@ -17,7 +17,7 @@ itertools = { workspace = true }
 log = { workspace = true }
 memmap2 = { workspace = true }
 num_cpus = { workspace = true }
-rayon = "1.9.0"
+rayon = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

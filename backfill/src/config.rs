@@ -16,6 +16,8 @@ pub struct BackfillConfig {
     pub gcs_bucket: String,
     /// Optional local file path to gcs [`ObjectResponse`]. Primarily for development to speed up iteration.
     pub gcs_local_file: Option<String>,
+    /// GCS service account JSON file
+    pub gcs_sa_key: String,
 }
 
 impl BackfillConfig {
