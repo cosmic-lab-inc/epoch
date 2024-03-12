@@ -5,7 +5,6 @@ use crate::statement_builder::StatementBuilder;
 use anyhow::anyhow;
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
-use solana_sdk::pubkey::Pubkey;
 use tokio_postgres::*;
 
 pub struct PostgresClient {
@@ -15,13 +14,13 @@ pub struct PostgresClient {
     account_delete_stmt: Statement,
     account_upsert_stmt: Statement,
     accounts_stmt: Statement,
-    accounts_by_key_stmt: Statement,
-    accounts_by_owner_stmt: Statement,
-    accounts_by_slot_stmt: Statement,
-    accounts_by_key_and_owner_stmt: Statement,
-    accounts_by_key_and_slot_stmt: Statement,
-    accounts_by_owner_and_slot_stmt: Statement,
-    accounts_by_key_and_owner_and_slot_stmt: Statement,
+    accounts_key_stmt: Statement,
+    accounts_owner_stmt: Statement,
+    accounts_slot_stmt: Statement,
+    accounts_key_owner_stmt: Statement,
+    accounts_key_slot_stmt: Statement,
+    accounts_owner_slot_stmt: Statement,
+    accounts_key_owner_slot_stmt: Statement,
 }
 
 impl PostgresClient {
@@ -42,33 +41,31 @@ impl PostgresClient {
         let account_upsert_stmt =
             StatementBuilder::account_upsert_statement(&client, config).await?;
         let accounts_stmt = StatementBuilder::accounts_statement(&client, config).await?;
-        let accounts_by_key_stmt =
-            StatementBuilder::accounts_by_key_statement(&client, config).await?;
-        let accounts_by_owner_stmt =
-            StatementBuilder::accounts_by_owner_statement(&client, config).await?;
-        let accounts_by_slot_stmt =
-            StatementBuilder::accounts_by_slot_statement(&client, config).await?;
-        let accounts_by_key_and_owner_stmt =
-            StatementBuilder::accounts_by_key_and_owner_statement(&client, config).await?;
-        let accounts_by_key_and_slot_stmt =
-            StatementBuilder::accounts_by_key_and_slot_statement(&client, config).await?;
-        let accounts_by_owner_and_slot_stmt =
-            StatementBuilder::accounts_by_owner_and_slot_statement(&client, config).await?;
-        let accounts_by_key_and_owner_and_slot_stmt =
-            StatementBuilder::accounts_by_key_and_owner_and_slot_statement(&client, config).await?;
+        let accounts_key_stmt = StatementBuilder::accounts_key_statement(&client, config).await?;
+        let accounts_owner_stmt =
+            StatementBuilder::accounts_owner_statement(&client, config).await?;
+        let accounts_slot_stmt = StatementBuilder::accounts_slot_statement(&client, config).await?;
+        let accounts_key_owner_stmt =
+            StatementBuilder::accounts_key_owner_statement(&client, config).await?;
+        let accounts_key_slot_stmt =
+            StatementBuilder::accounts_key_slot_statement(&client, config).await?;
+        let accounts_owner_slot_stmt =
+            StatementBuilder::accounts_owner_slot_statement(&client, config).await?;
+        let accounts_key_owner_slot_stmt =
+            StatementBuilder::accounts_key_owner_slot_statement(&client, config).await?;
         Ok(Self {
             client,
             account_stmt,
             account_delete_stmt,
             account_upsert_stmt,
             accounts_stmt,
-            accounts_by_key_stmt,
-            accounts_by_owner_stmt,
-            accounts_by_slot_stmt,
-            accounts_by_key_and_owner_stmt,
-            accounts_by_key_and_slot_stmt,
-            accounts_by_owner_and_slot_stmt,
-            accounts_by_key_and_owner_and_slot_stmt,
+            accounts_key_stmt,
+            accounts_owner_stmt,
+            accounts_slot_stmt,
+            accounts_key_owner_stmt,
+            accounts_key_slot_stmt,
+            accounts_owner_slot_stmt,
+            accounts_key_owner_slot_stmt,
         })
     }
 
@@ -159,8 +156,8 @@ impl PostgresClient {
         result.map_err(|err| anyhow!("Failed to get accounts: {}", err))
     }
 
-    pub async fn accounts_by_key(&self, params: &QueryAccountsByKey) -> anyhow::Result<Vec<Row>> {
-        let statement = &self.accounts_by_key_stmt;
+    pub async fn accounts_key(&self, params: &QueryAccountsKey) -> anyhow::Result<Vec<Row>> {
+        let statement = &self.accounts_key_stmt;
         let client = &self.client;
         let result = client
             .query(
@@ -175,11 +172,8 @@ impl PostgresClient {
         result.map_err(|err| anyhow!("Failed to get accounts by key: {}", err))
     }
 
-    pub async fn accounts_by_owner(
-        &self,
-        params: &QueryAccountsByOwner,
-    ) -> anyhow::Result<Vec<Row>> {
-        let statement = &self.accounts_by_owner_stmt;
+    pub async fn accounts_owner(&self, params: &QueryAccountsOwner) -> anyhow::Result<Vec<Row>> {
+        let statement = &self.accounts_owner_stmt;
         let client = &self.client;
         let result = client
             .query(
@@ -194,8 +188,8 @@ impl PostgresClient {
         result.map_err(|err| anyhow!("Failed to get accounts by owner: {}", err))
     }
 
-    pub async fn accounts_by_slot(&self, params: &QueryAccountsBySlot) -> anyhow::Result<Vec<Row>> {
-        let statement = &self.accounts_by_slot_stmt;
+    pub async fn accounts_slot(&self, params: &QueryAccountsSlot) -> anyhow::Result<Vec<Row>> {
+        let statement = &self.accounts_slot_stmt;
         let client = &self.client;
         let result = client
             .query(
@@ -210,11 +204,11 @@ impl PostgresClient {
         result.map_err(|err| anyhow!("Failed to get accounts by slot: {}", err))
     }
 
-    pub async fn accounts_by_key_and_owner(
+    pub async fn accounts_key_owner(
         &self,
-        params: &QueryAccountsByKeyAndOwner,
+        params: &QueryAccountsKeyOwner,
     ) -> anyhow::Result<Vec<Row>> {
-        let statement = &self.accounts_by_key_and_owner_stmt;
+        let statement = &self.accounts_key_owner_stmt;
         let client = &self.client;
         let result = client
             .query(
@@ -230,11 +224,11 @@ impl PostgresClient {
         result.map_err(|err| anyhow!("Failed to get accounts by key and owner: {}", err))
     }
 
-    pub async fn accounts_by_key_and_slot(
+    pub async fn accounts_key_slot(
         &self,
-        params: &QueryAccountsByKeyAndSlot,
+        params: &QueryAccountsKeySlot,
     ) -> anyhow::Result<Vec<Row>> {
-        let statement = &self.accounts_by_key_and_slot_stmt;
+        let statement = &self.accounts_key_slot_stmt;
         let client = &self.client;
         let result = client
             .query(
@@ -250,11 +244,11 @@ impl PostgresClient {
         result.map_err(|err| anyhow!("Failed to get accounts by key and slot: {}", err))
     }
 
-    pub async fn accounts_by_owner_and_slot(
+    pub async fn accounts_owner_slot(
         &self,
-        params: &QueryAccountsByOwnerAndSlot,
+        params: &QueryAccountsOwnerSlot,
     ) -> anyhow::Result<Vec<Row>> {
-        let statement = &self.accounts_by_owner_and_slot_stmt;
+        let statement = &self.accounts_owner_slot_stmt;
         let client = &self.client;
         let result = client
             .query(
@@ -270,11 +264,11 @@ impl PostgresClient {
         result.map_err(|err| anyhow!("Failed to get accounts by owner and slot: {}", err))
     }
 
-    pub async fn accounts_by_key_and_owner_and_slot(
+    pub async fn accounts_key_owner_slot(
         &self,
-        params: &QueryAccountsByKeyAndOwnerAndSlot,
+        params: &QueryAccountsKeyOwnerSlot,
     ) -> anyhow::Result<Vec<Row>> {
-        let statement = &self.accounts_by_key_and_owner_and_slot_stmt;
+        let statement = &self.accounts_key_owner_slot_stmt;
         let client = &self.client;
         let result = client
             .query(

@@ -93,11 +93,11 @@ impl StatementBuilder {
         }
     }
 
-    pub async fn accounts_by_key_statement(
+    pub async fn accounts_key_statement(
         client: &Client,
         config: &DatabaseSettings,
     ) -> anyhow::Result<Statement> {
-        let stmt = include_str!("../statements/accounts_by_key.sql");
+        let stmt = include_str!("../statements/accounts_key.sql");
         let stmt = client.prepare(stmt).await;
 
         match stmt {
@@ -115,11 +115,11 @@ impl StatementBuilder {
         }
     }
 
-    pub async fn accounts_by_owner_statement(
+    pub async fn accounts_owner_statement(
         client: &Client,
         config: &DatabaseSettings,
     ) -> anyhow::Result<Statement> {
-        let stmt = include_str!("../statements/accounts_by_owner.sql");
+        let stmt = include_str!("../statements/accounts_owner.sql");
         let stmt = client.prepare(stmt).await;
 
         match stmt {
@@ -137,11 +137,11 @@ impl StatementBuilder {
         }
     }
 
-    pub async fn accounts_by_slot_statement(
+    pub async fn accounts_slot_statement(
         client: &Client,
         config: &DatabaseSettings,
     ) -> anyhow::Result<Statement> {
-        let stmt = include_str!("../statements/accounts_by_slot.sql");
+        let stmt = include_str!("../statements/accounts_slot.sql");
         let stmt = client.prepare(stmt).await;
 
         match stmt {
@@ -159,11 +159,11 @@ impl StatementBuilder {
         }
     }
 
-    pub async fn accounts_by_key_and_owner_statement(
+    pub async fn accounts_key_owner_statement(
         client: &Client,
         config: &DatabaseSettings,
     ) -> anyhow::Result<Statement> {
-        let stmt = include_str!("../statements/accounts_by_key_and_owner.sql");
+        let stmt = include_str!("../statements/accounts_key_owner.sql");
         let stmt = client.prepare(stmt).await;
 
         match stmt {
@@ -181,11 +181,11 @@ impl StatementBuilder {
         }
     }
 
-    pub async fn accounts_by_key_and_slot_statement(
+    pub async fn accounts_key_slot_statement(
         client: &Client,
         config: &DatabaseSettings,
     ) -> anyhow::Result<Statement> {
-        let stmt = include_str!("../statements/accounts_by_key_and_slot.sql");
+        let stmt = include_str!("../statements/account_key_slot.sql");
         let stmt = client.prepare(stmt).await;
 
         match stmt {
@@ -203,11 +203,11 @@ impl StatementBuilder {
         }
     }
 
-    pub async fn accounts_by_owner_and_slot_statement(
+    pub async fn accounts_owner_slot_statement(
         client: &Client,
         config: &DatabaseSettings,
     ) -> anyhow::Result<Statement> {
-        let stmt = include_str!("../statements/accounts_by_owner_and_slot.sql");
+        let stmt = include_str!("../statements/accounts_owner_slot.sql");
         let stmt = client.prepare(stmt).await;
 
         match stmt {
@@ -225,11 +225,11 @@ impl StatementBuilder {
         }
     }
 
-    pub async fn accounts_by_key_and_owner_and_slot_statement(
+    pub async fn accounts_key_owner_slot_statement(
         client: &Client,
         config: &DatabaseSettings,
     ) -> anyhow::Result<Statement> {
-        let stmt = include_str!("../statements/accounts_by_key_and_owner_and_slot.sql");
+        let stmt = include_str!("../statements/accounts_key_owner_slot.sql");
         let stmt = client.prepare(stmt).await;
 
         match stmt {

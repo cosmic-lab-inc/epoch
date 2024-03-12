@@ -1,5 +1,22 @@
+use serde::Deserializer;
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
+use std::str::FromStr;
+
+// Custom deserialization function for converting a String to a Pubkey
+pub fn deserialize_pubkey<'de, D>(deserializer: D) -> Result<Pubkey, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    Pubkey::from_str(&s).map_err(serde::de::Error::custom)
+}
+// pub fn serialize_pubkey<S>(key: &Pubkey, serializer: S) -> Result<S::Ok, S::Error>
+//                            where
+//                              S: serde::Serializer,
+// {
+//     serializer.serialize_str(&key.to_string())
+// }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Paginate {
@@ -9,7 +26,8 @@ pub struct Paginate {
 
 // migrations/accounts_by_key.sql
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryAccountsByKey {
+pub struct QueryAccountsKey {
+    #[serde(deserialize_with = "deserialize_pubkey")]
     pub key: Pubkey,
     pub limit: u64,
     pub offset: u64,
@@ -17,7 +35,8 @@ pub struct QueryAccountsByKey {
 
 // migrations/accounts_by_owner.sql
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryAccountsByOwner {
+pub struct QueryAccountsOwner {
+    #[serde(deserialize_with = "deserialize_pubkey")]
     pub owner: Pubkey,
     pub limit: u64,
     pub offset: u64,
@@ -25,7 +44,7 @@ pub struct QueryAccountsByOwner {
 
 // migrations/accounts_by_slot.sql
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryAccountsBySlot {
+pub struct QueryAccountsSlot {
     pub slot: u64,
     pub limit: u64,
     pub offset: u64,
@@ -33,8 +52,10 @@ pub struct QueryAccountsBySlot {
 
 // migrations/accounts_by_key_and_owner.sql
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryAccountsByKeyAndOwner {
+pub struct QueryAccountsKeyOwner {
+    #[serde(deserialize_with = "deserialize_pubkey")]
     pub key: Pubkey,
+    #[serde(deserialize_with = "deserialize_pubkey")]
     pub owner: Pubkey,
     pub limit: u64,
     pub offset: u64,
@@ -42,7 +63,8 @@ pub struct QueryAccountsByKeyAndOwner {
 
 // migrations/accounts_by_key_and_slot.sql
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryAccountsByKeyAndSlot {
+pub struct QueryAccountsKeySlot {
+    #[serde(deserialize_with = "deserialize_pubkey")]
     pub key: Pubkey,
     pub slot: u64,
     pub limit: u64,
@@ -51,7 +73,8 @@ pub struct QueryAccountsByKeyAndSlot {
 
 // migrations/accounts_by_owner_and_slot.sql
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryAccountsByOwnerAndSlot {
+pub struct QueryAccountsOwnerSlot {
+    #[serde(deserialize_with = "deserialize_pubkey")]
     pub owner: Pubkey,
     pub slot: u64,
     pub limit: u64,
@@ -60,7 +83,8 @@ pub struct QueryAccountsByOwnerAndSlot {
 
 // migrations/accounts_by_key_and_owner_and_slot.sql
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryAccountsByKeyAndOwnerAndSlot {
+pub struct QueryAccountsKeyOwnerSlot {
+    #[serde(deserialize_with = "deserialize_pubkey")]
     pub key: Pubkey,
     pub owner: Pubkey,
     pub slot: u64,

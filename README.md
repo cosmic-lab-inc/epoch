@@ -78,6 +78,12 @@ With the default `backfill.yaml` you should see this output: `snapshot range: 66
 
 
 ### Start Epoch Server
+This requires the environment variable `DATABASE_URL` to be set.
+```shell
+DATABASE_URL=postgres://postgres:password@localhost:5432/epoch
+```
+
+```shell
 After running the backfill client to dump accounts into the Postgres database, you may run the Epoch server
 ```shell
 cargo make epoch

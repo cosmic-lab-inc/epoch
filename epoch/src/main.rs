@@ -1,32 +1,29 @@
 mod account;
 mod auth;
 mod errors;
+mod handler;
 mod logger;
 mod utils;
 
-use account::*;
 use auth::*;
 use clap::Parser;
 use errors::EpochError;
+use handler::*;
 use log::*;
 use logger::*;
 
 use crate::errors::EpochResult;
 use actix_cors::Cors;
-use actix_web::web::{Data, Payload, Query};
+use actix_web::web::{Data, Payload};
 use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
-use archive_stream::ArchiveAccount;
 use dotenv::dotenv;
-use futures::StreamExt;
-use postgres_client::{DbAccount, FromDbAccount, Paginate, PostgresClient};
+use postgres_client::PostgresClient;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-const MAX_SIZE: usize = 262_144; // max payload size is 256k
-
 struct AppState {
-    client: PostgresClient,
+    handler: EpochHandler,
 }
 
 #[derive(Parser, Debug)]
@@ -47,8 +44,8 @@ async fn main() -> EpochResult<()> {
     let bind_address = format!("0.0.0.0:{}", port);
 
     let db_url = std::env::var("DATABASE_URL")?;
-    let client = PostgresClient::new_from_url(db_url).await?;
-    let state = Data::new(Arc::new(AppState { client }));
+    let handler = EpochHandler::new(PostgresClient::new_from_url(db_url).await?);
+    let state = Data::new(Arc::new(AppState { handler }));
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -61,7 +58,17 @@ async fn main() -> EpochResult<()> {
         App::new()
             .app_data(Data::clone(&state))
             .wrap(cors)
-            .service(web::scope("/api").service(accounts))
+            .service(
+                web::scope("/api")
+                    .service(accounts)
+                    .service(accounts_key)
+                    .service(accounts_owner)
+                    .service(accounts_slot)
+                    .service(accounts_key_owner)
+                    .service(accounts_key_slot)
+                    .service(accounts_owner_slot)
+                    .service(accounts_key_owner_slot),
+            )
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
             .service(test)
     })
@@ -95,37 +102,63 @@ Solana data is a gold mine, and this is your pickaxe.
 // ================================== API ================================== //
 
 #[post("/accounts")]
-async fn accounts(state: Data<Arc<AppState>>, mut payload: Payload) -> EpochResult<HttpResponse> {
-    let mut body = web::BytesMut::new();
-    while let Some(chunk) = payload.next().await {
-        let chunk = chunk?;
-        if (body.len() + chunk.len()) > MAX_SIZE {
-            return Err(EpochError::Overflow);
-        }
-        body.extend_from_slice(&chunk);
-    }
-    let query = serde_json::from_slice::<Paginate>(&body)?;
-
-    let accounts: Vec<EpochAccount> = state
-        .client
-        .accounts(&query)
-        .await?
-        .into_iter()
-        .filter_map(|a| match DbAccount::try_from(&a) {
-            Err(e) => {
-                error!("Error converting DbAccount: {}", e);
-                None
-            }
-            Ok(db) => EpochAccount::try_from(db).ok(),
-        })
-        .collect();
-    Ok(HttpResponse::Ok().json(accounts))
+async fn accounts(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
 }
 
-#[post("/test_post")]
-async fn test_post(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
-    info!("test post");
-    Ok(HttpResponse::Ok().json("Ok"))
+#[post("/accounts-key")]
+async fn accounts_key(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_key(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-owner")]
+async fn accounts_owner(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_owner(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-slot")]
+async fn accounts_slot(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_slot(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-key-owner")]
+async fn accounts_key_owner(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_key_owner(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-key-slot")]
+async fn accounts_key_slot(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_key_slot(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-owner-slot")]
+async fn accounts_owner_slot(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_owner_slot(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-key-owner-slot")]
+async fn accounts_key_owner_slot(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_key_owner_slot(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
 }
 
 // ================================== ADMIN ================================== //

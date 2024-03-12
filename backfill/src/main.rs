@@ -44,6 +44,11 @@ fn main() -> anyhow::Result<()> {
         }?;
         Result::<_, anyhow::Error>::Ok(metas)
     })?;
+    info!(
+        "GCS snapshots found: {} - {}",
+        metas.first().unwrap().snapshot.slot,
+        metas.last().unwrap().snapshot.slot
+    );
 
     let earliest_snapshot = *backfill_config.slots.iter().min().unwrap();
     // slice metas after earliest snapshot
