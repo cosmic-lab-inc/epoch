@@ -1,8 +1,10 @@
+mod account;
 mod auth;
 mod errors;
 mod logger;
 mod utils;
 
+use account::*;
 use auth::*;
 use clap::Parser;
 use errors::EpochError;
@@ -16,10 +18,10 @@ use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use archive_stream::ArchiveAccount;
 use dotenv::dotenv;
+use futures::StreamExt;
 use postgres_client::{DbAccount, FromDbAccount, Paginate, PostgresClient};
 use std::path::PathBuf;
 use std::sync::Arc;
-use futures::StreamExt;
 
 const MAX_SIZE: usize = 262_144; // max payload size is 256k
 
@@ -98,13 +100,13 @@ async fn accounts(state: Data<Arc<AppState>>, mut payload: Payload) -> EpochResu
     while let Some(chunk) = payload.next().await {
         let chunk = chunk?;
         if (body.len() + chunk.len()) > MAX_SIZE {
-            return Err(EpochError::Overflow.into());
+            return Err(EpochError::Overflow);
         }
         body.extend_from_slice(&chunk);
     }
     let query = serde_json::from_slice::<Paginate>(&body)?;
-    
-    let accounts: Vec<ArchiveAccount> = state
+
+    let accounts: Vec<EpochAccount> = state
         .client
         .accounts(&query)
         .await?
@@ -114,11 +116,10 @@ async fn accounts(state: Data<Arc<AppState>>, mut payload: Payload) -> EpochResu
                 error!("Error converting DbAccount: {}", e);
                 None
             }
-            Ok(db) => ArchiveAccount::from_db_account(db).ok(),
+            Ok(db) => EpochAccount::try_from(db).ok(),
         })
         .collect();
-    let limited: Vec<ArchiveAccount> = accounts.into_iter().take(10).collect();
-    Ok(HttpResponse::Ok().json(limited))
+    Ok(HttpResponse::Ok().json(accounts))
 }
 
 #[post("/test_post")]
