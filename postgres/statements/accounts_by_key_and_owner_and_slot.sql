@@ -1,0 +1,1 @@
+SELECT * FROM accounts WHERE key = $1 AND owner = $2 AND slot = $3 LIMIT $4 OFFSET $5

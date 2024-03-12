@@ -1,1 +1,1 @@
-SELECT * FROM accounts WHERE hash = $1
+SELECT * FROM accounts WHERE key = $1 LIMIT $2 OFFSET $3

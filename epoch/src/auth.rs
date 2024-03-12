@@ -2,7 +2,6 @@ use actix_web::{dev::ServiceRequest, Error as ActixError};
 use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
 use actix_web_httpauth::extractors::AuthenticationError;
 use log::*;
-use serde::{Deserialize, Serialize};
 
 // Auth0 Rust example
 // https://auth0.com/blog/build-an-api-in-rust-with-jwt-authentication-using-actix-web/#Getting-Started

@@ -1,4 +1,5 @@
 use crate::account::DbAccount;
+use crate::query::*;
 use crate::settings::DatabaseSettings;
 use crate::statement_builder::StatementBuilder;
 use anyhow::anyhow;
@@ -17,6 +18,10 @@ pub struct PostgresClient {
     accounts_by_key_stmt: Statement,
     accounts_by_owner_stmt: Statement,
     accounts_by_slot_stmt: Statement,
+    accounts_by_key_and_owner_stmt: Statement,
+    accounts_by_key_and_slot_stmt: Statement,
+    accounts_by_owner_and_slot_stmt: Statement,
+    accounts_by_key_and_owner_and_slot_stmt: Statement,
 }
 
 impl PostgresClient {
@@ -34,7 +39,6 @@ impl PostgresClient {
         let account_stmt = StatementBuilder::account_statement(&client, config).await?;
         let account_delete_stmt =
             StatementBuilder::account_delete_statement(&client, config).await?;
-
         let account_upsert_stmt =
             StatementBuilder::account_upsert_statement(&client, config).await?;
         let accounts_stmt = StatementBuilder::accounts_statement(&client, config).await?;
@@ -44,7 +48,14 @@ impl PostgresClient {
             StatementBuilder::accounts_by_owner_statement(&client, config).await?;
         let accounts_by_slot_stmt =
             StatementBuilder::accounts_by_slot_statement(&client, config).await?;
-
+        let accounts_by_key_and_owner_stmt =
+            StatementBuilder::accounts_by_key_and_owner_statement(&client, config).await?;
+        let accounts_by_key_and_slot_stmt =
+            StatementBuilder::accounts_by_key_and_slot_statement(&client, config).await?;
+        let accounts_by_owner_and_slot_stmt =
+            StatementBuilder::accounts_by_owner_and_slot_statement(&client, config).await?;
+        let accounts_by_key_and_owner_and_slot_stmt =
+            StatementBuilder::accounts_by_key_and_owner_and_slot_statement(&client, config).await?;
         Ok(Self {
             client,
             account_stmt,
@@ -54,6 +65,10 @@ impl PostgresClient {
             accounts_by_key_stmt,
             accounts_by_owner_stmt,
             accounts_by_slot_stmt,
+            accounts_by_key_and_owner_stmt,
+            accounts_by_key_and_slot_stmt,
+            accounts_by_owner_and_slot_stmt,
+            accounts_by_key_and_owner_and_slot_stmt,
         })
     }
 
@@ -94,7 +109,7 @@ impl PostgresClient {
         Ok(pool)
     }
 
-    // ================ QUERIES =================
+    // =========================== QUERIES ===========================
 
     pub async fn account(&self, hash: u64) -> anyhow::Result<Vec<Row>> {
         let statement = &self.account_stmt;
@@ -132,33 +147,147 @@ impl PostgresClient {
         result.map_err(|err| anyhow!("Failed to upsert account: {}", err))
     }
 
-    pub async fn accounts(&self) -> anyhow::Result<Vec<Row>> {
+    pub async fn accounts(&self, params: &Paginate) -> anyhow::Result<Vec<Row>> {
         let statement = &self.accounts_stmt;
         let client = &self.client;
-        let result = client.query(statement, &[]).await;
-        result.map_err(|err| anyhow!("Failed to get all accounts: {}", err))
+        let result = client
+            .query(
+                statement,
+                &[&(params.limit as i64), &(params.offset as i64)],
+            )
+            .await;
+        result.map_err(|err| anyhow!("Failed to get accounts: {}", err))
     }
 
-    pub async fn accounts_by_key(&self, key: &Pubkey) -> anyhow::Result<Vec<Row>> {
+    pub async fn accounts_by_key(&self, params: &QueryAccountsByKey) -> anyhow::Result<Vec<Row>> {
         let statement = &self.accounts_by_key_stmt;
         let client = &self.client;
-        let result = client.query(statement, &[&key.to_bytes().as_slice()]).await;
+        let result = client
+            .query(
+                statement,
+                &[
+                    &params.key.to_bytes().as_slice(),
+                    &(params.limit as i64),
+                    &(params.offset as i64),
+                ],
+            )
+            .await;
         result.map_err(|err| anyhow!("Failed to get accounts by key: {}", err))
     }
 
-    pub async fn accounts_by_owner(&self, owner: &Pubkey) -> anyhow::Result<Vec<Row>> {
+    pub async fn accounts_by_owner(
+        &self,
+        params: &QueryAccountsByOwner,
+    ) -> anyhow::Result<Vec<Row>> {
         let statement = &self.accounts_by_owner_stmt;
         let client = &self.client;
         let result = client
-            .query(statement, &[&owner.to_bytes().as_slice()])
+            .query(
+                statement,
+                &[
+                    &params.owner.to_bytes().as_slice(),
+                    &(params.limit as i64),
+                    &(params.offset as i64),
+                ],
+            )
             .await;
         result.map_err(|err| anyhow!("Failed to get accounts by owner: {}", err))
     }
 
-    pub async fn accounts_by_slot(&self, slot: u64) -> anyhow::Result<Vec<Row>> {
+    pub async fn accounts_by_slot(&self, params: &QueryAccountsBySlot) -> anyhow::Result<Vec<Row>> {
         let statement = &self.accounts_by_slot_stmt;
         let client = &self.client;
-        let result = client.query(statement, &[&(slot as i64)]).await;
+        let result = client
+            .query(
+                statement,
+                &[
+                    &(params.slot as i64),
+                    &(params.limit as i64),
+                    &(params.offset as i64),
+                ],
+            )
+            .await;
         result.map_err(|err| anyhow!("Failed to get accounts by slot: {}", err))
+    }
+
+    pub async fn accounts_by_key_and_owner(
+        &self,
+        params: &QueryAccountsByKeyAndOwner,
+    ) -> anyhow::Result<Vec<Row>> {
+        let statement = &self.accounts_by_key_and_owner_stmt;
+        let client = &self.client;
+        let result = client
+            .query(
+                statement,
+                &[
+                    &params.key.to_bytes().as_slice(),
+                    &params.owner.to_bytes().as_slice(),
+                    &(params.limit as i64),
+                    &(params.offset as i64),
+                ],
+            )
+            .await;
+        result.map_err(|err| anyhow!("Failed to get accounts by key and owner: {}", err))
+    }
+
+    pub async fn accounts_by_key_and_slot(
+        &self,
+        params: &QueryAccountsByKeyAndSlot,
+    ) -> anyhow::Result<Vec<Row>> {
+        let statement = &self.accounts_by_key_and_slot_stmt;
+        let client = &self.client;
+        let result = client
+            .query(
+                statement,
+                &[
+                    &params.key.to_bytes().as_slice(),
+                    &(params.slot as i64),
+                    &(params.limit as i64),
+                    &(params.offset as i64),
+                ],
+            )
+            .await;
+        result.map_err(|err| anyhow!("Failed to get accounts by key and slot: {}", err))
+    }
+
+    pub async fn accounts_by_owner_and_slot(
+        &self,
+        params: &QueryAccountsByOwnerAndSlot,
+    ) -> anyhow::Result<Vec<Row>> {
+        let statement = &self.accounts_by_owner_and_slot_stmt;
+        let client = &self.client;
+        let result = client
+            .query(
+                statement,
+                &[
+                    &params.owner.to_bytes().as_slice(),
+                    &(params.slot as i64),
+                    &(params.limit as i64),
+                    &(params.offset as i64),
+                ],
+            )
+            .await;
+        result.map_err(|err| anyhow!("Failed to get accounts by owner and slot: {}", err))
+    }
+
+    pub async fn accounts_by_key_and_owner_and_slot(
+        &self,
+        params: &QueryAccountsByKeyAndOwnerAndSlot,
+    ) -> anyhow::Result<Vec<Row>> {
+        let statement = &self.accounts_by_key_and_owner_and_slot_stmt;
+        let client = &self.client;
+        let result = client
+            .query(
+                statement,
+                &[
+                    &params.key.to_bytes().as_slice(),
+                    &params.owner.to_bytes().as_slice(),
+                    &(params.slot as i64),
+                    &(params.limit as i64),
+                    &(params.offset as i64),
+                ],
+            )
+            .await;
+        result.map_err(|err| anyhow!("Failed to get accounts by key and owner and slot: {}", err))
     }
 }

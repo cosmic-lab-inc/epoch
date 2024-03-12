@@ -11,16 +11,15 @@ use logger::*;
 
 use crate::errors::EpochResult;
 use actix_cors::Cors;
-use actix_web::web::Data;
+use actix_web::web::{Data, Payload, Query};
 use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use archive_stream::ArchiveAccount;
 use dotenv::dotenv;
-use postgres_client::DbAccount;
-use postgres_client::{FromDbAccount, PostgresClient};
+use postgres_client::{DbAccount, FromDbAccount, Paginate, PostgresClient};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use futures::StreamExt;
 
 const MAX_SIZE: usize = 262_144; // max payload size is 256k
 
@@ -87,18 +86,27 @@ Everything back to genesis.
 Every account for every program.
 Every answer to any inquiry.
 Solana data is a gold mine, and this is your pickaxe.
-
 "#,
     ))
 }
 
 // ================================== API ================================== //
 
-#[get("/accounts")]
-async fn accounts(state: web::Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
+#[post("/accounts")]
+async fn accounts(state: Data<Arc<AppState>>, mut payload: Payload) -> EpochResult<HttpResponse> {
+    let mut body = web::BytesMut::new();
+    while let Some(chunk) = payload.next().await {
+        let chunk = chunk?;
+        if (body.len() + chunk.len()) > MAX_SIZE {
+            return Err(EpochError::Overflow.into());
+        }
+        body.extend_from_slice(&chunk);
+    }
+    let query = serde_json::from_slice::<Paginate>(&body)?;
+    
     let accounts: Vec<ArchiveAccount> = state
         .client
-        .accounts()
+        .accounts(&query)
         .await?
         .into_iter()
         .filter_map(|a| match DbAccount::try_from(&a) {
@@ -109,14 +117,12 @@ async fn accounts(state: web::Data<Arc<AppState>>) -> EpochResult<HttpResponse> 
             Ok(db) => ArchiveAccount::from_db_account(db).ok(),
         })
         .collect();
-    Ok(HttpResponse::Ok().json(accounts))
+    let limited: Vec<ArchiveAccount> = accounts.into_iter().take(10).collect();
+    Ok(HttpResponse::Ok().json(limited))
 }
 
 #[post("/test_post")]
-async fn test_post(
-    state: web::Data<Arc<AppState>>,
-    payload: web::Payload,
-) -> EpochResult<HttpResponse> {
+async fn test_post(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
     info!("test post");
     Ok(HttpResponse::Ok().json("Ok"))
 }
@@ -124,6 +130,6 @@ async fn test_post(
 // ================================== ADMIN ================================== //
 
 #[get("/admin_test")]
-async fn admin_test(state: web::Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
+async fn admin_test(state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
     Ok(HttpResponse::Ok().json("Ok"))
 }

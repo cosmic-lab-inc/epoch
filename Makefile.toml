@@ -1,5 +1,5 @@
 [config]
-default_to_workspace = true
+default_to_workspace = false
 
 #
 #
@@ -66,8 +66,8 @@ env = { DATABASE_URL = "postgres://postgres:password@localhost:5432/epoch" }
 script = "sqlx migrate run"
 
 [tasks.update_database]
-dependencies = ["create_database", "migrate_database"]
+dependencies = ["recreate_database", "migrate_database"]
 
 [tasks.init_database]
-dependencies = ["wipe_migrations", "create_database", "create_migrations", "copy_migrations", "migrate_database"]
+dependencies = ["wipe_migrations", "recreate_database", "create_migrations", "copy_migrations", "migrate_database"]
 
