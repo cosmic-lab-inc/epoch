@@ -1,4 +1,4 @@
-use postgres_client::DbAccount;
+use common::ArchiveAccount;
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
 
@@ -19,21 +19,24 @@ pub struct EpochAccount {
     pub executable: bool,
     /// the epoch at which this account will next owe rent
     pub rent_epoch: u64,
+    /// first 8 bytes of the data that Anchor uses to determine the program account type.
+    pub discriminant: Option<[u8; 8]>,
     /// data held in this account
     pub data: Vec<u8>,
 }
 
-impl TryFrom<DbAccount> for EpochAccount {
+impl TryFrom<ArchiveAccount> for EpochAccount {
     type Error = anyhow::Error;
-    fn try_from(account: DbAccount) -> anyhow::Result<Self> {
+    fn try_from(account: ArchiveAccount) -> anyhow::Result<Self> {
         Ok(Self {
-            hash: account.hash as u64,
-            key: Pubkey::new_from_array(account.key.as_slice().try_into()?).to_string(),
-            slot: account.slot as u64,
-            lamports: account.lamports as u64,
-            owner: Pubkey::new_from_array(account.owner.as_slice().try_into()?).to_string(),
+            hash: account.hash(),
+            key: account.key.to_string(),
+            slot: account.slot,
+            lamports: account.lamports,
+            owner: account.owner.to_string(),
             executable: account.executable,
-            rent_epoch: account.rent_epoch as u64,
+            discriminant: account.discrim(),
+            rent_epoch: account.rent_epoch,
             data: account.data,
         })
     }

@@ -5,7 +5,8 @@ members = [
     "backfill",
     "epoch",
     "gcs",
-    "postgres"
+    "postgres",
+    "common"
 ]
 
 [workspace.package]

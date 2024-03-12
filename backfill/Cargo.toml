@@ -13,6 +13,7 @@ anyhow = { workspace = true }
 archive_stream = { path = "../archive_stream" }
 chrono = { workspace = true }
 clap = { workspace = true }
+common = { path = "../common" }
 cloud-storage = { workspace = true }
 crossbeam-channel = { workspace = true }
 dotenv = { workspace = true }

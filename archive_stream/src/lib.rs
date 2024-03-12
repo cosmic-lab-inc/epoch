@@ -1,4 +1,3 @@
-pub mod account;
 pub mod archive;
 pub mod archiver;
 pub mod decode_accounts;
@@ -7,7 +6,6 @@ pub mod extract_snapshot;
 pub mod loader;
 pub mod utils;
 
-pub use account::*;
 pub use archive::*;
 pub use archiver::*;
 pub use decode_accounts::*;
@@ -16,6 +14,7 @@ pub use extract_snapshot::*;
 pub use loader::*;
 pub use utils::*;
 
+use common::ArchiveAccount;
 use std::sync::Arc;
 
 pub fn stream_archived_accounts(

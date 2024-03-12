@@ -1,5 +1,5 @@
 use crate::decode_accounts::{AppendVec, StoredAccountMeta};
-use crate::ArchiveAccount;
+use common::ArchiveAccount;
 use solana_sdk::clock::Slot;
 use std::ffi::OsStr;
 use std::str::FromStr;

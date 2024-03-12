@@ -2,8 +2,9 @@ mod config;
 mod errors;
 mod logger;
 
-use archive_stream::{shorten_address, stream_archived_accounts, ArchiveAccount};
+use archive_stream::{shorten_address, stream_archived_accounts};
 use clap::Parser;
+use common::ArchiveAccount;
 use config::*;
 use errors::*;
 use gcs::bq::{BigQueryClient, BqAccount};
@@ -32,20 +33,12 @@ fn main() -> anyhow::Result<()> {
         .enable_all()
         .build()?;
 
-    let backfill_config = BackfillConfig::read_backfill_config(&args.config_file_path)?;
+    let backfill_config = BackfillConfig::read_config(&args.config_file_path)?;
 
     let client = rt.block_on(async move {
         let client = BigQueryClient::new(Path::new(&backfill_config.gcs_sa_key)).await?;
         Result::<_, anyhow::Error>::Ok(client)
     })?;
-
-    // check backfill_config.gcs_file file is not empty
-    let mut needs_remote_fetch = true;
-    if let Some(path) = &backfill_config.gcs_local_file {
-        if Path::new(path).exists() {
-            needs_remote_fetch = false;
-        }
-    }
 
     let bucket = backfill_config.gcs_bucket;
     let metas: Vec<SnapshotMeta> = rt.block_on(async move {
@@ -88,6 +81,10 @@ fn main() -> anyhow::Result<()> {
     let programs = Arc::new(backfill_config.programs);
     rt.spawn(async move {
         let programs = programs.clone();
+
+        const BUFFER_SIZE: usize = 100;
+        let mut buffer = Vec::new();
+
         while let Ok(account) = rx.recv() {
             if programs.contains(&account.owner) {
                 let msg = format!(
@@ -104,13 +101,18 @@ fn main() -> anyhow::Result<()> {
                         return;
                     }
                 };
-                match client.upsert_accounts(vec![bq_account]).await {
-                    Ok(_row) => {
-                        info!("Upserted account: {:?}", msg);
+                if buffer.len() == BUFFER_SIZE {
+                    match client.upsert_accounts(std::mem::take(&mut buffer)).await {
+                        Ok(_row) => {
+                            info!("Upserted {} accounts", BUFFER_SIZE);
+                        }
+                        Err(e) => {
+                            error!("{:?}", e);
+                        }
                     }
-                    Err(e) => {
-                        error!("{:?}", e);
-                    }
+                } else {
+                    debug!("Received account: {:?}", msg);
+                    buffer.push(bq_account);
                 }
             }
         }

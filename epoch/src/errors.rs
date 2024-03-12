@@ -6,6 +6,9 @@ pub type EpochResult<T> = Result<T, EpochError>;
 
 #[derive(Debug, Error)]
 pub enum EpochError {
+    #[error("SerdeYaml: {0}")]
+    SerdeYaml(#[from] serde_yaml::Error),
+
     #[error("Init logger error")]
     InitLogger,
 
@@ -42,6 +45,7 @@ pub enum EpochError {
 impl ResponseError for EpochError {
     fn status_code(&self) -> StatusCode {
         match &self {
+            Self::SerdeYaml(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::InitLogger => StatusCode::INTERNAL_SERVER_ERROR,

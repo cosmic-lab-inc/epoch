@@ -1,4 +1,4 @@
-use archive_stream::ArchiveAccount;
+use common::ArchiveAccount;
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
 use tokio_postgres::*;
@@ -32,6 +32,7 @@ impl Eq for DbAccount {}
 /// Pubkey -> Vec<u8>
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct DbAccount {
+    /// unique has of key at this slot
     pub hash: i64,
     /// account key
     pub key: Vec<u8>,

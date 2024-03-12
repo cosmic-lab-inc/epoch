@@ -31,7 +31,7 @@ impl BackfillConfig {
             .collect()
     }
 
-    pub fn read_backfill_config(path: &PathBuf) -> Result<BackfillConfig, BackfillError> {
+    pub fn read_config(path: &PathBuf) -> anyhow::Result<BackfillConfig> {
         let contents = String::from_utf8(std::fs::read(path)?)?;
         Ok(serde_yaml::from_str(&contents)?)
     }

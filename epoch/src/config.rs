@@ -1,0 +1,16 @@
+use crate::errors::EpochError;
+use serde::{Deserialize, Deserializer};
+use std::{path::PathBuf, str::FromStr};
+
+#[derive(Debug, Deserialize)]
+pub struct EpochConfig {
+    /// GCS service account JSON file
+    pub gcs_sa_key: String,
+}
+
+impl EpochConfig {
+    pub fn read_config(path: &PathBuf) -> anyhow::Result<EpochConfig> {
+        let contents = String::from_utf8(std::fs::read(path)?)?;
+        Ok(serde_yaml::from_str(&contents)?)
+    }
+}

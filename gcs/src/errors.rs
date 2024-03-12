@@ -19,6 +19,9 @@ pub enum GcsError {
     // TableDataInsertAllResponse is invalid
     #[error("Failed to upsert account to BigQuery")]
     BigQueryUpsertError,
+
+    #[error("Value is None")]
+    None,
 }
 
 pub type GcsResult<T> = Result<T, GcsError>;

@@ -1,8 +1,14 @@
-use archive_stream::ArchiveAccount;
+use crate::bq::column::*;
+use crate::errors::GcsError;
 use base64::{engine::general_purpose, Engine as _};
+use common::ArchiveAccount;
 use gcp_bigquery_client::model::table_field_schema::TableFieldSchema;
+use gcp_bigquery_client::model::table_row::TableRow;
 use gcp_bigquery_client::model::table_schema::TableSchema;
+use log::info;
 use serde::{Deserialize, Serialize};
+use solana_sdk::pubkey::Pubkey;
+use std::str::FromStr;
 
 impl Eq for BqAccount {}
 
@@ -44,22 +50,22 @@ impl BqAccount {
     }
 }
 
-// impl TryFrom<&Row> for BqAccount {
-//     type Error = anyhow::Error;
-//     fn try_from(row: &Row) -> anyhow::Result<Self> {
-//         Ok(Self {
-//             hash: row.get("hash"),
-//             key: row.get("key"),
-//             slot: row.get("slot"),
-//             lamports: row.get("lamports"),
-//             owner: row.get("owner"),
-//             executable: row.get("executable"),
-//             rent_epoch: row.get("rent_epoch"),
-//             discriminant: row.get("discriminant"),
-//             data: row.get("data"),
-//         })
-//     }
-// }
+impl TryFrom<TableRow> for BqAccount {
+    type Error = anyhow::Error;
+    fn try_from(row: TableRow) -> anyhow::Result<Self> {
+        let columns = row.columns.ok_or(GcsError::None)?;
+        Ok(Self {
+            hash: i64_column(&columns, 0)?,
+            key: string_column(&columns, 1)?,
+            slot: i64_column(&columns, 2)?,
+            lamports: i64_column(&columns, 3)?,
+            owner: string_column(&columns, 4)?,
+            executable: bool_column(&columns, 5)?,
+            rent_epoch: i64_column(&columns, 6)?,
+            data: string_column(&columns, 7)?,
+        })
+    }
+}
 
 impl TryFrom<ArchiveAccount> for BqAccount {
     type Error = anyhow::Error;
@@ -68,16 +74,13 @@ impl TryFrom<ArchiveAccount> for BqAccount {
     }
 }
 
-pub trait AccountTableSchema {
+pub trait BqAccountTrait {
     fn to_schema() -> TableSchema;
+    fn to_archive(&self) -> anyhow::Result<ArchiveAccount>;
 }
 
-impl AccountTableSchema for BqAccount {
+impl BqAccountTrait for BqAccount {
     fn to_schema() -> TableSchema {
-        // let mut data = TableFieldSchema::bytes("data");
-        // data.mode = Some("REPEATED".to_string());
-        let data = TableFieldSchema::string("data");
-
         TableSchema::new(vec![
             TableFieldSchema::integer("hash"),
             TableFieldSchema::string("key"),
@@ -86,7 +89,19 @@ impl AccountTableSchema for BqAccount {
             TableFieldSchema::string("owner"),
             TableFieldSchema::bool("executable"),
             TableFieldSchema::integer("rent_epoch"),
-            data,
+            TableFieldSchema::string("data"),
         ])
+    }
+
+    fn to_archive(&self) -> anyhow::Result<ArchiveAccount> {
+        Ok(ArchiveAccount {
+            key: Pubkey::from_str(&self.key)?,
+            slot: self.slot as u64,
+            lamports: self.lamports as u64,
+            owner: Pubkey::from_str(&self.owner)?,
+            executable: self.executable,
+            rent_epoch: self.rent_epoch as u64,
+            data: general_purpose::STANDARD.decode(&self.data).unwrap(),
+        })
     }
 }

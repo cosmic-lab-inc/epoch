@@ -16,10 +16,10 @@ anyhow = { workspace = true }
 archive_stream = { path = "../archive_stream" }
 chrono = { workspace = true }
 clap = { workspace = true }
+common = { path = "../common" }
 dotenv = { workspace = true }
 gcs = { path = "../gcs" }
 log = { workspace = true }
-postgres-client = { path = "../postgres" }
 reqwest = { workspace = true }
 serde = { workspace = true }
 serde_yaml = { workspace = true }

@@ -78,9 +78,11 @@ With the default `backfill.yaml` you should see this output: `snapshot range: 66
 
 
 ### Start Epoch Server
-This requires the environment variable `DATABASE_URL` to be set.
-```shell
-DATABASE_URL=postgres://postgres:password@localhost:5432/epoch
+This requires the config yaml file `epoch.yaml` to be set. 
+It needs the local path to the Google service account JSON.
+The yaml file will look like this
+```yaml
+gcs_sa_key: epoch_sa_key.json
 ```
 
 ```shell
