@@ -87,3 +87,11 @@ The general API routes are behind `http://localhost:333/api`.
 
 To see all accounts loaded by the backfill (careful is is a massive payload), 
 check out http://localhost:3333/api/accounts.
+
+Request body expects rust type `struct Paginate`. Use Insomnia or Postman to send a POST request to the server.
+```json
+{
+  "limit": 10,
+  "offset": 0
+}
+```
