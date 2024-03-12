@@ -1,1 +1,0 @@
-SELECT * FROM accounts WHERE hash = $1

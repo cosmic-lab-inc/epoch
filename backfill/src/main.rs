@@ -2,11 +2,10 @@ mod config;
 mod errors;
 mod logger;
 
-use archive_stream::{shorten_address, stream_archived_accounts};
+use archive_stream::stream_archived_accounts;
 use clap::Parser;
 use common::ArchiveAccount;
 use config::*;
-use errors::*;
 use gcs::bq::{BigQueryClient, BqAccount};
 use gcs::bucket::*;
 use log::*;
@@ -46,7 +45,7 @@ fn main() -> anyhow::Result<()> {
         let metas = match &backfill_config.gcs_local_file {
             Some(path) => match Path::new(path).exists() {
                 false => get_snapshot_metas(&bucket).await,
-                true => get_snapshot_metas_from_local(&path).await,
+                true => get_snapshot_metas_from_local(path).await,
             },
             None => get_snapshot_metas(&bucket).await,
         }?;
@@ -82,17 +81,11 @@ fn main() -> anyhow::Result<()> {
     rt.spawn(async move {
         let programs = programs.clone();
 
-        const BUFFER_SIZE: usize = 100;
+        const BUFFER_SIZE: usize = 500;
         let mut buffer = Vec::new();
 
         while let Ok(account) = rx.recv() {
             if programs.contains(&account.owner) {
-                let msg = format!(
-                    "key: {}, slot: {}, owner: {}",
-                    &account.key,
-                    account.slot,
-                    shorten_address(&account.owner)
-                );
                 // send to BigQuery
                 let bq_account = match BqAccount::try_from(account) {
                     Ok(db_account) => db_account,
@@ -111,7 +104,6 @@ fn main() -> anyhow::Result<()> {
                         }
                     }
                 } else {
-                    debug!("Received account: {:?}", msg);
                     buffer.push(bq_account);
                 }
             }

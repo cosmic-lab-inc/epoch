@@ -64,13 +64,16 @@ async fn main() -> EpochResult<()> {
             .app_data(Data::clone(&state))
             .wrap(cors)
             .service(
-                web::scope("/api").service(accounts), // .service(accounts_key)
-                                                      // .service(accounts_owner)
-                                                      // .service(accounts_slot)
-                                                      // .service(accounts_key_owner)
-                                                      // .service(accounts_key_slot)
-                                                      // .service(accounts_owner_slot)
-                                                      // .service(accounts_key_owner_slot),
+                web::scope("/api")
+                    .service(account_id)
+                    .service(accounts)
+                    .service(accounts_key)
+                    .service(accounts_owner)
+                    .service(accounts_slot)
+                    .service(accounts_key_owner)
+                    .service(accounts_key_slot)
+                    .service(accounts_owner_slot)
+                    .service(accounts_key_owner_slot),
             )
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
             .service(test)
@@ -104,69 +107,75 @@ Solana data is a gold mine, and this is your pickaxe.
 
 // ================================== API ================================== //
 
+#[post("/account-id")]
+async fn account_id(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    let accts = state.handler.account_id(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
 #[post("/accounts")]
 async fn accounts(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
     let accts = state.handler.accounts(payload).await?;
     Ok(HttpResponse::Ok().json(accts))
 }
 
-// #[post("/accounts-key")]
-// async fn accounts_key(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
-//     let accts = state.handler.accounts_key(payload).await?;
-//     Ok(HttpResponse::Ok().json(accts))
-// }
-//
-// #[post("/accounts-owner")]
-// async fn accounts_owner(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
-//     let accts = state.handler.accounts_owner(payload).await?;
-//     Ok(HttpResponse::Ok().json(accts))
-// }
-//
-// #[post("/accounts-slot")]
-// async fn accounts_slot(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
-//     let accts = state.handler.accounts_slot(payload).await?;
-//     Ok(HttpResponse::Ok().json(accts))
-// }
-//
-// #[post("/accounts-key-owner")]
-// async fn accounts_key_owner(
-//     state: Data<Arc<AppState>>,
-//     payload: Payload,
-// ) -> EpochResult<HttpResponse> {
-//     let accts = state.handler.accounts_key_owner(payload).await?;
-//     Ok(HttpResponse::Ok().json(accts))
-// }
-//
-// #[post("/accounts-key-slot")]
-// async fn accounts_key_slot(
-//     state: Data<Arc<AppState>>,
-//     payload: Payload,
-// ) -> EpochResult<HttpResponse> {
-//     let accts = state.handler.accounts_key_slot(payload).await?;
-//     Ok(HttpResponse::Ok().json(accts))
-// }
-//
-// #[post("/accounts-owner-slot")]
-// async fn accounts_owner_slot(
-//     state: Data<Arc<AppState>>,
-//     payload: Payload,
-// ) -> EpochResult<HttpResponse> {
-//     let accts = state.handler.accounts_owner_slot(payload).await?;
-//     Ok(HttpResponse::Ok().json(accts))
-// }
-//
-// #[post("/accounts-key-owner-slot")]
-// async fn accounts_key_owner_slot(
-//     state: Data<Arc<AppState>>,
-//     payload: Payload,
-// ) -> EpochResult<HttpResponse> {
-//     let accts = state.handler.accounts_key_owner_slot(payload).await?;
-//     Ok(HttpResponse::Ok().json(accts))
-// }
+#[post("/accounts-key")]
+async fn accounts_key(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_key(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-owner")]
+async fn accounts_owner(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_owner(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-slot")]
+async fn accounts_slot(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_slot(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-key-owner")]
+async fn accounts_key_owner(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_key_owner(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-key-slot")]
+async fn accounts_key_slot(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_key_slot(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-owner-slot")]
+async fn accounts_owner_slot(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_owner_slot(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/accounts-key-owner-slot")]
+async fn accounts_key_owner_slot(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.accounts_key_owner_slot(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
 
 // ================================== ADMIN ================================== //
 
 #[get("/admin_test")]
-async fn admin_test(state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
+async fn admin_test(_state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
     Ok(HttpResponse::Ok().json("Ok"))
 }

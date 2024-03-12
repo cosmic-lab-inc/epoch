@@ -1,12 +1,11 @@
 use common::ArchiveAccount;
 use serde::{Deserialize, Serialize};
-use solana_sdk::pubkey::Pubkey;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct EpochAccount {
     /// hash that is unique to the key at this slot
-    pub hash: u64,
+    pub id: u64,
     /// address of this account on-chain
     pub key: String,
     /// historical snapshot slot at which this state existed
@@ -29,7 +28,7 @@ impl TryFrom<ArchiveAccount> for EpochAccount {
     type Error = anyhow::Error;
     fn try_from(account: ArchiveAccount) -> anyhow::Result<Self> {
         Ok(Self {
-            hash: account.hash(),
+            id: account.id(),
             key: account.key.to_string(),
             slot: account.slot,
             lamports: account.lamports,

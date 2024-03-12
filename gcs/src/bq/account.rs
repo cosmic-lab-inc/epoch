@@ -5,7 +5,6 @@ use common::ArchiveAccount;
 use gcp_bigquery_client::model::table_field_schema::TableFieldSchema;
 use gcp_bigquery_client::model::table_row::TableRow;
 use gcp_bigquery_client::model::table_schema::TableSchema;
-use log::info;
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
@@ -17,7 +16,7 @@ impl Eq for BqAccount {}
 /// Pubkey -> String
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BqAccount {
-    pub hash: i64,
+    pub id: i64,
     /// account key
     pub key: String,
     /// historical snapshot slot at which this state existed
@@ -38,7 +37,7 @@ impl BqAccount {
     pub fn new(account: ArchiveAccount) -> Self {
         let data = general_purpose::STANDARD.encode(&account.data);
         Self {
-            hash: account.hash() as i64,
+            id: account.id() as i64,
             key: account.key.to_string(),
             slot: account.slot as i64,
             lamports: account.lamports as i64,
@@ -55,7 +54,7 @@ impl TryFrom<TableRow> for BqAccount {
     fn try_from(row: TableRow) -> anyhow::Result<Self> {
         let columns = row.columns.ok_or(GcsError::None)?;
         Ok(Self {
-            hash: i64_column(&columns, 0)?,
+            id: i64_column(&columns, 0)?,
             key: string_column(&columns, 1)?,
             slot: i64_column(&columns, 2)?,
             lamports: i64_column(&columns, 3)?,
@@ -82,7 +81,7 @@ pub trait BqAccountTrait {
 impl BqAccountTrait for BqAccount {
     fn to_schema() -> TableSchema {
         TableSchema::new(vec![
-            TableFieldSchema::integer("hash"),
+            TableFieldSchema::integer("id"),
             TableFieldSchema::string("key"),
             TableFieldSchema::integer("slot"),
             TableFieldSchema::integer("lamports"),

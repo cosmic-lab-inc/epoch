@@ -1,6 +1,5 @@
-use crate::errors::EpochError;
-use serde::{Deserialize, Deserializer};
-use std::{path::PathBuf, str::FromStr};
+use serde::Deserialize;
+use std::path::PathBuf;
 
 #[derive(Debug, Deserialize)]
 pub struct EpochConfig {

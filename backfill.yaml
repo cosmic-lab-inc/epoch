@@ -265,8 +265,8 @@ slots:
 #  - 218145814 # date: 2023-09-17 17:00:00, closest block time: 2023-09-17T17:19:06, time diff: 19.10 minutes
 #  - 218341665 # date: 2023-09-18 17:00:00, closest block time: 2023-09-18T17:05:23, time diff: 5.38 minutes
 #  - 218540518 # date: 2023-09-19 17:00:00, closest block time: 2023-09-19T17:17:37, time diff: 17.62 minutes
-#  - 219531346 # date: 2023-09-24 17:00:00, closest block time: 2023-09-24T16:57:24, time diff: 2.60 minutes
-  - 219729755 # date: 2023-09-25 17:00:00, closest block time: 2023-09-25T16:45:47, time diff: 14.22 minutes
+  - 219531346 # date: 2023-09-24 17:00:00, closest block time: 2023-09-24T16:57:24, time diff: 2.60 minutes
+#  - 219729755 # date: 2023-09-25 17:00:00, closest block time: 2023-09-25T16:45:47, time diff: 14.22 minutes
 
 gcs_bucket: mainnet-beta-ledger-us-ny5
 

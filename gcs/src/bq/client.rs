@@ -1,5 +1,4 @@
-use crate::bq::account::BqAccountTrait;
-use crate::bq::{BqAccount, Paginate};
+use crate::bq::*;
 use crate::errors::GcsError;
 use common::ArchiveAccount;
 use gcp_bigquery_client::error::BQError;
@@ -9,12 +8,13 @@ use gcp_bigquery_client::model::table::Table;
 use gcp_bigquery_client::model::table_data_insert_all_request::TableDataInsertAllRequest;
 use gcp_bigquery_client::model::table_data_insert_all_request_rows::TableDataInsertAllRequestRows;
 use gcp_bigquery_client::model::table_data_insert_all_response::TableDataInsertAllResponse;
+use gcp_bigquery_client::model::table_row::TableRow;
 use gcp_bigquery_client::Client;
 use log::{debug, error, info, warn};
 use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelRefIterator;
 use std::path::Path;
-use tokio_stream::StreamExt;
+use tokio_stream::{Stream, StreamExt};
 
 const BQ_PROJECT_ID: &str = "epoch-417015";
 const BQ_DATASET_ID: &str = "epoch";
@@ -96,7 +96,7 @@ impl BigQueryClient {
             .par_iter()
             .map(|account| {
                 Result::<_, anyhow::Error>::Ok(TableDataInsertAllRequestRows {
-                    insert_id: Some(account.hash.to_string()),
+                    insert_id: Some(account.id.to_string()),
                     json: serde_json::to_value(account)?,
                 })
             })
@@ -126,24 +126,16 @@ impl BigQueryClient {
         }
     }
 
-    pub async fn accounts(&self, query: &Paginate) -> anyhow::Result<Vec<ArchiveAccount>> {
-        let result_set = self.client.job().query_all(
-            BQ_PROJECT_ID,
-            JobConfigurationQuery {
-                query: format!(
-                    "SELECT * FROM {} LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.limit, query.offset
-                ),
-                query_parameters: None,
-                use_legacy_sql: Some(false),
-                ..Default::default()
-            },
-            None,
-        );
-        tokio::pin!(result_set);
+    //
+    // ================================== READ QUERIES ================================== //
+    //
 
+    /// Helper function to collect a streamed response from BigQuery
+    async fn read_stream(
+        mut stream: impl Stream<Item = Result<Vec<TableRow>, BQError>> + Sized + Unpin,
+    ) -> anyhow::Result<Vec<ArchiveAccount>> {
         let mut res = Vec::new();
-        while let Some(page) = result_set.next().await {
+        while let Some(page) = stream.next().await {
             match page {
                 Ok(rows) => {
                     let mut accts: Vec<ArchiveAccount> = rows
@@ -162,5 +154,188 @@ impl BigQueryClient {
             }
         }
         Ok(res)
+    }
+
+    pub async fn account_id(&self, query: &QueryAccountId) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let res = self.client.job().query_all(
+            BQ_PROJECT_ID,
+            JobConfigurationQuery {
+                query: format!(
+                    "SELECT * FROM {} WHERE id = {} LIMIT {} OFFSET {}",
+                    &self.accounts_table, query.id, query.limit, query.offset
+                ),
+                query_parameters: None,
+                use_legacy_sql: Some(false),
+                ..Default::default()
+            },
+            None,
+        );
+        tokio::pin!(res);
+        Self::read_stream(res).await
+    }
+
+    pub async fn accounts(&self, query: &Paginate) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let res = self.client.job().query_all(
+            BQ_PROJECT_ID,
+            JobConfigurationQuery {
+                query: format!(
+                    "SELECT * FROM {} LIMIT {} OFFSET {}",
+                    &self.accounts_table, query.limit, query.offset
+                ),
+                query_parameters: None,
+                use_legacy_sql: Some(false),
+                ..Default::default()
+            },
+            None,
+        );
+        tokio::pin!(res);
+        Self::read_stream(res).await
+    }
+
+    pub async fn accounts_key(
+        &self,
+        query: &QueryAccountsKey,
+    ) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let res = self.client.job().query_all(
+            BQ_PROJECT_ID,
+            JobConfigurationQuery {
+                query: format!(
+                    "SELECT * FROM {} WHERE key = \"{}\" LIMIT {} OFFSET {}",
+                    &self.accounts_table, query.key, query.limit, query.offset
+                ),
+                query_parameters: None,
+                use_legacy_sql: Some(false),
+                ..Default::default()
+            },
+            None,
+        );
+        tokio::pin!(res);
+        Self::read_stream(res).await
+    }
+
+    pub async fn accounts_owner(
+        &self,
+        query: &QueryAccountsOwner,
+    ) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let res = self.client.job().query_all(
+            BQ_PROJECT_ID,
+            JobConfigurationQuery {
+                query: format!(
+                    "SELECT * FROM {} WHERE owner = \"{}\" LIMIT {} OFFSET {}",
+                    &self.accounts_table, query.owner, query.limit, query.offset
+                ),
+                query_parameters: None,
+                use_legacy_sql: Some(false),
+                ..Default::default()
+            },
+            None,
+        );
+        tokio::pin!(res);
+        Self::read_stream(res).await
+    }
+
+    pub async fn accounts_slot(
+        &self,
+        query: &QueryAccountsSlot,
+    ) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let res = self.client.job().query_all(
+            BQ_PROJECT_ID,
+            JobConfigurationQuery {
+                query: format!(
+                    "SELECT * FROM {} WHERE slot = {} LIMIT {} OFFSET {}",
+                    &self.accounts_table, query.slot, query.limit, query.offset
+                ),
+                query_parameters: None,
+                use_legacy_sql: Some(false),
+                ..Default::default()
+            },
+            None,
+        );
+        tokio::pin!(res);
+        Self::read_stream(res).await
+    }
+
+    pub async fn accounts_key_owner(
+        &self,
+        query: &QueryAccountsKeyOwner,
+    ) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let res = self.client.job().query_all(
+            BQ_PROJECT_ID,
+            JobConfigurationQuery {
+                query: format!(
+                    "SELECT * FROM {} WHERE key = \"{}\" AND owner = \"{}\" LIMIT {} OFFSET {}",
+                    &self.accounts_table, query.key, query.owner, query.limit, query.offset
+                ),
+                query_parameters: None,
+                use_legacy_sql: Some(false),
+                ..Default::default()
+            },
+            None,
+        );
+        tokio::pin!(res);
+        Self::read_stream(res).await
+    }
+
+    pub async fn accounts_key_slot(
+        &self,
+        query: &QueryAccountsKeySlot,
+    ) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let res = self.client.job().query_all(
+            BQ_PROJECT_ID,
+            JobConfigurationQuery {
+                query: format!(
+                    "SELECT * FROM {} WHERE key = \"{}\" AND slot = {} LIMIT {} OFFSET {}",
+                    &self.accounts_table, query.key, query.slot, query.limit, query.offset
+                ),
+                query_parameters: None,
+                use_legacy_sql: Some(false),
+                ..Default::default()
+            },
+            None,
+        );
+        tokio::pin!(res);
+        Self::read_stream(res).await
+    }
+
+    pub async fn accounts_owner_slot(
+        &self,
+        query: &QueryAccountsOwnerSlot,
+    ) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let res = self.client.job().query_all(
+            BQ_PROJECT_ID,
+            JobConfigurationQuery {
+                query: format!(
+                    "SELECT * FROM {} WHERE owner = \"{}\" AND slot = {} LIMIT {} OFFSET {}",
+                    &self.accounts_table, query.owner, query.slot, query.limit, query.offset
+                ),
+                query_parameters: None,
+                use_legacy_sql: Some(false),
+                ..Default::default()
+            },
+            None,
+        );
+        tokio::pin!(res);
+        Self::read_stream(res).await
+    }
+
+    pub async fn accounts_key_owner_slot(
+        &self,
+        query: &QueryAccountsKeyOwnerSlot,
+    ) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let res = self.client.job().query_all(
+            BQ_PROJECT_ID,
+            JobConfigurationQuery {
+                query: format!(
+                    "SELECT * FROM {} WHERE key = \"{}\" AND owner = \"{}\" AND slot = {} LIMIT {} OFFSET {}",
+                    &self.accounts_table, query.key, query.owner, query.slot, query.limit, query.offset
+                ),
+                query_parameters: None,
+                use_legacy_sql: Some(false),
+                ..Default::default()
+            },
+            None,
+        );
+        tokio::pin!(res);
+        Self::read_stream(res).await
     }
 }

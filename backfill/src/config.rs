@@ -1,4 +1,3 @@
-use crate::BackfillError;
 use serde::{Deserialize, Deserializer};
 use solana_sdk::pubkey::Pubkey;
 use std::{path::PathBuf, str::FromStr};

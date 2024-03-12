@@ -5,7 +5,6 @@ members = [
     "backfill",
     "epoch",
     "gcs",
-    "postgres",
     "common"
 ]
 

@@ -1,1 +1,0 @@
-SELECT * FROM accounts WHERE key = $1 AND slot = $2 LIMIT $3 OFFSET $4

@@ -19,7 +19,6 @@ crossbeam-channel = { workspace = true }
 dotenv = { workspace = true }
 gcs = { path = "../gcs" }
 log = { workspace = true }
-postgres-client = { path = "../postgres" }
 reqwest = { workspace = true }
 serde = { workspace = true }
 serde_yaml = { workspace = true }

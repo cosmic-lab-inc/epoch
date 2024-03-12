@@ -11,4 +11,3 @@ snapshots
 *.zst
 *.csv
 *.json
-epoch_sa_key.json

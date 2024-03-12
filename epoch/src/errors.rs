@@ -9,12 +9,15 @@ pub enum EpochError {
     #[error("SerdeYaml: {0}")]
     SerdeYaml(#[from] serde_yaml::Error),
 
+    #[allow(unused)]
     #[error("Init logger error")]
     InitLogger,
 
+    #[allow(unused)]
     #[error("Internal Server Error")]
     InternalServerError(String),
 
+    #[allow(unused)]
     #[error("Bad request: {0}")]
     BadRequest(String),
 
