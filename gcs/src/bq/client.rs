@@ -156,13 +156,16 @@ impl BigQueryClient {
         Ok(res)
     }
 
-    pub async fn account_id(&self, query: &QueryAccountId) -> anyhow::Result<Vec<ArchiveAccount>> {
+    pub async fn account_id(
+        &self,
+        query: &QueryAccountId,
+    ) -> anyhow::Result<Option<ArchiveAccount>> {
         let res = self.client.job().query_all(
             BQ_PROJECT_ID,
             JobConfigurationQuery {
                 query: format!(
-                    "SELECT * FROM {} WHERE id = {} LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.id, query.limit, query.offset
+                    "SELECT * FROM {} WHERE id = {} LIMIT 1",
+                    &self.accounts_table, query.id
                 ),
                 query_parameters: None,
                 use_legacy_sql: Some(false),
@@ -171,7 +174,8 @@ impl BigQueryClient {
             None,
         );
         tokio::pin!(res);
-        Self::read_stream(res).await
+        let vec = Self::read_stream(res).await?;
+        Ok(vec.first().cloned())
     }
 
     pub async fn accounts(&self, query: &Paginate) -> anyhow::Result<Vec<ArchiveAccount>> {

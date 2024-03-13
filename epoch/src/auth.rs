@@ -16,7 +16,7 @@ pub async fn admin_validator(
     if credentials.token() != admin_bearer_token {
         info!("Token validation failed");
         let config = req.app_data::<Config>().cloned().unwrap_or_default();
-        return Err((AuthenticationError::from(config).into(), req));
+        Err((AuthenticationError::from(config).into(), req))
     } else {
         Ok(req)
     }

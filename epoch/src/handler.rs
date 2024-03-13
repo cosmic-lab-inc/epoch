@@ -27,16 +27,13 @@ impl EpochHandler {
         Ok(body)
     }
 
-    pub async fn account_id(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {
+    pub async fn account_id(&self, payload: Payload) -> EpochResult<Option<EpochAccount>> {
         let body = self.checked_payload(payload).await?;
         let query = serde_json::from_slice::<QueryAccountId>(&body)?;
-        Ok(self
-            .client
-            .account_id(&query)
-            .await?
-            .into_iter()
-            .filter_map(|a| EpochAccount::try_from(a).ok())
-            .collect::<Vec<EpochAccount>>())
+        Ok(match self.client.account_id(&query).await? {
+            None => None,
+            Some(acct) => EpochAccount::try_from(acct).ok(),
+        })
     }
 
     pub async fn accounts(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {

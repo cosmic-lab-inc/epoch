@@ -1,6 +1,6 @@
-use crate::errors::GcsError;
 // use base64::{engine::general_purpose, Engine as _};
 use gcp_bigquery_client::model::table_cell::TableCell;
+use crate::errors::GcsError;
 
 pub fn i64_column(columns: &[TableCell], index: usize) -> anyhow::Result<i64> {
     let value = columns
