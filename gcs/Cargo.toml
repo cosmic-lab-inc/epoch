@@ -12,6 +12,7 @@ keywords.workspace = true
 archive_stream = { path = "../archive_stream" }
 anyhow = { workspace = true }
 base64 = { workspace = true }
+chrono = { workspace = true }
 cloud-storage = { workspace = true }
 common = { path = "../common" }
 futures-util = { workspace = true }

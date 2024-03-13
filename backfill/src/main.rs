@@ -34,20 +34,19 @@ fn main() -> anyhow::Result<()> {
 
     let backfill_config = BackfillConfig::read_config(&args.config_file_path)?;
 
-    let client = rt.block_on(async move {
+    let client = Arc::new(rt.block_on(async move {
         let client = BigQueryClient::new(Path::new(&backfill_config.gcs_sa_key)).await?;
         Result::<_, anyhow::Error>::Ok(client)
-    })?;
+    })?);
 
     let bucket = backfill_config.gcs_bucket;
     let metas: Vec<SnapshotMeta> = rt.block_on(async move {
-        info!("Fetching snapshots from GCS, this usually takes 60-90s");
         let metas = match &backfill_config.gcs_local_file {
             Some(path) => match Path::new(path).exists() {
-                false => get_snapshot_metas(&bucket).await,
-                true => get_snapshot_metas_from_local(path).await,
+                false => get_snapshot_metas(GcsObjectsSource::Url(bucket)).await,
+                true => get_snapshot_metas(GcsObjectsSource::Path(path.clone())).await,
             },
-            None => get_snapshot_metas(&bucket).await,
+            None => get_snapshot_metas(GcsObjectsSource::Url(bucket)).await,
         }?;
         Result::<_, anyhow::Error>::Ok(metas)
     })?;
@@ -57,26 +56,20 @@ fn main() -> anyhow::Result<()> {
         metas.last().unwrap().snapshot.slot
     );
 
-    let earliest_snapshot = *backfill_config.slots.iter().min().unwrap();
-    // slice metas after earliest snapshot
+    // slice SnapshotMetas to range config wants to backfill
+    let start = backfill_config.backfill_start_date;
+    let end = backfill_config.backfill_end_date;
     let metas: Vec<_> = metas
         .into_iter()
-        .filter(|m| m.snapshot.slot >= earliest_snapshot)
+        .filter(|m| m.snapshot.time_created >= start && m.snapshot.time_created <= end)
         .collect();
-
-    let first = metas.first().unwrap();
-    let last = metas.last().unwrap();
     info!(
-        "desired snapshot range: {} - {}",
-        first.snapshot.slot, last.snapshot.slot
+        "Snapshot date range to backfill: {} - {}",
+        metas.first().unwrap().datetime(),
+        metas.last().unwrap().datetime()
     );
 
-    // get accounts from the earliest snapshot
-    let snapshot_meta = metas.first().unwrap().clone();
-    let source = snapshot_meta.snapshot.url;
-
     let (tx, rx) = crossbeam_channel::unbounded::<ArchiveAccount>();
-
     let programs = Arc::new(backfill_config.programs);
     rt.spawn(async move {
         let programs = programs.clone();
@@ -97,7 +90,7 @@ fn main() -> anyhow::Result<()> {
                 if buffer.len() == BUFFER_SIZE {
                     match client.upsert_accounts(std::mem::take(&mut buffer)).await {
                         Ok(_row) => {
-                            info!("Upserted {} accounts", BUFFER_SIZE);
+                            debug!("Upserted {} accounts", BUFFER_SIZE);
                         }
                         Err(e) => {
                             error!("{:?}", e);
@@ -110,5 +103,23 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
-    stream_archived_accounts(source, tx)
+    // backfill from the most recent date to the oldest
+    let sender = Arc::new(tx);
+    for meta in metas.into_iter().rev() {
+        let source = meta.snapshot.url.clone();
+        info!("Backfilling snapshot: {:#?}", &meta);
+        match stream_archived_accounts(source, sender.clone()) {
+            Ok(_) => {
+                info!(
+                    "Done with snapshot on {} for slot {}",
+                    &meta.datetime(),
+                    &meta.snapshot.slot
+                );
+            }
+            Err(e) => {
+                error!("Error backfilling snapshot: {}", e);
+            }
+        }
+    }
+    Ok(())
 }

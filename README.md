@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://cosmiclab.io">
+  <a href="https://epoch.fm">
     <img alt="Epoch" src="./assets/logo.png" width="250px" style="border-radius: 50%;"/>
   </a>
 </p>
@@ -22,12 +22,13 @@ Epoch provides **complex queries** such as "get all accounts for the Jupiter pro
 than 1000 and an average positive account change over the past 60 days".
 
 Solana RPCs are validators that filled in the role of data servers while the Solana ecosystem grew. 
-Validators are designed to validatee blocks, not to store Terabytes of history and serve complex requests.
+Validators are designed to validate blocks, not to store Terabytes of history and serve complex requests.
 
 Solana created **Geyser** to let the validators push data to infrastructure that is better designed to 
 store and serve it to end users.
 
 This is Epoch. 
+
 
 ## Local Development
 
@@ -35,36 +36,6 @@ Install cargo make to run pre-configured commands in `Makefile.toml`.
 ```shell
 cargo install cargo-make
 ```
-
-Install PostgreSQL to start database and create superuser
-```shell
-# For MacOS
-cargo make install_postgresql_macos && cargo make start_postgresql_macos
-# For Linux
-cargo make install_postgresql_linux && cargo make start_postgresql_linux
-
-# If getting the error: 
-# psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: FATAL
-# run this to debug:
-rm /opt/homebrew/var/postgresql@13/postmaster.pid
-brew services restart postgresql@13
-
-# create supseruser
-createuser -s postgres
-# check that superuser exists
-psql -U postgres -c "SELECT * FROM pg_user;"
-psql -U postgres
-
-# quit psql shell
-\q
-```
-
-Initialize Postgres database and migrate tables
-```shell
-# reset and recreate database, create migrations, copy migrations to proper directory, and load migrations to database
-cargo make init_database
-```
-
 
 ### Start Backfill
 Epoch reads the `backfill.yaml` config file which defines the snapshots to pull from Google Cloud Storage (GCS), the 
@@ -93,7 +64,7 @@ cargo make epoch
 The server defaults to http://localhost:3333 where you should see a welcome message.
 The general API routes are behind `http://localhost:333/api`.
 
-To see all accounts loaded by the backfill (careful is is a massive payload), 
+To see all accounts loaded by the backfill (careful is a massive payload), 
 check out http://localhost:3333/api/accounts.
 
 Request body expects rust type `struct Paginate`. Use Insomnia or Postman to send a POST request to the server.

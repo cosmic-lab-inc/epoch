@@ -1,6 +1,7 @@
 use crate::archive::{append_vec_iter, AppendVecMeta};
 use crate::SnapshotError;
 use common::account::ArchiveAccount;
+use crossbeam_channel::Sender;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelRefIterator;
 use std::sync::Arc;
@@ -14,10 +15,9 @@ use std::sync::Arc;
 pub struct Archiver;
 
 impl Archiver {
-    // todo: par iter if possible
     pub fn extract_accounts(
         append_vec: Arc<AppendVecMeta>,
-        sender: crossbeam_channel::Sender<ArchiveAccount>,
+        sender: Arc<Sender<ArchiveAccount>>,
     ) -> anyhow::Result<()> {
         append_vec_iter(append_vec)
             .par_iter()

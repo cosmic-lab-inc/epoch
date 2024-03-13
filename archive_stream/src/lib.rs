@@ -15,15 +15,16 @@ pub use loader::*;
 pub use utils::*;
 
 use common::ArchiveAccount;
+use crossbeam_channel::Sender;
 use std::sync::Arc;
 
 pub fn stream_archived_accounts(
     source: String,
-    sender: crossbeam_channel::Sender<ArchiveAccount>,
+    sender: Arc<Sender<ArchiveAccount>>,
 ) -> anyhow::Result<()> {
     let mut loader = ArchiveLoader::new(source)?;
 
-    // TODO: parallelize stream
+    // TODO: parallelize stream with rayon ?
     for append_vec in loader.iter() {
         Archiver::extract_accounts(Arc::new(append_vec?), sender.clone())?
     }

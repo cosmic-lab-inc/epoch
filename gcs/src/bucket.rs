@@ -1,16 +1,23 @@
 use crate::download::download_file;
+use chrono::{DateTime, NaiveDate, Utc};
 use futures_util::future::join_all;
 use log::*;
 use regex::{Captures, Regex};
 use reqwest::Url;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
+use std::fmt::Display;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::time::Instant;
 use std::{collections::HashMap, str::FromStr};
 use tokio::spawn;
+
+pub enum GcsObjectsSource {
+    Url(String),
+    Path(String),
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,6 +35,8 @@ pub struct GCSObject {
     pub size: u64,
     /// Media download link.
     pub media_link: String,
+    /// The creation time of the object in RFC 3339 format.
+    pub time_created: DateTime<Utc>,
 }
 
 fn deserialize_number_or_string<'de, D>(deserializer: D) -> Result<u64, D::Error>
@@ -48,14 +57,25 @@ where
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct SnapshotMeta {
     pub snapshot: Snapshot,
     pub epoch: u64,
     pub bounds: Bounds,
 }
+impl SnapshotMeta {
+    pub fn datetime(&self) -> String {
+        self.snapshot
+            .time_created
+            .format("%Y-%m-%d %H:%M:%S")
+            .to_string()
+    }
+    pub fn timestamp(&self) -> i64 {
+        self.snapshot.time_created.timestamp()
+    }
+}
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Snapshot {
     pub name: String,
     pub filename: String,
@@ -63,9 +83,21 @@ pub struct Snapshot {
     pub size: u64,
     pub slot: u64,
     pub hash: String,
+    // #[serde(serialize_with = "Snapshot::serialize_date")]
+    pub time_created: DateTime<Utc>,
 }
+// impl Snapshot {
+//     fn serialize_date<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//      where
+//        S: Serializer,
+//     {
+//         // convert to yyyy-mm-dd-hh-mm-ss
+//         let res = self.time_created.format("%Y-%m-%d %H:%M:%S").to_string();
+//         serializer.serialize_str(&res)
+//     }
+// }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize)]
 pub struct Bounds {
     pub name: String,
     pub url: String,
@@ -118,7 +150,7 @@ pub async fn list_objects(
 }
 
 /// Pass Some("**/snapshot-*") to glob to only get snapshots (accounts db)
-/// Pass None to get all objects, including epoch and bounds txt files
+/// Pass None to get all objects, including epoch and bounds txt files, and hourly snapshots
 pub async fn get_all_objects(
     bucket_name: &str,
     glob: Option<&str>,
@@ -208,23 +240,28 @@ async fn get_epochs_versions(versions_file: &[(&GCSObject, Captures<'_>)]) -> Ve
         .collect()
 }
 
+/// Filters out hourly snapshots
 pub fn get_snapshots(objects: &[GCSObject]) -> Vec<Snapshot> {
     let snapshot_regex = Regex::new(r"snapshot-(\d+)-(\w+)\.tar\.(zst|bz2)").unwrap();
     search_objects_by_filename(objects, &snapshot_regex)
         .into_iter()
-        .map(|(s, captures)| {
-            let slot = captures.get(1).unwrap().as_str().parse().unwrap();
-            let hash = captures.get(2).unwrap().as_str().to_string();
-            let filename = s.name.split('/').last().unwrap().to_string();
-            // let file_type = captures.get(3).unwrap().as_str();
+        .filter_map(|(s, captures)| {
+            if s.name.contains("hourly") {
+                None
+            } else {
+                let slot = captures.get(1).unwrap().as_str().parse().unwrap();
+                let hash = captures.get(2).unwrap().as_str().to_string();
+                let filename = s.name.split('/').last().unwrap().to_string();
 
-            Snapshot {
-                name: s.name.clone(),
-                filename,
-                url: s.media_link.clone(),
-                size: s.size,
-                slot,
-                hash,
+                Some(Snapshot {
+                    name: s.name.clone(),
+                    filename,
+                    url: s.media_link.clone(),
+                    size: s.size,
+                    slot,
+                    hash,
+                    time_created: s.time_created,
+                })
             }
         })
         .collect()
@@ -279,61 +316,80 @@ pub async fn get_ledger_snapshots(objects: &[GCSObject]) -> Vec<LedgerSnapshot> 
 /// 2. Get all epoch bounds.txt files, which defined start and end slots for each epoch
 /// 3. For each snapshot, find the epoch and slot bounds it belongs to
 /// 4. Sort snapshots by slot
-pub async fn get_snapshot_metas(bucket: &str) -> anyhow::Result<Vec<SnapshotMeta>> {
-    // use this line for just snapshots (accounts db) but not epoch and bounds related files.
-    // let r = get_all_objects(bucket, Some("**/snapshot-*")).await?;
-
+pub async fn __remote_snapshot_metas(bucket: &str) -> anyhow::Result<Vec<ObjectResponse>> {
+    info!("Fetching snapshots from GCS, this usually takes 60-90s");
     let pre = Instant::now();
-    let r = get_all_objects(bucket, None).await?;
+    let resp = get_all_objects(bucket, None).await?;
     info!("Fetch all GCS objects in: {}s", pre.elapsed().as_secs());
     // write response to json file
-    let json = serde_json::to_string_pretty(&r)?;
+    let json = serde_json::to_string_pretty(&resp)?;
     std::fs::write("gcs_snapshots.json", json)?;
-
-    let objects: Vec<GCSObject> = r.into_iter().filter_map(|o| o.items).flatten().collect();
-
-    let snapshots = get_snapshots(&objects);
-    let mut metas_map = HashMap::<u64, SnapshotMeta>::new();
-
-    let bounds_file_regex = Regex::new(r"(\d+)/bounds\.txt").unwrap();
-    let epochs_bounds =
-        get_epoch_bounds(&search_objects_by_filename(&objects, &bounds_file_regex)).await;
-
-    for (epoch, bounds) in epochs_bounds {
-        snapshots.iter().for_each(|s| {
-            if s.slot >= bounds.start_slot && s.slot <= bounds.end_slot {
-                metas_map.insert(
-                    s.slot,
-                    SnapshotMeta {
-                        snapshot: s.clone(),
-                        epoch,
-                        bounds: bounds.clone(),
-                    },
-                );
-            }
-        });
-    }
-
-    let mut metas: Vec<SnapshotMeta> = metas_map.into_values().collect();
-    metas.sort_by_key(|s| s.snapshot.slot);
-
-    Ok(metas)
+    Ok(resp)
 }
 
 /// For development, load GCS snapshots from local file path. This avoids the 90 seconds GCS response time.
-pub async fn get_snapshot_metas_from_local(path: &str) -> anyhow::Result<Vec<SnapshotMeta>> {
-    // use this line for just snapshots (accounts db) but not epoch and bounds related files.
-    // let r = get_all_objects(bucket, Some("**/snapshot-*")).await?;
-
+pub async fn __local_snapshot_metas(path: &str) -> anyhow::Result<Vec<ObjectResponse>> {
+    info!("Fetching snapshots from local file path");
     let path = Path::new(path);
     let mut file = File::open(path)?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
     let resp = serde_json::from_slice::<Vec<ObjectResponse>>(&buf)?;
+    Ok(resp)
+}
+
+/// Hourly snapshots on the same day are filtered to the snapshot closest to 17:00:00 UTC
+fn filter_hourly_snapshots(snapshots: Vec<Snapshot>) -> Vec<Snapshot> {
+    let target_hour = 17;
+    let mut grouped: HashMap<NaiveDate, Vec<Snapshot>> = HashMap::new();
+
+    // Group dates by year, month, and day
+    snapshots.into_iter().for_each(|snapshot| {
+        grouped
+            .entry(snapshot.time_created.date_naive())
+            .or_default()
+            .push(snapshot);
+    });
+
+    let mut filtered_dates: Vec<Snapshot> = Vec::new();
+
+    for (_, mut group) in grouped {
+        // Sort by absolute difference from target hour (5 PM)
+        group.sort_by_key(|k| {
+            let time_created = k.time_created.naive_utc();
+            let target_time = k
+                .time_created
+                .date_naive()
+                .and_hms_opt(target_hour, 0, 0)
+                .unwrap();
+            if time_created > target_time {
+                // convert NaiveDateTime to DateTime<Utc>
+                time_created.signed_duration_since(target_time)
+            } else {
+                target_time.signed_duration_since(time_created)
+            }
+        });
+        // Take the first element after sorting, which is the closest to 5 PM
+        if let Some(closest) = group.first() {
+            filtered_dates.push(closest.clone());
+        }
+    }
+
+    filtered_dates
+}
+
+pub async fn get_snapshot_metas(src: GcsObjectsSource) -> anyhow::Result<Vec<SnapshotMeta>> {
+    let resp = match src {
+        GcsObjectsSource::Url(url) => __remote_snapshot_metas(&url).await,
+        GcsObjectsSource::Path(path) => __local_snapshot_metas(&path).await,
+    }?;
 
     let objects: Vec<GCSObject> = resp.into_iter().filter_map(|o| o.items).flatten().collect();
 
-    let snapshots = get_snapshots(&objects);
+    let snapshots_hourly = get_snapshots(&objects);
+    // filter out snapshots on the say day, and take the closest to 5pm UTC
+    let snapshots = filter_hourly_snapshots(snapshots_hourly);
+
     let mut metas_map = HashMap::<u64, SnapshotMeta>::new();
 
     let bounds_file_regex = Regex::new(r"(\d+)/bounds\.txt").unwrap();
@@ -357,6 +413,5 @@ pub async fn get_snapshot_metas_from_local(path: &str) -> anyhow::Result<Vec<Sna
 
     let mut metas: Vec<SnapshotMeta> = metas_map.into_values().collect();
     metas.sort_by_key(|s| s.snapshot.slot);
-
     Ok(metas)
 }

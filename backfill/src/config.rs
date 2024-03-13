@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer};
 use solana_sdk::pubkey::Pubkey;
 use std::{path::PathBuf, str::FromStr};
@@ -9,8 +10,12 @@ pub struct BackfillConfig {
     /// Only parse and store accounts for these programs.
     #[serde(deserialize_with = "BackfillConfig::deserialize_pubkey")]
     pub programs: Vec<Pubkey>,
-    /// Only parse and store historical data for these slots.
-    pub slots: Vec<u64>,
+    /// Earliest date, formatted yyyy-mm-dd, to start backfilling from.
+    #[serde(deserialize_with = "BackfillConfig::deserialize_date")]
+    pub backfill_start_date: DateTime<Utc>,
+    /// Latest date, formatted yyyy-mm-dd, to start backfilling from.
+    #[serde(deserialize_with = "BackfillConfig::deserialize_date")]
+    pub backfill_end_date: DateTime<Utc>,
     /// Google cloud storage bucket to pull snapshots from
     pub gcs_bucket: String,
     /// Optional local file path to gcs [`ObjectResponse`]. Primarily for development to speed up iteration.
@@ -28,6 +33,37 @@ impl BackfillConfig {
         keys.into_iter()
             .map(|pubkey| Pubkey::from_str(&pubkey).map_err(serde::de::Error::custom))
             .collect()
+    }
+
+    fn deserialize_date<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // deserialize yyyy-mm-dd into DateTime<Utc>
+        let date: String = match String::deserialize(deserializer) {
+            Ok(date) => date,
+            Err(e) => {
+                return Err(serde::de::Error::custom(format!(
+                    "Failed to deserialize date: {}",
+                    e
+                )))
+            }
+        };
+        let yyyy = &date.split('-').collect::<Vec<&str>>()[0];
+        let mm = &date.split('-').collect::<Vec<&str>>()[1];
+        let dd = &date.split('-').collect::<Vec<&str>>()[2];
+        let dt_fixed =
+            match DateTime::parse_from_rfc3339(&format!("{}-{}-{}T00:00:00Z", yyyy, mm, dd)) {
+                Ok(dr) => dr,
+                Err(e) => {
+                    return Err(serde::de::Error::custom(format!(
+                        "Failed to parse date: {}",
+                        e
+                    )))
+                }
+            };
+        let dt = DateTime::<Utc>::from(dt_fixed);
+        Ok(dt)
     }
 
     pub fn read_config(path: &PathBuf) -> anyhow::Result<BackfillConfig> {
