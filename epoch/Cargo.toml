@@ -13,7 +13,7 @@ actix-web = "4.5.1"
 actix-web-httpauth = "0.8.1"
 actix-cors = "0.7.0"
 anyhow = { workspace = true }
-archive_stream = { path = "../archive_stream" }
+snapshot = { path = "../snapshot" }
 chrono = { workspace = true }
 clap = { workspace = true }
 common = { path = "../common" }
@@ -28,7 +28,7 @@ solana-sdk = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tungstenite = { version = "0.21.0", features = ["native-tls"] }
-futures = "0.3.30"
+futures = { workspace = true }
 lazy_static = "1.4.0"
 derive_more = "0.99.17"
 serde_json = "1.0.114"

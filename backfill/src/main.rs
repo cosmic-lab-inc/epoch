@@ -2,7 +2,6 @@ mod config;
 mod errors;
 mod logger;
 
-use archive_stream::stream_archived_accounts;
 use clap::Parser;
 use common::ArchiveAccount;
 use config::*;
@@ -10,6 +9,7 @@ use gcs::bq::{BigQueryClient, BqAccount};
 use gcs::bucket::*;
 use log::*;
 use logger::*;
+use snapshot::stream_archived_accounts;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 

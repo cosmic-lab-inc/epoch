@@ -1,16 +1,6 @@
-use serde::Deserializer;
+use common::deserialize_pubkey;
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
-use std::str::FromStr;
-
-// Custom deserialization function for converting a String to a Pubkey
-pub fn deserialize_pubkey<'de, D>(deserializer: D) -> Result<Pubkey, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    Pubkey::from_str(&s).map_err(serde::de::Error::custom)
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Paginate {

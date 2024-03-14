@@ -8,7 +8,7 @@ pub struct BackfillConfig {
     /// Number of threads to ETL (extract, transform, and load) snapshots.
     pub max_workers: usize,
     /// Only parse and store accounts for these programs.
-    #[serde(deserialize_with = "BackfillConfig::deserialize_pubkey")]
+    #[serde(deserialize_with = "BackfillConfig::deserialize_pubkeys")]
     pub programs: Vec<Pubkey>,
     /// Earliest date, formatted yyyy-mm-dd, to start backfilling from.
     #[serde(deserialize_with = "BackfillConfig::deserialize_date")]
@@ -25,7 +25,7 @@ pub struct BackfillConfig {
 }
 
 impl BackfillConfig {
-    fn deserialize_pubkey<'de, D>(deserializer: D) -> Result<Vec<Pubkey>, D::Error>
+    fn deserialize_pubkeys<'de, D>(deserializer: D) -> Result<Vec<Pubkey>, D::Error>
     where
         D: Deserializer<'de>,
     {

@@ -10,7 +10,7 @@ keywords.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-archive_stream = { path = "../archive_stream" }
+snapshot = { path = "../snapshot" }
 chrono = { workspace = true }
 clap = { workspace = true }
 common = { path = "../common" }

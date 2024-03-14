@@ -1,5 +1,5 @@
 [package]
-name = "archive_stream"
+name = "decoder"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,25 +8,25 @@ authors.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 [dependencies]
 anyhow = { workspace = true }
-bincode = { workspace = true }
+base64 = { workspace = true }
 borsh = { workspace = true }
+bytemuck = { workspace = true }
+chrono = { workspace = true }
 common = { path = "../common" }
-crossbeam-channel = { workspace = true }
-itertools = { workspace = true }
+futures = { workspace = true }
+futures-util = { workspace = true }
 log = { workspace = true }
-memmap2 = { workspace = true }
-num_cpus = { workspace = true }
 rayon = { workspace = true }
-reqwest = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
-solana-accounts-db = { workspace = true }
-solana-runtime = { workspace = true }
+simplelog = { workspace = true }
+solana-account-decoder = { workspace = true }
+solana-client = { workspace = true }
 solana-sdk = { workspace = true }
-tar = { workspace = true }
-thiserror = { workspace = true }
+time = { workspace = true }
 tokio = { workspace = true }
-zstd = { workspace = true }

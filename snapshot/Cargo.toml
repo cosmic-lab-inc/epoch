@@ -1,5 +1,5 @@
 [package]
-name = "gcs"
+name = "snapshot"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,21 +9,24 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-snapshot = { path = "../snapshot" }
 anyhow = { workspace = true }
-base64 = { workspace = true }
-chrono = { workspace = true }
-cloud-storage = { workspace = true }
+bincode = { workspace = true }
+borsh = { workspace = true }
 common = { path = "../common" }
-futures-util = { workspace = true }
-gcp-bigquery-client = "0.18.0"
+crossbeam-channel = { workspace = true }
+itertools = { workspace = true }
 log = { workspace = true }
+memmap2 = { workspace = true }
+num_cpus = { workspace = true }
 rayon = { workspace = true }
-regex = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 serde_json = { workspace = true }
+solana-accounts-db = { workspace = true }
+solana-runtime = { workspace = true }
 solana-sdk = { workspace = true }
+tar = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
-tokio-stream = { workspace = true }
+zstd = { workspace = true }
