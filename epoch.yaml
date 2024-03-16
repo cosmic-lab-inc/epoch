@@ -1,1 +1,3 @@
 gcs_sa_key: epoch_sa_key.json
+
+solana_rpc: https://mainnet.helius-rpc.com/?api-key=0b810c4e-acb6-49a3-b2cd-90e671480ca8

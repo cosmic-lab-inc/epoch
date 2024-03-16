@@ -1,6 +1,7 @@
 use crate::bq::*;
 use crate::errors::GcsError;
 use common::ArchiveAccount;
+use decoder::ProgramDecoder;
 use gcp_bigquery_client::error::BQError;
 use gcp_bigquery_client::model::dataset::Dataset;
 use gcp_bigquery_client::model::job_configuration_query::JobConfigurationQuery;
@@ -178,14 +179,39 @@ impl BigQueryClient {
         Ok(vec.first().cloned())
     }
 
-    pub async fn accounts(&self, query: &Paginate) -> anyhow::Result<Vec<ArchiveAccount>> {
+    fn build_accounts_query(&self, params: &QueryAccounts) -> String {
+        let mut query = format!("SELECT * FROM {}", &self.accounts_table);
+        let mut where_added = false;
+
+        if let Some(key) = &params.key {
+            query = format!("{} WHERE key = \"{}\"", &query, key);
+            where_added = true;
+        }
+        if let Some(slot) = &params.slot {
+            let clause = match where_added {
+                false => "WHERE",
+                true => "AND",
+            };
+            query = format!("{} {} slot = {}", &query, clause, slot);
+        }
+        if let Some(owner) = &params.owner {
+            let clause = match where_added {
+                false => "WHERE",
+                true => "AND",
+            };
+            query = format!("{} {} owner = \"{}\"", &query, clause, owner);
+        }
+
+        query = format!("{} LIMIT {} OFFSET {}", &query, params.limit, params.offset);
+        query
+    }
+
+    pub async fn accounts(&self, params: &QueryAccounts) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let query = self.build_accounts_query(params);
         let res = self.client.job().query_all(
             BQ_PROJECT_ID,
             JobConfigurationQuery {
-                query: format!(
-                    "SELECT * FROM {} LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.limit, query.offset
-                ),
+                query,
                 query_parameters: None,
                 use_legacy_sql: Some(false),
                 ..Default::default()
@@ -196,143 +222,47 @@ impl BigQueryClient {
         Self::read_stream(res).await
     }
 
-    pub async fn accounts_key(
-        &self,
-        query: &QueryAccountsKey,
-    ) -> anyhow::Result<Vec<ArchiveAccount>> {
-        let res = self.client.job().query_all(
-            BQ_PROJECT_ID,
-            JobConfigurationQuery {
-                query: format!(
-                    "SELECT * FROM {} WHERE key = \"{}\" LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.key, query.limit, query.offset
-                ),
-                query_parameters: None,
-                use_legacy_sql: Some(false),
-                ..Default::default()
-            },
-            None,
+    fn build_account_type_query(&self, params: &QueryAccountType) -> anyhow::Result<String> {
+        let mut query = format!("SELECT * FROM {}", &self.accounts_table);
+        let mut where_added = false;
+
+        if let Some(key) = &params.key {
+            query = format!("{} WHERE key = \"{}\"", &query, key);
+            where_added = true;
+        }
+        if let Some(slot) = &params.slot {
+            let clause = match where_added {
+                false => "WHERE",
+                true => "AND",
+            };
+            query = format!("{} {} slot = {}", &query, clause, slot);
+        }
+
+        let clause = match where_added {
+            false => "WHERE",
+            true => "AND",
+        };
+        query = format!("{} {} owner = \"{}\"", &query, clause, params.owner);
+
+        let base64_discrim = ProgramDecoder::name_to_base64_discrim(&params.discriminant);
+        query = format!(
+            "{} AND TO_BASE64(SUBSTR(FROM_BASE64(data), 1, 8)) = \"{}\"",
+            &query, base64_discrim
         );
-        tokio::pin!(res);
-        Self::read_stream(res).await
+
+        query = format!("{} LIMIT {} OFFSET {}", &query, params.limit, params.offset);
+        Ok(query)
     }
 
-    pub async fn accounts_owner(
+    pub async fn account_type(
         &self,
-        query: &QueryAccountsOwner,
+        params: &QueryAccountType,
     ) -> anyhow::Result<Vec<ArchiveAccount>> {
+        let query = self.build_account_type_query(params)?;
         let res = self.client.job().query_all(
             BQ_PROJECT_ID,
             JobConfigurationQuery {
-                query: format!(
-                    "SELECT * FROM {} WHERE owner = \"{}\" LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.owner, query.limit, query.offset
-                ),
-                query_parameters: None,
-                use_legacy_sql: Some(false),
-                ..Default::default()
-            },
-            None,
-        );
-        tokio::pin!(res);
-        Self::read_stream(res).await
-    }
-
-    pub async fn accounts_slot(
-        &self,
-        query: &QueryAccountsSlot,
-    ) -> anyhow::Result<Vec<ArchiveAccount>> {
-        let res = self.client.job().query_all(
-            BQ_PROJECT_ID,
-            JobConfigurationQuery {
-                query: format!(
-                    "SELECT * FROM {} WHERE slot = {} LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.slot, query.limit, query.offset
-                ),
-                query_parameters: None,
-                use_legacy_sql: Some(false),
-                ..Default::default()
-            },
-            None,
-        );
-        tokio::pin!(res);
-        Self::read_stream(res).await
-    }
-
-    pub async fn accounts_key_owner(
-        &self,
-        query: &QueryAccountsKeyOwner,
-    ) -> anyhow::Result<Vec<ArchiveAccount>> {
-        let res = self.client.job().query_all(
-            BQ_PROJECT_ID,
-            JobConfigurationQuery {
-                query: format!(
-                    "SELECT * FROM {} WHERE key = \"{}\" AND owner = \"{}\" LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.key, query.owner, query.limit, query.offset
-                ),
-                query_parameters: None,
-                use_legacy_sql: Some(false),
-                ..Default::default()
-            },
-            None,
-        );
-        tokio::pin!(res);
-        Self::read_stream(res).await
-    }
-
-    pub async fn accounts_key_slot(
-        &self,
-        query: &QueryAccountsKeySlot,
-    ) -> anyhow::Result<Vec<ArchiveAccount>> {
-        let res = self.client.job().query_all(
-            BQ_PROJECT_ID,
-            JobConfigurationQuery {
-                query: format!(
-                    "SELECT * FROM {} WHERE key = \"{}\" AND slot = {} LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.key, query.slot, query.limit, query.offset
-                ),
-                query_parameters: None,
-                use_legacy_sql: Some(false),
-                ..Default::default()
-            },
-            None,
-        );
-        tokio::pin!(res);
-        Self::read_stream(res).await
-    }
-
-    pub async fn accounts_owner_slot(
-        &self,
-        query: &QueryAccountsOwnerSlot,
-    ) -> anyhow::Result<Vec<ArchiveAccount>> {
-        let res = self.client.job().query_all(
-            BQ_PROJECT_ID,
-            JobConfigurationQuery {
-                query: format!(
-                    "SELECT * FROM {} WHERE owner = \"{}\" AND slot = {} LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.owner, query.slot, query.limit, query.offset
-                ),
-                query_parameters: None,
-                use_legacy_sql: Some(false),
-                ..Default::default()
-            },
-            None,
-        );
-        tokio::pin!(res);
-        Self::read_stream(res).await
-    }
-
-    pub async fn accounts_key_owner_slot(
-        &self,
-        query: &QueryAccountsKeyOwnerSlot,
-    ) -> anyhow::Result<Vec<ArchiveAccount>> {
-        let res = self.client.job().query_all(
-            BQ_PROJECT_ID,
-            JobConfigurationQuery {
-                query: format!(
-                    "SELECT * FROM {} WHERE key = \"{}\" AND owner = \"{}\" AND slot = {} LIMIT {} OFFSET {}",
-                    &self.accounts_table, query.key, query.owner, query.slot, query.limit, query.offset
-                ),
+                query,
                 query_parameters: None,
                 use_legacy_sql: Some(false),
                 ..Default::default()

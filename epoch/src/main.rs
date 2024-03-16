@@ -1,8 +1,8 @@
 mod account;
 mod auth;
-mod errors;
-// mod handler;
 mod config;
+mod decoded_account;
+mod errors;
 mod handler;
 mod logger;
 mod utils;
@@ -20,8 +20,10 @@ use actix_cors::Cors;
 use actix_web::web::{Data, Payload};
 use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
+use borsh::BorshSerialize;
 use dotenv::dotenv;
 use gcs::bq::BigQueryClient;
+use solana_client::nonblocking::rpc_client::RpcClient;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -48,8 +50,10 @@ async fn main() -> EpochResult<()> {
     let bind_address = format!("0.0.0.0:{}", port);
 
     let epoch_config = EpochConfig::read_config(&args.config_file_path)?;
-    let handler =
-        EpochHandler::new(BigQueryClient::new(Path::new(&epoch_config.gcs_sa_key)).await?);
+    let bq_client = BigQueryClient::new(Path::new(&epoch_config.gcs_sa_key)).await?;
+    let rpc = RpcClient::new(epoch_config.solana_rpc.clone());
+    let handler = tokio::task::spawn_blocking(move || EpochHandler::new(bq_client, rpc)).await??;
+
     let state = Data::new(Arc::new(AppState { handler }));
 
     HttpServer::new(move || {
@@ -67,13 +71,7 @@ async fn main() -> EpochResult<()> {
                 web::scope("/api")
                     .service(account_id)
                     .service(accounts)
-                    .service(accounts_key)
-                    .service(accounts_owner)
-                    .service(accounts_slot)
-                    .service(accounts_key_owner)
-                    .service(accounts_key_slot)
-                    .service(accounts_owner_slot)
-                    .service(accounts_key_owner_slot),
+                    .service(decoded_accounts),
             )
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
             .service(test)
@@ -119,63 +117,20 @@ async fn accounts(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<H
     Ok(HttpResponse::Ok().json(accts))
 }
 
-#[post("/accounts-key")]
-async fn accounts_key(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
-    let accts = state.handler.accounts_key(payload).await?;
-    Ok(HttpResponse::Ok().json(accts))
-}
-
-#[post("/accounts-owner")]
-async fn accounts_owner(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
-    let accts = state.handler.accounts_owner(payload).await?;
-    Ok(HttpResponse::Ok().json(accts))
-}
-
-#[post("/accounts-slot")]
-async fn accounts_slot(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
-    let accts = state.handler.accounts_slot(payload).await?;
-    Ok(HttpResponse::Ok().json(accts))
-}
-
-#[post("/accounts-key-owner")]
-async fn accounts_key_owner(
+#[post("/decoded-accounts")]
+async fn decoded_accounts(
     state: Data<Arc<AppState>>,
     payload: Payload,
 ) -> EpochResult<HttpResponse> {
-    let accts = state.handler.accounts_key_owner(payload).await?;
-    Ok(HttpResponse::Ok().json(accts))
-}
-
-#[post("/accounts-key-slot")]
-async fn accounts_key_slot(
-    state: Data<Arc<AppState>>,
-    payload: Payload,
-) -> EpochResult<HttpResponse> {
-    let accts = state.handler.accounts_key_slot(payload).await?;
-    Ok(HttpResponse::Ok().json(accts))
-}
-
-#[post("/accounts-owner-slot")]
-async fn accounts_owner_slot(
-    state: Data<Arc<AppState>>,
-    payload: Payload,
-) -> EpochResult<HttpResponse> {
-    let accts = state.handler.accounts_owner_slot(payload).await?;
-    Ok(HttpResponse::Ok().json(accts))
-}
-
-#[post("/accounts-key-owner-slot")]
-async fn accounts_key_owner_slot(
-    state: Data<Arc<AppState>>,
-    payload: Payload,
-) -> EpochResult<HttpResponse> {
-    let accts = state.handler.accounts_key_owner_slot(payload).await?;
-    Ok(HttpResponse::Ok().json(accts))
+    let accts = state.handler.decoded_accounts(payload).await?;
+    let mut buf = Vec::new();
+    accts.serialize(&mut buf)?;
+    Ok(HttpResponse::Ok().body(buf))
 }
 
 // ================================== ADMIN ================================== //
 
-#[get("/admin_test")]
+#[get("/admin-test")]
 async fn admin_test(_state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
     Ok(HttpResponse::Ok().json("Ok"))
 }

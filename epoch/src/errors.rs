@@ -36,13 +36,14 @@ pub enum EpochError {
     #[error("Request payload size is too large")]
     Overflow,
 
-    // serde
     #[error("Serde Error: {0}")]
     SerdeError(#[from] serde_json::Error),
 
-    // PayloadError
     #[error("Payload error: {0}")]
     PayloadError(#[from] actix_web::error::PayloadError),
+
+    #[error("Join error: {0}")]
+    JoinError(#[from] tokio::task::JoinError),
 }
 
 impl ResponseError for EpochError {
@@ -58,6 +59,7 @@ impl ResponseError for EpochError {
             Self::Overflow => StatusCode::PAYLOAD_TOO_LARGE,
             Self::SerdeError(_) => StatusCode::BAD_REQUEST,
             Self::PayloadError(_) => StatusCode::BAD_REQUEST,
+            Self::JoinError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 

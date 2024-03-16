@@ -1,0 +1,23 @@
+[package]
+name = "drift-cpi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description.workspace = true
+authors.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[features]
+default = ["cpi"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+
+[dependencies]
+anchor-gen = { path = "../../../anchor-gen/crates/anchor-gen" }
+anchor-lang = ">=0.20.0"
+anyhow = { workspace = true }
+borsh = { workspace = true }
+common = { path = "../../common" }

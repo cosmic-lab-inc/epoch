@@ -13,10 +13,12 @@ actix-web = "4.5.1"
 actix-web-httpauth = "0.8.1"
 actix-cors = "0.7.0"
 anyhow = { workspace = true }
+borsh = { workspace = true }
 snapshot = { path = "../snapshot" }
 chrono = { workspace = true }
 clap = { workspace = true }
 common = { path = "../common" }
+decoder = { path = "../decoder" }
 dotenv = { workspace = true }
 gcs = { path = "../gcs" }
 log = { workspace = true }
@@ -24,6 +26,7 @@ reqwest = { workspace = true }
 serde = { workspace = true }
 serde_yaml = { workspace = true }
 simplelog = { workspace = true }
+solana-client = { workspace = true }
 solana-sdk = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }

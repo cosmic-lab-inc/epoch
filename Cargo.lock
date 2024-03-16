@@ -332,7 +332,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5f619f1d04f53621925ba8a2e633ba5a6081f2ae14758cbb67f38fd823e0a3e"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.29.0",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -344,7 +344,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7f2a3e1df4685f18d12a943a9f2a7456305401af21a07c9fe076ef9ecd6e400"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.29.0",
  "bs58 0.5.0",
  "proc-macro2",
  "quote",
@@ -357,7 +357,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9423945cb55627f0b30903288e78baf6f62c6c8ab28fb344b6b25f1ffee3dca7"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.29.0",
  "quote",
  "syn 1.0.109",
 ]
@@ -368,7 +368,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93ed12720033cc3c3bf3cfa293349c2275cd5ab99936e33dd4bf283aaad3e241"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.29.0",
  "quote",
  "syn 1.0.109",
 ]
@@ -379,7 +379,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eef4dc0371eba2d8c8b54794b0b0eb786a234a559b77593d6f80825b6d2c77a2"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.29.0",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -391,28 +391,9 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b18c4f191331e078d4a6a080954d1576241c29c56638783322a18d308ab27e4f"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.29.0",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "anchor-client"
-version = "0.29.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb48c4a7911038da546dc752655a29fa49f6bd50ebc1edca218bac8da1012acd"
-dependencies = [
- "anchor-lang",
- "anyhow",
- "futures",
- "regex",
- "serde",
- "solana-account-decoder",
- "solana-client",
- "solana-sdk",
- "thiserror",
- "tokio",
- "url",
 ]
 
 [[package]]
@@ -421,7 +402,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5de10d6e9620d3bcea56c56151cad83c5992f50d5960b3a9bebc4a50390ddc3c"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.29.0",
  "quote",
  "syn 1.0.109",
 ]
@@ -432,7 +413,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4e2e5be518ec6053d90a2a7f26843dbee607583c779e6c8395951b9739bdfbe"
 dependencies = [
- "anchor-syn",
+ "anchor-syn 0.29.0",
  "borsh-derive-internal 0.10.3",
  "proc-macro2",
  "quote",
@@ -447,6 +428,44 @@ checksum = "1ecc31d19fa54840e74b7a979d44bcea49d70459de846088a1d71e87ba53c419"
 dependencies = [
  "proc-macro2",
  "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "anchor-gen"
+version = "0.3.1"
+dependencies = [
+ "anchor-generate-cpi-crate",
+ "anchor-generate-cpi-interface",
+]
+
+[[package]]
+name = "anchor-generate-cpi-crate"
+version = "0.3.1"
+dependencies = [
+ "anchor-idl",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "anchor-generate-cpi-interface"
+version = "0.3.1"
+dependencies = [
+ "anchor-idl",
+ "darling 0.14.4",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "anchor-idl"
+version = "0.3.1"
+dependencies = [
+ "anchor-syn 0.24.2",
+ "darling 0.14.4",
+ "heck 0.4.1",
+ "proc-macro2",
+ "quote",
+ "serde_json",
  "syn 1.0.109",
 ]
 
@@ -472,6 +491,25 @@ dependencies = [
  "bytemuck",
  "getrandom 0.2.12",
  "solana-program",
+ "thiserror",
+]
+
+[[package]]
+name = "anchor-syn"
+version = "0.24.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03549dc2eae0b20beba6333b14520e511822a6321cdb1760f841064a69347316"
+dependencies = [
+ "anyhow",
+ "bs58 0.3.1",
+ "heck 0.3.3",
+ "proc-macro2",
+ "proc-macro2-diagnostics",
+ "quote",
+ "serde",
+ "serde_json",
+ "sha2 0.9.9",
+ "syn 1.0.109",
  "thiserror",
 ]
 
@@ -1008,6 +1046,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4114279215a005bc675e386011e594e1d9b800918cea18fcadadcce864a2046b"
 dependencies = [
  "borsh-derive 0.10.3",
+ "bytes",
  "hashbrown 0.13.2",
 ]
 
@@ -1125,6 +1164,12 @@ dependencies = [
  "alloc-no-stdlib",
  "alloc-stdlib",
 ]
+
+[[package]]
+name = "bs58"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "476e9cd489f9e121e02ffa6014a8ef220ecb15c05ed23fc34cca13925dc283fb"
 
 [[package]]
 name = "bs58"
@@ -1403,11 +1448,9 @@ dependencies = [
 name = "common"
 version = "0.1.0"
 dependencies = [
- "anchor-client",
  "anyhow",
  "base64 0.22.0",
- "borsh 1.3.1",
- "bytemuck",
+ "borsh 0.10.3",
  "chrono",
  "itertools",
  "log",
@@ -1611,12 +1654,36 @@ dependencies = [
 
 [[package]]
 name = "darling"
+version = "0.14.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b750cb3417fd1b327431a470f388520309479ab0bf5e323505daf0290cd3850"
+dependencies = [
+ "darling_core 0.14.4",
+ "darling_macro 0.14.4",
+]
+
+[[package]]
+name = "darling"
 version = "0.20.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54e36fcd13ed84ffdfda6f5be89b31287cbb80c439841fe69e04841435464391"
 dependencies = [
- "darling_core",
- "darling_macro",
+ "darling_core 0.20.8",
+ "darling_macro 0.20.8",
+]
+
+[[package]]
+name = "darling_core"
+version = "0.14.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "109c1ca6e6b7f82cc233a97004ea8ed7ca123a9af07a8230878fcfda9b158bf0"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim 0.10.0",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -1635,11 +1702,22 @@ dependencies = [
 
 [[package]]
 name = "darling_macro"
+version = "0.14.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4aab4dbc9f7611d8b55048a3a16d2d010c2c8334e46304b40ac1cc14bf3b48e"
+dependencies = [
+ "darling_core 0.14.4",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "darling_macro"
 version = "0.20.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a668eda54683121533a393014d8692171709ff57a7d61f187b6e782719f8933f"
 dependencies = [
- "darling_core",
+ "darling_core 0.20.8",
  "quote",
  "syn 2.0.52",
 ]
@@ -1670,22 +1748,22 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64 0.22.0",
- "borsh 1.3.1",
- "bytemuck",
+ "borsh 0.10.3",
  "chrono",
  "common",
+ "drift-cpi",
  "futures",
  "futures-util",
+ "lazy_static",
  "log",
  "rayon",
  "serde",
  "serde_bytes",
  "serde_json",
  "simplelog",
- "solana-account-decoder",
+ "sol-chainsaw",
  "solana-client",
  "solana-sdk",
- "time",
  "tokio",
 ]
 
@@ -1846,6 +1924,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1435fa1053d8b2fbbe9be7e97eca7f33d37b28409959813daefc1446a14247f1"
 
 [[package]]
+name = "drift-cpi"
+version = "0.1.0"
+dependencies = [
+ "anchor-gen",
+ "anchor-lang",
+ "anyhow",
+ "borsh 0.10.3",
+ "common",
+]
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1954,9 +2043,11 @@ dependencies = [
  "actix-web",
  "actix-web-httpauth",
  "anyhow",
+ "borsh 0.10.3",
  "chrono",
  "clap 4.2.7",
  "common",
+ "decoder",
  "derive_more",
  "dotenv",
  "futures",
@@ -1969,6 +2060,7 @@ dependencies = [
  "serde_yaml",
  "simplelog",
  "snapshot",
+ "solana-client",
  "solana-sdk",
  "thiserror",
  "tokio",
@@ -2028,6 +2120,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46303f565772937ffe1d394a4fac6f411c6013172fadde9dcdb1e147a086940e"
 dependencies = [
  "crc32fast",
+ "libz-sys",
  "miniz_oxide",
 ]
 
@@ -2197,6 +2290,7 @@ dependencies = [
  "chrono",
  "cloud-storage",
  "common",
+ "decoder",
  "futures-util",
  "gcp-bigquery-client",
  "log",
@@ -2787,6 +2881,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67abfe149395e3aa1c48a2beb32b068e2334402df8181f818d3aee2b304c4f5d"
 dependencies = [
  "libsecp256k1-core",
+]
+
+[[package]]
+name = "libz-sys"
+version = "1.1.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "037731f5d3aaa87a5675e895b63ddff1a87624bc29f77004ea829809654e48f6"
+dependencies = [
+ "cc",
+ "pkg-config",
+ "vcpkg",
 ]
 
 [[package]]
@@ -3586,6 +3691,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "proc-macro2-diagnostics"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bf29726d67464d49fa6224a1d07936a8c08bb3fba727c7493f6cf1616fdaada"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+ "version_check",
+ "yansi",
+]
+
+[[package]]
 name = "qstring"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4174,7 +4292,7 @@ version = "2.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "881b6f881b17d13214e5d494c939ebab463d01264ce1811e9d4ac3a882e7695f"
 dependencies = [
- "darling",
+ "darling 0.20.8",
  "proc-macro2",
  "quote",
  "syn 2.0.52",
@@ -4330,7 +4448,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "borsh 1.3.1",
  "common",
  "crossbeam-channel",
  "itertools",
@@ -4359,6 +4476,23 @@ checksum = "05ffd9c0a93b7543e062e759284fcf5f5e3b098501104bfbdde4d404db792871"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "sol-chainsaw"
+version = "0.0.2"
+dependencies = [
+ "borsh 0.9.3",
+ "flate2",
+ "futures",
+ "serde",
+ "serde_json",
+ "solana-account-decoder",
+ "solana-client",
+ "solana-program",
+ "solana-sdk",
+ "solana_idl",
+ "thiserror",
 ]
 
 [[package]]
@@ -5382,6 +5516,15 @@ dependencies = [
  "subtle",
  "thiserror",
  "zeroize",
+]
+
+[[package]]
+name = "solana_idl"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b99e7fbfdb635483093b72c8f253fce6cc14888a213fb7d91d9192041174481"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -6613,6 +6756,12 @@ dependencies = [
  "linux-raw-sys",
  "rustix",
 ]
+
+[[package]]
+name = "yansi"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09041cd90cf85f7f8b2df60c646f853b7f535ce68f85244eb6731cf89fa498ec"
 
 [[package]]
 name = "yasna"

@@ -1,18 +1,26 @@
 use crate::account::EpochAccount;
+use crate::decoded_account::DecodedEpochAccount;
 use crate::errors::{EpochError, EpochResult};
 use actix_web::web::{BytesMut, Payload};
+use decoder::program_decoder::ProgramDecoder;
 use futures::StreamExt;
 use gcs::bq::*;
+use log::error;
+use solana_client::nonblocking::rpc_client::RpcClient;
 
 const MAX_SIZE: usize = 262_144; // max payload size is 256k
 
 pub struct EpochHandler {
     pub client: BigQueryClient,
+    pub decoder: ProgramDecoder,
 }
 
 impl EpochHandler {
-    pub fn new(client: BigQueryClient) -> Self {
-        Self { client }
+    pub fn new(client: BigQueryClient, rpc: RpcClient) -> anyhow::Result<Self> {
+        Ok(Self {
+            client,
+            decoder: ProgramDecoder::new(rpc)?,
+        })
     }
 
     async fn checked_payload(&self, mut payload: Payload) -> EpochResult<BytesMut> {
@@ -38,7 +46,7 @@ impl EpochHandler {
 
     pub async fn accounts(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {
         let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<Paginate>(&body)?;
+        let query = serde_json::from_slice::<QueryAccounts>(&body)?;
         Ok(self
             .client
             .accounts(&query)
@@ -48,90 +56,35 @@ impl EpochHandler {
             .collect::<Vec<EpochAccount>>())
     }
 
-    pub async fn accounts_key(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountsKey>(&body)?;
-        Ok(self
-            .client
-            .accounts_key(&query)
-            .await?
-            .into_iter()
-            .filter_map(|a| EpochAccount::try_from(a).ok())
-            .collect::<Vec<EpochAccount>>())
-    }
-
-    pub async fn accounts_owner(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountsOwner>(&body)?;
-        Ok(self
-            .client
-            .accounts_owner(&query)
-            .await?
-            .into_iter()
-            .filter_map(|a| EpochAccount::try_from(a).ok())
-            .collect::<Vec<EpochAccount>>())
-    }
-
-    pub async fn accounts_slot(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountsSlot>(&body)?;
-        Ok(self
-            .client
-            .accounts_slot(&query)
-            .await?
-            .into_iter()
-            .filter_map(|a| EpochAccount::try_from(a).ok())
-            .collect::<Vec<EpochAccount>>())
-    }
-
-    pub async fn accounts_key_owner(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountsKeyOwner>(&body)?;
-        Ok(self
-            .client
-            .accounts_key_owner(&query)
-            .await?
-            .into_iter()
-            .filter_map(|a| EpochAccount::try_from(a).ok())
-            .collect::<Vec<EpochAccount>>())
-    }
-
-    pub async fn accounts_key_slot(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountsKeySlot>(&body)?;
-        Ok(self
-            .client
-            .accounts_key_slot(&query)
-            .await?
-            .into_iter()
-            .filter_map(|a| EpochAccount::try_from(a).ok())
-            .collect::<Vec<EpochAccount>>())
-    }
-
-    pub async fn accounts_owner_slot(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountsOwnerSlot>(&body)?;
-        Ok(self
-            .client
-            .accounts_owner_slot(&query)
-            .await?
-            .into_iter()
-            .filter_map(|a| EpochAccount::try_from(a).ok())
-            .collect::<Vec<EpochAccount>>())
-    }
-
-    pub async fn accounts_key_owner_slot(
+    pub async fn decoded_accounts(
         &self,
         payload: Payload,
-    ) -> EpochResult<Vec<EpochAccount>> {
+    ) -> anyhow::Result<Vec<DecodedEpochAccount>> {
         let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountsKeyOwnerSlot>(&body)?;
-        Ok(self
-            .client
-            .accounts_key_owner_slot(&query)
-            .await?
+        let query = serde_json::from_slice::<QueryAccountType>(&body)?;
+        let archive_accts = self.client.account_type(&query).await?;
+
+        let decoded_accts: Vec<DecodedEpochAccount> = archive_accts
             .into_iter()
-            .filter_map(|a| EpochAccount::try_from(a).ok())
-            .collect::<Vec<EpochAccount>>())
+            .flat_map(|a| match EpochAccount::try_from(a) {
+                Err(e) => {
+                    error!("Error converting ArchiveAccount to EpochAccount: {:?}", e);
+                    Err(EpochError::Anyhow(e))?
+                }
+                Ok(account) => {
+                    let name = match self
+                        .decoder
+                        .discrim_to_name(&query.owner, &account.data[..8].try_into()?)
+                    {
+                        Some(discrim) => Result::<_, anyhow::Error>::Ok(discrim),
+                        None => Err(EpochError::Anyhow(anyhow::anyhow!("Invalid discriminant")))?,
+                    }?;
+                    let decoded =
+                        ProgramDecoder::decode_account(&query.owner, &name, &account.data)?;
+                    Result::<_, anyhow::Error>::Ok(DecodedEpochAccount { account, decoded })
+                }
+            })
+            .collect();
+        Ok(decoded_accts)
     }
 }

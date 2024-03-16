@@ -15,6 +15,7 @@ base64 = { workspace = true }
 chrono = { workspace = true }
 cloud-storage = { workspace = true }
 common = { path = "../common" }
+decoder = { path = "../decoder" }
 futures-util = { workspace = true }
 gcp-bigquery-client = "0.18.0"
 log = { workspace = true }

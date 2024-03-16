@@ -1,7 +1,8 @@
+use borsh::{BorshDeserialize, BorshSerialize};
 use common::ArchiveAccount;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, BorshDeserialize, BorshSerialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EpochAccount {
     /// hash that is unique to the key at this slot

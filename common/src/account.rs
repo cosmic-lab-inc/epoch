@@ -1,4 +1,3 @@
-use crate::{deserialize_pubkey, serialize_pubkey};
 use crate::{AccountHasher, HashTrait};
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
@@ -6,20 +5,12 @@ use solana_sdk::pubkey::Pubkey;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveAccount {
-    #[serde(
-        deserialize_with = "deserialize_pubkey",
-        serialize_with = "serialize_pubkey"
-    )]
     pub key: Pubkey,
     /// historical snapshot slot at which this state existed
     pub slot: u64,
     /// lamports in the account
     pub lamports: u64,
     /// the program that owns this account. If executable, the program that loads this account.
-    #[serde(
-        deserialize_with = "deserialize_pubkey",
-        serialize_with = "serialize_pubkey"
-    )]
     pub owner: Pubkey,
     /// this account's data contains a loaded program (and is now read-only)
     pub executable: bool,
