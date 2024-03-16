@@ -7,25 +7,28 @@ mod handler;
 mod logger;
 mod utils;
 
+use crate::{config::EpochConfig, errors::EpochResult};
+use actix_cors::Cors;
+use actix_web::{
+    get, post, web,
+    web::{Data, Payload},
+    App, HttpResponse, HttpServer,
+};
+use actix_web_httpauth::middleware::HttpAuthentication;
 use auth::*;
+use borsh::BorshSerialize;
 use clap::Parser;
+use decoder::Decoder;
+use dotenv::dotenv;
 use errors::EpochError;
+use gcs::bq::BigQueryClient;
 use handler::EpochHandler;
 use log::*;
 use logger::*;
-
-use crate::config::EpochConfig;
-use crate::errors::EpochResult;
-use actix_cors::Cors;
-use actix_web::web::{Data, Payload};
-use actix_web::{get, post, web, App, HttpResponse, HttpServer};
-use actix_web_httpauth::middleware::HttpAuthentication;
-use borsh::BorshSerialize;
-use dotenv::dotenv;
-use gcs::bq::BigQueryClient;
-use solana_client::nonblocking::rpc_client::RpcClient;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 struct AppState {
     handler: EpochHandler,
@@ -51,8 +54,7 @@ async fn main() -> EpochResult<()> {
 
     let epoch_config = EpochConfig::read_config(&args.config_file_path)?;
     let bq_client = BigQueryClient::new(Path::new(&epoch_config.gcs_sa_key)).await?;
-    let rpc = RpcClient::new(epoch_config.solana_rpc.clone());
-    let handler = tokio::task::spawn_blocking(move || EpochHandler::new(bq_client, rpc)).await??;
+    let handler = tokio::task::spawn_blocking(move || EpochHandler::new(bq_client)).await??;
 
     let state = Data::new(Arc::new(AppState { handler }));
 
@@ -71,7 +73,8 @@ async fn main() -> EpochResult<()> {
                 web::scope("/api")
                     .service(account_id)
                     .service(accounts)
-                    .service(decoded_accounts),
+                    .service(decoded_accounts)
+                    .service(json_decoded_accounts),
             )
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
             .service(test)
@@ -113,7 +116,13 @@ async fn account_id(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult
 
 #[post("/accounts")]
 async fn accounts(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
-    let accts = state.handler.accounts(payload).await?;
+    let accts = match state.handler.accounts(payload).await {
+        Ok(accts) => accts,
+        Err(e) => {
+            error!("Error fetching accounts: {:?}", e);
+            return Ok(HttpResponse::InternalServerError().json(e.to_string()));
+        }
+    };
     Ok(HttpResponse::Ok().json(accts))
 }
 
@@ -122,10 +131,46 @@ async fn decoded_accounts(
     state: Data<Arc<AppState>>,
     payload: Payload,
 ) -> EpochResult<HttpResponse> {
-    let accts = state.handler.decoded_accounts(payload).await?;
+    let accts = match state.handler.borsh_decoded_accounts(payload).await {
+        Ok(accts) => accts,
+        Err(e) => {
+            error!("Error fetching decoded accounts: {:?}", e);
+            return Ok(HttpResponse::InternalServerError().json(e.to_string()));
+        }
+    };
+    // TODO: remove after debugging
+    for acct in accts.iter() {
+        match &acct.decoded {
+            Decoder::Drift(acc) => match acc {
+                decoder::drift_cpi::AccountType::User(user) => {
+                    info!(
+                        "decoded user pnl: {:?}",
+                        user.settled_perp_pnl as f64 / decoder::drift::QUOTE_PRECISION as f64
+                    );
+                }
+                decoder::drift_cpi::AccountType::PerpMarket(market) => {
+                    info!("decoded perp market: {:?}", market.pubkey.to_string());
+                }
+                decoder::drift_cpi::AccountType::SpotMarket(market) => {
+                    info!("decoded spot market: {:?}", market.pubkey.to_string());
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+    }
     let mut buf = Vec::new();
     accts.serialize(&mut buf)?;
     Ok(HttpResponse::Ok().body(buf))
+}
+
+#[post("/json-decoded-accounts")]
+async fn json_decoded_accounts(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.json_decoded_accounts(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
 }
 
 // ================================== ADMIN ================================== //

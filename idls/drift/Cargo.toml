@@ -19,5 +19,14 @@ cpi = ["no-entrypoint"]
 anchor-gen = { path = "../../../anchor-gen/crates/anchor-gen" }
 anchor-lang = ">=0.20.0"
 anyhow = { workspace = true }
+base64 = { workspace = true }
 borsh = { workspace = true }
 common = { path = "../../common" }
+lazy_static = { workspace = true }
+log = { workspace = true }
+once_cell = { workspace = true }
+solana-sdk = { workspace = true }
+sol-chainsaw = { path = "../../../sol-chainsaw", features = ["json", "network"] }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+serde_json = { workspace = true}

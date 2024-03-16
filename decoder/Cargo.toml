@@ -19,8 +19,9 @@ common = { path = "../common" }
 drift-cpi = { path = "../idls/drift" }
 futures = { workspace = true }
 futures-util = { workspace = true }
-lazy_static = "1.4.0"
 log = { workspace = true }
+lazy_static = { workspace = true }
+once_cell = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

@@ -1448,6 +1448,7 @@ dependencies = [
 name = "common"
 version = "0.1.0"
 dependencies = [
+ "anchor-lang",
  "anyhow",
  "base64 0.22.0",
  "borsh 0.10.3",
@@ -1458,6 +1459,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "simplelog",
+ "sol-chainsaw",
  "solana-client",
  "solana-sdk",
  "time",
@@ -1756,6 +1758,7 @@ dependencies = [
  "futures-util",
  "lazy_static",
  "log",
+ "once_cell",
  "rayon",
  "serde",
  "serde_bytes",
@@ -1930,8 +1933,17 @@ dependencies = [
  "anchor-gen",
  "anchor-lang",
  "anyhow",
+ "base64 0.22.0",
  "borsh 0.10.3",
  "common",
+ "lazy_static",
+ "log",
+ "once_cell",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "sol-chainsaw",
+ "solana-sdk",
 ]
 
 [[package]]

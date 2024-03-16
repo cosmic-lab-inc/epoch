@@ -1,28 +1,24 @@
 use base64::{engine::general_purpose, Engine as _};
 use borsh::{BorshDeserialize, BorshSerialize};
 use common::DecodeProgramAccount;
-use drift_cpi::DriftAccountType;
-use lazy_static::lazy_static;
+// reexport drift_cpi
+pub use drift_cpi;
 use log::*;
+use once_cell::sync::Lazy;
 use serde_json::Value;
-use sol_chainsaw::network::IdlClient;
 use sol_chainsaw::{ChainsawDeserializer, IdlProvider};
-use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::hash::hash;
-use solana_sdk::pubkey::Pubkey;
+use solana_sdk::{hash::hash, pubkey::Pubkey};
 use std::collections::HashMap;
-use std::str::FromStr;
 
-lazy_static! {
-    /// Master list of supported programs that can provide decoded accounts based on an Anchor IDL.
-    pub static ref PROGRAMS: Vec<Pubkey> = vec![Pubkey::from_str(drift_cpi::PROGRAM_ID).unwrap()];
-}
+/// Master list of supported programs that can provide decoded accounts based on an Anchor IDL.
+pub static PROGRAMS: Lazy<Vec<(String, Pubkey)>> =
+    Lazy::new(|| vec![(drift_cpi::PROGRAM_NAME.to_string(), *drift_cpi::PROGRAM_ID)]);
 
 /// Registry of program account decoders that match a discriminant,
 /// such as "User", to a specific account type.
 #[derive(BorshDeserialize, BorshSerialize)]
 pub enum Decoder {
-    Drift(DriftAccountType),
+    Drift(drift_cpi::AccountType),
 }
 
 pub struct ProgramDecoder {
@@ -31,49 +27,63 @@ pub struct ProgramDecoder {
 }
 
 impl ProgramDecoder {
-    pub fn new(rpc: RpcClient) -> anyhow::Result<Self> {
-        info!("Initializing ProgramDecoder");
-        let idl_client = IdlClient::for_anchor_on_rpc(rpc.url());
+    // TODO: get rid of chainsaw, all we need is the account discrim -> name lookup, which we can replicate.
+    pub fn new() -> anyhow::Result<Self> {
         let mut chainsaw = ChainsawDeserializer::new(&*Box::leak(Box::default()));
-
         let mut idls = HashMap::new();
-        for program in PROGRAMS.iter() {
-            info!("fetching idl for program: {}", program.to_string());
-            let program_idl = match idl_client.fetch_idl(*program) {
-                Ok(idl) => Ok(idl),
-                Err(err) => Err(anyhow::anyhow!(
-                    "Error fetching idl for program {}: {}",
-                    program.to_string(),
-                    err
-                )),
-            }?;
-            info!("idl fetched");
-            let idl = program_idl.json;
+
+        for (name, program) in PROGRAMS.iter() {
+            info!(
+                "reading IDL for \"{}\" program with id: {}",
+                name,
+                program.to_string()
+            );
+            let idl_path = &drift_cpi::IDL_PATH.to_string();
+            let idl = std::fs::read_to_string(idl_path)?;
             chainsaw.add_idl_json(program.to_string(), &idl, IdlProvider::Anchor)?;
-            info!("added idl");
             idls.insert(*program, idl);
         }
 
         Ok(Self { chainsaw, idls })
     }
 
-    pub fn decode_account(
+    pub fn borsh_decode_account(
+        &self,
         program_id: &Pubkey,
         account_name: &str,
         data: &[u8],
     ) -> anyhow::Result<Decoder> {
-        Ok(match program_id.to_string().as_str() {
-            drift_cpi::PROGRAM_ID => {
-                let discrim = Self::name_to_base64_discrim(account_name);
-                Decoder::Drift(DriftAccountType::decode_account(&discrim, data)?)
+        match *program_id {
+            _ if *program_id == *drift_cpi::PROGRAM_ID => Ok(Decoder::Drift(
+                drift_cpi::AccountType::borsh_decode_account(account_name, data)?,
+            )),
+            _ => Err(anyhow::anyhow!(
+                "Program {} not supported",
+                program_id.to_string()
+            )),
+        }
+    }
+
+    pub fn json_decode_account(
+        &self,
+        program_id: &Pubkey,
+        account_name: &str,
+        data: &mut &[u8],
+    ) -> anyhow::Result<Value> {
+        match *program_id {
+            _ if *program_id == *drift_cpi::PROGRAM_ID => {
+                drift_cpi::AccountType::json_decode_account(
+                    &self.chainsaw,
+                    program_id,
+                    account_name,
+                    data,
+                )
             }
-            _ => {
-                return Err(anyhow::anyhow!(
-                    "Program {} not supported",
-                    program_id.to_string()
-                ))
-            }
-        })
+            _ => Err(anyhow::anyhow!(
+                "Program {} not supported",
+                program_id.to_string()
+            )),
+        }
     }
 
     fn idl(&self, program_id: &Pubkey) -> anyhow::Result<String> {
