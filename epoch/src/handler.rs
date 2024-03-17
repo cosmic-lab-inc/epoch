@@ -7,7 +7,7 @@ use actix_web::web::{BytesMut, Payload};
 use decoder::program_decoder::ProgramDecoder;
 use futures::StreamExt;
 use gcs::bq::*;
-use log::{error, info};
+use log::*;
 
 const MAX_SIZE: usize = 262_144; // max payload size is 256k
 

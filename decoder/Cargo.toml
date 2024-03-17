@@ -28,6 +28,6 @@ serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 simplelog = { workspace = true }
 solana-client = { workspace = true }
-sol-chainsaw = { path = "../../sol-chainsaw", features = ["json", "network"] }
+sol-chainsaw = { workspace = true }
 solana-sdk = { workspace = true }
 tokio = { workspace = true }
