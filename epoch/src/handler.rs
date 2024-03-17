@@ -126,7 +126,7 @@ impl EpochHandler {
                     let decoded = match self.decoder.json_decode_account(
                         &query.owner,
                         &name,
-                        &mut account.data[..8].try_into()?,
+                        &mut account.data.as_slice(),
                     ) {
                         Ok(decoded) => decoded,
                         Err(e) => {
