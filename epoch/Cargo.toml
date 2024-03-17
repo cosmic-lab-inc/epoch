@@ -12,6 +12,7 @@ keywords.workspace = true
 actix-web = "4.5.1"
 actix-web-httpauth = "0.8.1"
 actix-cors = "0.7.0"
+rayon = { workspace = true }
 anyhow = { workspace = true }
 borsh = { workspace = true }
 snapshot = { path = "../snapshot" }

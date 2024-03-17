@@ -148,7 +148,6 @@ async fn decoded_accounts(
                         "decoded user pnl: {:?}",
                         user.settled_perp_pnl as f64 / decoder::drift::QUOTE_PRECISION as f64
                     );
-                    // let str = serde_json::to_string(acc)?;
                 }
                 decoder::drift_cpi::AccountType::PerpMarket(market) => {
                     info!("decoded perp market: {:?}", market.pubkey.to_string());

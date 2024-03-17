@@ -1,4 +1,3 @@
-use log::info;
 use serde::{Deserialize, Deserializer};
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;

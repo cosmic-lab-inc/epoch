@@ -8,19 +8,20 @@ use decoder::program_decoder::ProgramDecoder;
 use futures::StreamExt;
 use gcs::bq::*;
 use log::*;
+use std::sync::Arc;
 
 const MAX_SIZE: usize = 262_144; // max payload size is 256k
 
 pub struct EpochHandler {
     pub client: BigQueryClient,
-    pub decoder: ProgramDecoder,
+    pub decoder: Arc<ProgramDecoder>,
 }
 
 impl EpochHandler {
     pub fn new(client: BigQueryClient) -> anyhow::Result<Self> {
         Ok(Self {
             client,
-            decoder: ProgramDecoder::new()?,
+            decoder: Arc::new(ProgramDecoder::new()?),
         })
     }
 
@@ -107,8 +108,8 @@ impl EpochHandler {
         let query = serde_json::from_slice::<QueryAccountType>(&body)?;
         let archive_accts = self.client.account_type(&query).await?;
 
-        // TODO: par iter by wrapping ProgramDecoder in Arc
-        let decoded_accts: Vec<JsonEpochAccount> = archive_accts
+        // TODO: par iter by making EpochAccount try from reference. Data must be borrowed Cow (use BytesWrapper)
+        let mut decoded_accts: Vec<JsonEpochAccount> = archive_accts
             .into_iter()
             .flat_map(|a| match EpochAccount::try_from(a) {
                 Err(e) => {
@@ -138,6 +139,10 @@ impl EpochHandler {
                 }
             })
             .collect();
+        // sort so the highest slot is 0th index
+        decoded_accts.sort_by_key(|a| a.account.slot);
+        decoded_accts.reverse();
+
         Ok(decoded_accts)
     }
 }

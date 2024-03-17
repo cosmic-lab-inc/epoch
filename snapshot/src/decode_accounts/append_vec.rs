@@ -15,23 +15,20 @@
 // This file contains code vendored from https://github.com/solana-labs/solana
 // Source: solana/runtime/src/append_vec.rs
 
-use {
-    log::*,
-    memmap2::{Mmap, MmapMut},
-    serde::{Deserialize, Serialize},
-    solana_sdk::{
-        account::{Account, AccountSharedData, ReadableAccount},
-        clock::Epoch,
-        hash::Hash,
-        pubkey::Pubkey,
-    },
-    std::{
-        convert::TryFrom,
-        fs::OpenOptions,
-        io::{self, Read},
-        mem,
-        path::Path,
-    },
+use log::*;
+use memmap2::{Mmap, MmapMut};
+use serde::{Deserialize, Serialize};
+use solana_sdk::{
+    account::{Account, AccountSharedData, ReadableAccount},
+    clock::Epoch,
+    hash::Hash,
+    pubkey::Pubkey,
+};
+use std::{
+    fs::OpenOptions,
+    io::{self, Read},
+    mem,
+    path::Path,
 };
 
 // Data placement should be aligned at the next boundary. Without alignment accessing the memory may

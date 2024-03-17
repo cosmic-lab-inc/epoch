@@ -16,7 +16,7 @@ no-log-ix-name = []
 cpi = ["no-entrypoint"]
 
 [dependencies]
-anchor-gen = "0.3.1"
+anchor-gen = { workspace = true }
 anchor-lang = ">=0.20.0"
 anyhow = { workspace = true }
 base64 = { workspace = true }
