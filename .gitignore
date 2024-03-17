@@ -10,4 +10,5 @@ snapshots
 *.tar
 *.zst
 *.csv
-*.json
+gcs_snapshots.json
+epoch_sa_key.json

@@ -93,7 +93,12 @@ impl EpochHandler {
                                 Err(EpochError::Anyhow(e))?
                             }
                         };
-                    Result::<_, anyhow::Error>::Ok(DecodedEpochAccount { account, decoded })
+                    Result::<_, anyhow::Error>::Ok(DecodedEpochAccount {
+                        key: account.key,
+                        slot: account.slot,
+                        owner: account.owner,
+                        decoded,
+                    })
                 }
             })
             .collect();
@@ -135,12 +140,17 @@ impl EpochHandler {
                             Err(EpochError::Anyhow(e))?
                         }
                     };
-                    Result::<_, anyhow::Error>::Ok(JsonEpochAccount { account, decoded })
+                    Result::<_, anyhow::Error>::Ok(JsonEpochAccount {
+                        key: account.key,
+                        slot: account.slot,
+                        owner: account.owner,
+                        decoded,
+                    })
                 }
             })
             .collect();
         // sort so the highest slot is 0th index
-        decoded_accts.sort_by_key(|a| a.account.slot);
+        decoded_accts.sort_by_key(|a| a.slot);
         decoded_accts.reverse();
 
         Ok(decoded_accts)
