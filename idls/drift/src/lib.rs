@@ -1,3 +1,10 @@
+// TODO: this code is all repeated except for the AccountType variants
+// using the IDL, the list of account names can be discovered.
+// The missing piece is using std::any::type_name<T>() to go for the IDL account name to the actual struct.
+// To get the struct I would need to be able to iterate all exported types in this anchor-gen `typedefs` module.
+// Reading the type at compile time isn't possible, it means a trait must be defined in anchor-gen
+// that defines the string name of the type as std::any::type_name<Self>().
+// The module then needs some way of iterating the types themselves with this string-type map.
 anchor_gen::generate_cpi_crate!("idl.json");
 anchor_lang::declare_id!("dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH");
 

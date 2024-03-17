@@ -140,13 +140,15 @@ async fn decoded_accounts(
     };
     // TODO: remove after debugging
     for acct in accts.iter() {
-        match &acct.decoded {
-            Decoder::Drift(acc) => match acc {
+        #[allow(irrefutable_let_patterns)]
+        if let Decoder::Drift(acc) = &acct.decoded {
+            match acc {
                 decoder::drift_cpi::AccountType::User(user) => {
                     info!(
                         "decoded user pnl: {:?}",
                         user.settled_perp_pnl as f64 / decoder::drift::QUOTE_PRECISION as f64
                     );
+                    // let str = serde_json::to_string(acc)?;
                 }
                 decoder::drift_cpi::AccountType::PerpMarket(market) => {
                     info!("decoded perp market: {:?}", market.pubkey.to_string());
@@ -155,8 +157,7 @@ async fn decoded_accounts(
                     info!("decoded spot market: {:?}", market.pubkey.to_string());
                 }
                 _ => {}
-            },
-            _ => {}
+            }
         }
     }
     let mut buf = Vec::new();
