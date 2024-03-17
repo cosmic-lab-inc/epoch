@@ -174,9 +174,10 @@ impl EpochHandler {
                     .filter_map(|t| {
                         match (&query.program_name, &query.program, &query.discriminant) {
                             (Some(program_name), Some(program), Some(discriminant)) => {
-                                if t.program_name == *program_name
+                                if t.program_name.to_lowercase() == *program_name.to_lowercase()
                                     && t.program == *program
-                                    && t.account_discriminant == *discriminant
+                                    && t.account_discriminant.to_lowercase()
+                                        == *discriminant.to_lowercase()
                                 {
                                     Some(t)
                                 } else {
@@ -184,15 +185,18 @@ impl EpochHandler {
                                 }
                             }
                             (Some(program_name), Some(program), None) => {
-                                if t.program_name == *program_name && t.program == *program {
+                                if t.program_name.to_lowercase() == *program_name.to_lowercase()
+                                    && t.program == *program
+                                {
                                     Some(t)
                                 } else {
                                     None
                                 }
                             }
                             (Some(program_name), None, Some(discriminant)) => {
-                                if t.program_name == *program_name
-                                    && t.account_discriminant == *discriminant
+                                if t.program_name.to_lowercase() == *program_name.to_lowercase()
+                                    && t.account_discriminant.to_lowercase()
+                                        == *discriminant.to_lowercase()
                                 {
                                     Some(t)
                                 } else {
@@ -200,14 +204,16 @@ impl EpochHandler {
                                 }
                             }
                             (Some(program_name), None, None) => {
-                                if t.program_name == *program_name {
+                                if t.program_name.to_lowercase() == *program_name.to_lowercase() {
                                     Some(t)
                                 } else {
                                     None
                                 }
                             }
                             (None, Some(program), Some(discriminant)) => {
-                                if t.program == *program && t.account_discriminant == *discriminant
+                                if t.program == *program
+                                    && t.account_discriminant.to_lowercase()
+                                        == *discriminant.to_lowercase()
                                 {
                                     Some(t)
                                 } else {
@@ -222,7 +228,9 @@ impl EpochHandler {
                                 }
                             }
                             (None, None, Some(discriminant)) => {
-                                if t.account_discriminant == *discriminant {
+                                if t.account_discriminant.to_lowercase()
+                                    == *discriminant.to_lowercase()
+                                {
                                     Some(t)
                                 } else {
                                     None
