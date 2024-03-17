@@ -1,9 +1,10 @@
-use crate::archive::{append_vec_iter, AppendVecMeta};
-use crate::SnapshotError;
-use common::account::ArchiveAccount;
+use crate::{
+    archive::{append_vec_iter, AppendVecMeta},
+    SnapshotError,
+};
+use common::archive_account::ArchiveAccount;
 use crossbeam_channel::Sender;
-use rayon::iter::ParallelIterator;
-use rayon::prelude::IntoParallelRefIterator;
+use rayon::{iter::ParallelIterator, prelude::IntoParallelRefIterator};
 use std::sync::Arc;
 
 /// Archiver handles everything related to extracting accounts from a snapshot

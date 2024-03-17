@@ -4,6 +4,7 @@ use crate::{
     errors::{EpochError, EpochResult},
 };
 use actix_web::web::{BytesMut, Payload};
+use common::types::query::*;
 use decoder::program_decoder::ProgramDecoder;
 use futures::StreamExt;
 use gcs::bq::*;
@@ -154,5 +155,84 @@ impl EpochHandler {
         decoded_accts.reverse();
 
         Ok(decoded_accts)
+    }
+
+    pub async fn registered_types(
+        &self,
+        payload: Option<Payload>,
+    ) -> anyhow::Result<Vec<RegisteredType>> {
+        match payload {
+            None => self.decoder.registred_types(),
+            Some(payload) => {
+                let body = self.checked_payload(payload).await?;
+                let query = serde_json::from_slice::<QueryRegisteredTypes>(&body)?;
+
+                Ok(self
+                    .decoder
+                    .registred_types()?
+                    .into_iter()
+                    .filter_map(|t| {
+                        match (&query.program_name, &query.program, &query.discriminant) {
+                            (Some(program_name), Some(program), Some(discriminant)) => {
+                                if t.program_name == *program_name
+                                    && t.program == *program
+                                    && t.account_discriminant == *discriminant
+                                {
+                                    Some(t)
+                                } else {
+                                    None
+                                }
+                            }
+                            (Some(program_name), Some(program), None) => {
+                                if t.program_name == *program_name && t.program == *program {
+                                    Some(t)
+                                } else {
+                                    None
+                                }
+                            }
+                            (Some(program_name), None, Some(discriminant)) => {
+                                if t.program_name == *program_name
+                                    && t.account_discriminant == *discriminant
+                                {
+                                    Some(t)
+                                } else {
+                                    None
+                                }
+                            }
+                            (Some(program_name), None, None) => {
+                                if t.program_name == *program_name {
+                                    Some(t)
+                                } else {
+                                    None
+                                }
+                            }
+                            (None, Some(program), Some(discriminant)) => {
+                                if t.program == *program && t.account_discriminant == *discriminant
+                                {
+                                    Some(t)
+                                } else {
+                                    None
+                                }
+                            }
+                            (None, Some(program), None) => {
+                                if t.program == *program {
+                                    Some(t)
+                                } else {
+                                    None
+                                }
+                            }
+                            (None, None, Some(discriminant)) => {
+                                if t.account_discriminant == *discriminant {
+                                    Some(t)
+                                } else {
+                                    None
+                                }
+                            }
+                            (None, None, None) => Some(t),
+                        }
+                    })
+                    .collect())
+            }
+        }
     }
 }

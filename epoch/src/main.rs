@@ -74,7 +74,9 @@ async fn main() -> EpochResult<()> {
                     .service(account_id)
                     .service(accounts)
                     .service(decoded_accounts)
-                    .service(json_decoded_accounts),
+                    .service(json_decoded_accounts)
+                    .service(filtered_registered_types)
+                    .service(all_registered_types),
             )
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
             .service(test)
@@ -170,6 +172,21 @@ async fn json_decoded_accounts(
     payload: Payload,
 ) -> EpochResult<HttpResponse> {
     let accts = state.handler.json_decoded_accounts(payload).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/registered-types")]
+async fn filtered_registered_types(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let accts = state.handler.registered_types(Some(payload)).await?;
+    Ok(HttpResponse::Ok().json(accts))
+}
+
+#[get("/registered-types")]
+async fn all_registered_types(state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
+    let accts = state.handler.registered_types(None).await?;
     Ok(HttpResponse::Ok().json(accts))
 }
 

@@ -1,9 +1,8 @@
 use base64::{engine::general_purpose, Engine as _};
 use borsh::{BorshDeserialize, BorshSerialize};
-use common::DecodeProgramAccount;
+use common::{DecodeProgramAccount, RegisteredType};
 // reexport drift_cpi
 pub use drift_cpi;
-use log::*;
 use once_cell::sync::Lazy;
 use serde_json::Value;
 use sol_chainsaw::{ChainsawDeserializer, IdlProvider};
@@ -11,8 +10,7 @@ use solana_sdk::{hash::hash, pubkey::Pubkey};
 use std::collections::HashMap;
 
 /// Master list of supported programs that can provide decoded accounts based on an Anchor IDL.
-pub static PROGRAMS: Lazy<Vec<(String, Pubkey)>> =
-    Lazy::new(|| vec![(drift_cpi::PROGRAM_NAME.to_string(), *drift_cpi::PROGRAM_ID)]);
+pub static PROGRAMS: Lazy<Vec<Pubkey>> = Lazy::new(|| vec![*drift_cpi::PROGRAM_ID]);
 
 /// Registry of program account decoders that match a discriminant,
 /// such as "User", to a specific account type.
@@ -32,12 +30,7 @@ impl ProgramDecoder {
         let mut chainsaw = ChainsawDeserializer::new(&*Box::leak(Box::default()));
         let mut idls = HashMap::new();
 
-        for (name, program) in PROGRAMS.iter() {
-            info!(
-                "reading IDL for \"{}\" program with id: {}",
-                name,
-                program.to_string()
-            );
+        for program in PROGRAMS.iter() {
             let idl_path = &drift_cpi::IDL_PATH.to_string();
             let idl = std::fs::read_to_string(idl_path)?;
             chainsaw.add_idl_json(program.to_string(), &idl, IdlProvider::Anchor)?;
@@ -93,14 +86,34 @@ impl ProgramDecoder {
             .ok_or_else(|| anyhow::anyhow!("No IDL found for program"))
     }
 
-    pub fn idl_accounts(&self, program_id: &Pubkey) -> anyhow::Result<Vec<String>> {
+    pub fn registred_types(&self) -> anyhow::Result<Vec<RegisteredType>> {
+        let registered_types: Vec<anyhow::Result<Vec<RegisteredType>>> = PROGRAMS
+            .iter()
+            .map(|program_id| self.program_registered_types(program_id))
+            .collect();
+        Ok(registered_types
+            .into_iter()
+            .filter_map(Result::ok)
+            .flatten()
+            .collect())
+    }
+
+    pub fn program_registered_types(
+        &self,
+        program_id: &Pubkey,
+    ) -> anyhow::Result<Vec<RegisteredType>> {
         let idl_str = self.idl(program_id)?;
         let idl = serde_json::from_str::<Value>(&idl_str)?;
         let accounts = serde_json::from_value::<Vec<Value>>(idl["accounts"].clone())?;
         Ok(accounts
-            .iter()
-            .map(|a| a["name"].as_str().unwrap().to_string())
-            .collect::<Vec<String>>())
+            .into_iter()
+            .map(|raw_acct| RegisteredType {
+                program_name: idl["name"].as_str().unwrap().to_string(),
+                program: *program_id,
+                account_discriminant: raw_acct["name"].as_str().unwrap().to_string(),
+                account_type: raw_acct,
+            })
+            .collect::<Vec<RegisteredType>>())
     }
 
     pub fn name_to_discrim(&self, account_name: &str) -> [u8; 8] {

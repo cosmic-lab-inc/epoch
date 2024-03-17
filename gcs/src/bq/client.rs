@@ -1,19 +1,18 @@
-use crate::bq::*;
-use crate::errors::GcsError;
-use common::ArchiveAccount;
+use crate::{bq::*, errors::GcsError};
+use common::types::*;
 use decoder::ProgramDecoder;
-use gcp_bigquery_client::error::BQError;
-use gcp_bigquery_client::model::dataset::Dataset;
-use gcp_bigquery_client::model::job_configuration_query::JobConfigurationQuery;
-use gcp_bigquery_client::model::table::Table;
-use gcp_bigquery_client::model::table_data_insert_all_request::TableDataInsertAllRequest;
-use gcp_bigquery_client::model::table_data_insert_all_request_rows::TableDataInsertAllRequestRows;
-use gcp_bigquery_client::model::table_data_insert_all_response::TableDataInsertAllResponse;
-use gcp_bigquery_client::model::table_row::TableRow;
-use gcp_bigquery_client::Client;
+use gcp_bigquery_client::{
+    error::BQError,
+    model::{
+        dataset::Dataset, job_configuration_query::JobConfigurationQuery, table::Table,
+        table_data_insert_all_request::TableDataInsertAllRequest,
+        table_data_insert_all_request_rows::TableDataInsertAllRequestRows,
+        table_data_insert_all_response::TableDataInsertAllResponse, table_row::TableRow,
+    },
+    Client,
+};
 use log::{debug, error, info, warn};
-use rayon::iter::ParallelIterator;
-use rayon::prelude::IntoParallelRefIterator;
+use rayon::{iter::ParallelIterator, prelude::IntoParallelRefIterator};
 use std::path::Path;
 use tokio_stream::{Stream, StreamExt};
 
