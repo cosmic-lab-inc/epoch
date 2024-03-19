@@ -60,8 +60,9 @@ async fn main() -> EpochResult<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:3000")
-            .allowed_origin("http://epoch.fm")
+            // .allowed_origin("http://localhost:3000")
+            // .allowed_origin("http://epoch.fm")
+            .allow_any_origin()
             .allowed_methods(vec!["GET", "POST"])
             .allow_any_header()
             .max_age(3600);
