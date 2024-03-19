@@ -1,15 +1,19 @@
-use crate::archive::{parse_append_vec_name, AppendVecIterator, AppendVecMeta, ArchiveIterator};
-use crate::decode_accounts::{
-    deserialize_from, AccountsDbFields, AppendVec, DeserializableVersionedBank,
-    SerializableAccountStorageEntry,
+use crate::{
+    archive::{parse_append_vec_name, AppendVecIterator, AppendVecMeta, ArchiveIterator},
+    decode_accounts::{
+        deserialize_from, AccountsDbFields, AppendVec, DeserializableVersionedBank,
+        SerializableAccountStorageEntry,
+    },
+    SnapshotError,
 };
-use crate::SnapshotError;
 use log::info;
-use std::fs::File;
-use std::io::{BufReader, Read};
-use std::path::{Component, Path};
-use std::pin::Pin;
-use std::time::Instant;
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+    path::{Component, Path},
+    pin::Pin,
+    time::Instant,
+};
 use tar::{Archive, Entries, Entry};
 use zstd::Decoder;
 

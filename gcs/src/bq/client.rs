@@ -221,7 +221,10 @@ impl BigQueryClient {
         Self::read_stream(res).await
     }
 
-    fn build_account_type_query(&self, params: &QueryAccountType) -> anyhow::Result<String> {
+    fn build_decoded_accounts_query(
+        &self,
+        params: &QueryDecodedAccounts,
+    ) -> anyhow::Result<String> {
         let mut query = format!("SELECT * FROM {}", &self.accounts_table);
         let mut where_added = false;
 
@@ -255,9 +258,9 @@ impl BigQueryClient {
 
     pub async fn account_type(
         &self,
-        params: &QueryAccountType,
+        params: &QueryDecodedAccounts,
     ) -> anyhow::Result<Vec<ArchiveAccount>> {
-        let query = self.build_account_type_query(params)?;
+        let query = self.build_decoded_accounts_query(params)?;
         let res = self.client.job().query_all(
             BQ_PROJECT_ID,
             JobConfigurationQuery {

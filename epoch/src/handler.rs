@@ -64,7 +64,7 @@ impl EpochHandler {
         payload: Payload,
     ) -> anyhow::Result<Vec<DecodedEpochAccount>> {
         let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountType>(&body)?;
+        let query = serde_json::from_slice::<QueryDecodedAccounts>(&body)?;
         let archive_accts = self.client.account_type(&query).await?;
 
         // TODO: par iter by wrapping ProgramDecoder in Arc
@@ -111,7 +111,7 @@ impl EpochHandler {
         payload: Payload,
     ) -> anyhow::Result<Vec<JsonEpochAccount>> {
         let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountType>(&body)?;
+        let query = serde_json::from_slice::<QueryDecodedAccounts>(&body)?;
         let archive_accts = self.client.account_type(&query).await?;
 
         // TODO: par iter by making EpochAccount try from reference. Data must be borrowed Cow (use BytesWrapper)

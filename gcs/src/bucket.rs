@@ -6,11 +6,7 @@ use regex::{Captures, Regex};
 use reqwest::Url;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
-use std::time::Instant;
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, fs::File, io::Read, path::Path, str::FromStr, time::Instant};
 use tokio::spawn;
 
 pub enum GcsObjectsSource {

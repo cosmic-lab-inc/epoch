@@ -1,6 +1,8 @@
 use actix_web::{dev::ServiceRequest, Error as ActixError};
-use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
-use actix_web_httpauth::extractors::AuthenticationError;
+use actix_web_httpauth::extractors::{
+    bearer::{BearerAuth, Config},
+    AuthenticationError,
+};
 use log::*;
 
 // Auth0 Rust example

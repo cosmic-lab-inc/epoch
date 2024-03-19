@@ -1,5 +1,4 @@
-use actix_web::http::StatusCode;
-use actix_web::{error::ResponseError, HttpResponse};
+use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use thiserror::Error;
 
 pub type EpochResult<T> = Result<T, EpochError>;

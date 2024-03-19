@@ -1,9 +1,7 @@
 use crate::decode_accounts::{AppendVec, StoredAccountMeta};
 use common::ArchiveAccount;
 use solana_sdk::clock::Slot;
-use std::ffi::OsStr;
-use std::str::FromStr;
-use std::sync::Arc;
+use std::{ffi::OsStr, str::FromStr, sync::Arc};
 
 pub struct AppendVecMeta {
     pub append_vec: AppendVec,

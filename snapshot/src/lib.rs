@@ -8,15 +8,14 @@ pub mod utils;
 
 pub use archive::*;
 pub use archiver::*;
+use common::ArchiveAccount;
+use crossbeam_channel::Sender;
 pub use decode_accounts::*;
 pub use errors::*;
 pub use extract_snapshot::*;
 pub use loader::*;
-pub use utils::*;
-
-use common::ArchiveAccount;
-use crossbeam_channel::Sender;
 use std::sync::Arc;
+pub use utils::*;
 
 pub fn stream_archived_accounts(
     source: String,

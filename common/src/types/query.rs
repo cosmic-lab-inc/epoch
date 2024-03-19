@@ -21,7 +21,7 @@ pub struct QueryAccounts {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QueryAccountType {
+pub struct QueryDecodedAccounts {
     #[serde(deserialize_with = "deserialize_option_pubkey")]
     #[serde(default)]
     pub key: Option<Pubkey>,

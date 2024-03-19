@@ -5,13 +5,17 @@ mod logger;
 use clap::Parser;
 use common::ArchiveAccount;
 use config::*;
-use gcs::bq::{BigQueryClient, BqAccount};
-use gcs::bucket::*;
+use gcs::{
+    bq::{BigQueryClient, BqAccount},
+    bucket::*,
+};
 use log::*;
 use logger::*;
 use snapshot::stream_archived_accounts;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 #[derive(Parser, Debug)]
 struct Args {

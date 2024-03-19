@@ -1,10 +1,9 @@
-use crate::bq::column::*;
-use crate::errors::GcsError;
+use crate::{bq::column::*, errors::GcsError};
 use base64::{engine::general_purpose, Engine as _};
 use common::ArchiveAccount;
-use gcp_bigquery_client::model::table_field_schema::TableFieldSchema;
-use gcp_bigquery_client::model::table_row::TableRow;
-use gcp_bigquery_client::model::table_schema::TableSchema;
+use gcp_bigquery_client::model::{
+    table_field_schema::TableFieldSchema, table_row::TableRow, table_schema::TableSchema,
+};
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;

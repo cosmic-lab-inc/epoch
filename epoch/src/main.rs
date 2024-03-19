@@ -60,8 +60,9 @@ async fn main() -> EpochResult<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
+            .allowed_origin("http://localhost:3000")
+            .allowed_origin("http://epoch.fm")
+            .allowed_methods(vec!["GET", "POST"])
             .allow_any_header()
             .max_age(3600);
         let admin_auth = HttpAuthentication::bearer(admin_validator);
@@ -73,7 +74,7 @@ async fn main() -> EpochResult<()> {
                 web::scope("/api")
                     .service(account_id)
                     .service(accounts)
-                    .service(decoded_accounts)
+                    .service(borsh_decoded_accounts)
                     .service(json_decoded_accounts)
                     .service(filtered_registered_types)
                     .service(all_registered_types),
@@ -128,8 +129,8 @@ async fn accounts(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<H
     Ok(HttpResponse::Ok().json(accts))
 }
 
-#[post("/decoded-accounts")]
-async fn decoded_accounts(
+#[post("/borsh-decoded-accounts")]
+async fn borsh_decoded_accounts(
     state: Data<Arc<AppState>>,
     payload: Payload,
 ) -> EpochResult<HttpResponse> {
@@ -166,7 +167,7 @@ async fn decoded_accounts(
     Ok(HttpResponse::Ok().body(buf))
 }
 
-#[post("/json-decoded-accounts")]
+#[post("/decoded-accounts")]
 async fn json_decoded_accounts(
     state: Data<Arc<AppState>>,
     payload: Payload,

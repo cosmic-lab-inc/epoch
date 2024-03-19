@@ -1,17 +1,21 @@
-use crate::archive::{parse_append_vec_name, AppendVecIterator, AppendVecMeta, ArchiveIterator};
-use crate::decode_accounts::{
-    deserialize_from, AccountsDbFields, AppendVec, DeserializableVersionedBank,
-    SerializableAccountStorageEntry,
+use crate::{
+    archive::{parse_append_vec_name, AppendVecIterator, AppendVecMeta, ArchiveIterator},
+    decode_accounts::{
+        deserialize_from, AccountsDbFields, AppendVec, DeserializableVersionedBank,
+        SerializableAccountStorageEntry,
+    },
+    SnapshotError,
 };
-use crate::SnapshotError;
 use itertools::Itertools;
 use log::info;
 use solana_runtime::snapshot_utils::SNAPSHOT_STATUS_CACHE_FILENAME;
-use std::fs::OpenOptions;
-use std::io::BufReader;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
-use std::time::Instant;
+use std::{
+    fs::OpenOptions,
+    io::BufReader,
+    path::{Path, PathBuf},
+    str::FromStr,
+    time::Instant,
+};
 
 pub const SNAPSHOTS_DIR: &str = "snapshots";
 
