@@ -52,9 +52,27 @@ async fn main() -> EpochResult<()> {
     let port = std::env::var("PORT").unwrap_or_else(|_| "3333".to_string());
     let bind_address = format!("0.0.0.0:{}", port);
 
-    let epoch_config = EpochConfig::read_config(&args.config_file_path)?;
-    let bq_client = BigQueryClient::new(Path::new(&epoch_config.gcs_sa_key)).await?;
-    let handler = tokio::task::spawn_blocking(move || EpochHandler::new(bq_client)).await??;
+    let epoch_config = match EpochConfig::read_config(&args.config_file_path) {
+        Ok(config) => config,
+        Err(e) => {
+            error!("Error reading config: {:?}", e);
+            return Err(EpochError::from(e));
+        }
+    };
+    let bq_client = match BigQueryClient::new(Path::new(&epoch_config.gcs_sa_key)).await {
+        Ok(client) => client,
+        Err(e) => {
+            error!("Error creating BigQuery client: {:?}", e);
+            return Err(EpochError::from(e));
+        }
+    };
+    let handler = match tokio::task::spawn_blocking(move || EpochHandler::new(bq_client)).await? {
+        Ok(handler) => handler,
+        Err(e) => {
+            error!("Error creating EpochHandler: {:?}", e);
+            return Err(EpochError::from(e));
+        }
+    };
 
     let state = Data::new(Arc::new(AppState { handler }));
 
@@ -77,8 +95,8 @@ async fn main() -> EpochResult<()> {
             .service(json_decoded_accounts)
             .service(filtered_registered_types)
             .service(all_registered_types)
-            .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
             .service(test)
+            .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
     })
     .bind(bind_address)?
     .run()

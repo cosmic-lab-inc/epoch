@@ -3,6 +3,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use common::{DecodeProgramAccount, RegisteredType};
 // reexport drift_cpi
 pub use drift_cpi;
+use log::{error, info};
 use once_cell::sync::Lazy;
 use serde_json::Value;
 use sol_chainsaw::{ChainsawDeserializer, IdlProvider};
@@ -32,7 +33,14 @@ impl ProgramDecoder {
 
         for program in PROGRAMS.iter() {
             let idl_path = &drift_cpi::IDL_PATH.to_string();
-            let idl = std::fs::read_to_string(idl_path)?;
+            info!("Load IDL at {}", *drift_cpi::IDL_PATH);
+            let idl = match std::fs::read_to_string(idl_path) {
+                Ok(idl) => idl,
+                Err(e) => {
+                    error!("Failed to read IDL path: {:?}", e);
+                    return Err(anyhow::Error::from(e));
+                }
+            };
             chainsaw.add_idl_json(program.to_string(), &idl, IdlProvider::Anchor)?;
             idls.insert(*program, idl);
         }
