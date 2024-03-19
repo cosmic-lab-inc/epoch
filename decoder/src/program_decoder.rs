@@ -11,7 +11,8 @@ use solana_sdk::{hash::hash, pubkey::Pubkey};
 use std::collections::HashMap;
 
 /// Master list of supported programs that can provide decoded accounts based on an Anchor IDL.
-pub static PROGRAMS: Lazy<Vec<Pubkey>> = Lazy::new(|| vec![*drift_cpi::PROGRAM_ID]);
+pub static PROGRAMS: Lazy<Vec<(String, Pubkey)>> =
+    Lazy::new(|| vec![(drift_cpi::PROGRAM_NAME.clone(), *drift_cpi::PROGRAM_ID)]);
 
 /// Registry of program account decoders that match a discriminant,
 /// such as "User", to a specific account type.
@@ -31,9 +32,9 @@ impl ProgramDecoder {
         let mut chainsaw = ChainsawDeserializer::new(&*Box::leak(Box::default()));
         let mut idls = HashMap::new();
 
-        for program in PROGRAMS.iter() {
-            let idl_path = &drift_cpi::IDL_PATH.to_string();
-            info!("Load IDL at {}", *drift_cpi::IDL_PATH);
+        for (name, program) in PROGRAMS.iter() {
+            let idl_path = format!("./idls/{}/idl.json", *name);
+            info!("Load IDL at {}", idl_path);
             let idl = match std::fs::read_to_string(idl_path) {
                 Ok(idl) => idl,
                 Err(e) => {
@@ -97,7 +98,7 @@ impl ProgramDecoder {
     pub fn registred_types(&self) -> anyhow::Result<Vec<RegisteredType>> {
         let registered_types: Vec<anyhow::Result<Vec<RegisteredType>>> = PROGRAMS
             .iter()
-            .map(|program_id| self.program_registered_types(program_id))
+            .map(|(_, program_id)| self.program_registered_types(program_id))
             .collect();
         Ok(registered_types
             .into_iter()
