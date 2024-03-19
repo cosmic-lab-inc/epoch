@@ -71,7 +71,7 @@ async fn main() -> EpochResult<()> {
             .app_data(Data::clone(&state))
             .wrap(cors)
             .service(
-                web::scope("/api")
+                web::scope("/")
                     .service(account_id)
                     .service(accounts)
                     .service(borsh_decoded_accounts)
