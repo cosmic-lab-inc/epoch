@@ -123,6 +123,10 @@ async fn token_2022_test() -> Result<()> {
     println!("Token amount left over: {}", state.base.amount);
     assert_eq!(state.base.amount, 10000);
 
+    let token_info = client.get_token_2022_account_info(&vault.pubkey()).await?;
+    println!("Token amount left over: {}", token_info.amount);
+    assert_eq!(token_info.amount, 10000);
+
     Ok(())
 }
 
