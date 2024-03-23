@@ -8,6 +8,7 @@ members = [
     "gcs",
     "idls/*",
     "snapshot",
+    "warden"
 ]
 
 [workspace.package]
@@ -22,8 +23,7 @@ keywords = ["solana"]
 
 [workspace.dependencies]
 anchor-gen = { version = "0.3.1" }
-#anchor-gen = { path = "../anchor-gen/crates/anchor-gen" }
-anchor-client = { version = "0.29.0" }
+#anchor-lang = { git = "https://github.com/staratlasmeta/anchor.git", branch = "token_2022" }
 anchor-lang = "0.29.0"
 anyhow = "1.0.75"
 base64 = "0.22.0"
@@ -61,6 +61,11 @@ solana-runtime = { version = "1.17.2", features = ["dev-context-only-utils"] }
 solana-sdk = { version = "1.17.2", features = ["dev-context-only-utils"] }
 solana-client = "1.17.22"
 solana-account-decoder = "1.17.22"
+#solana-accounts-db = { version = "1.16.9", features = ["dev-context-only-utils"] }
+#solana-runtime = { version = "1.16.9", features = ["dev-context-only-utils"] }
+#solana-sdk = { version = "1.16.9", features = ["dev-context-only-utils"] }
+#solana-client = "1.16.9"
+#solana-account-decoder = "1.16.9"
 time = "0.3.14"
 tar = "0.4.38"
 thiserror = "1.0.44"

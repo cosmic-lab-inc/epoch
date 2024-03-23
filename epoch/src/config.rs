@@ -5,9 +5,16 @@ use std::path::PathBuf;
 pub struct EpochConfig {
     /// GCS service account JSON file
     pub gcs_sa_key: String,
-
     /// Solana RPC endpoint
     pub solana_rpc: String,
+    /// Redis username
+    pub redis_username: String,
+    /// Redis password
+    pub redis_password: String,
+    /// Redis host
+    pub redis_host: String,
+    /// Redis port
+    pub redis_port: u16,
 }
 
 impl EpochConfig {

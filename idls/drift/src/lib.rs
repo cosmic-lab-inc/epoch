@@ -6,7 +6,6 @@ use once_cell::sync::Lazy;
 
 pub static PATH: Lazy<String> = Lazy::new(|| env!("CARGO_MANIFEST_DIR").to_string());
 pub static PROGRAM_NAME: Lazy<String> = Lazy::new(|| PATH.split('/').last().unwrap().to_string());
-pub static IDL_PATH: Lazy<String> = Lazy::new(|| format!("{}/idl.json", *PATH));
 pub static PROGRAM_ID: Lazy<Pubkey> = Lazy::new(|| ID);
 
 decode_account!(

@@ -38,6 +38,23 @@ impl EpochHandler {
         Ok(body)
     }
 
+    //
+    //
+    // Interact with Redis to validate hashed API key
+    // and attempt to debit EPOCH tokens from user's token account
+    //
+    //
+    
+    
+    
+    
+    
+    //
+    //
+    // Interact with Google BigQuery
+    //
+    //
+
     pub async fn account_id(&self, payload: Payload) -> EpochResult<Option<EpochAccount>> {
         let body = self.checked_payload(payload).await?;
         let query = serde_json::from_slice::<QueryAccountId>(&body)?;
