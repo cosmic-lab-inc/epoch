@@ -1,4 +1,4 @@
-use crate::{hasher::Hasher, redis::redis_client::RedisClient};
+use crate::{redis::redis_client::RedisClient, scrambler::Scrambler, HasherTrait, ToRedisKey};
 use log::{error, info};
 use solana_sdk::pubkey::Pubkey;
 
@@ -19,13 +19,13 @@ impl Warden {
     }
 
     /// Hash the api key and check against the hashed key in Redis.
-    pub fn validate_api_key(&self, api_key: String) -> anyhow::Result<Pubkey> {
-        let hashed_key = Hasher::hash(api_key.as_bytes())?;
+    pub fn validate_api_key<T: ToRedisKey>(&self, api_key: T) -> anyhow::Result<Pubkey> {
+        let hashed_key = Scrambler::new().hash(&api_key);
         let epoch_token_acct = self.redis.get(hashed_key)?;
         match epoch_token_acct {
             None => {
                 error!("API key not recognized");
-                Err(anyhow::Error::msg("API key not recognized"))
+                Err(anyhow::anyhow!("API key not recognized"))
             }
             Some(epoch_token_acct) => Ok(Pubkey::new_from_array(
                 epoch_token_acct.as_bytes().try_into()?,
@@ -36,13 +36,13 @@ impl Warden {
     /// Update a user's Epoch token account under the hashed API key.
     /// This will error if the API key is already registered.
     pub fn register_user(&self, api_key: String, epoch_vault: Pubkey) -> anyhow::Result<String> {
-        let hashed_key = Hasher::hash(api_key.as_bytes())?;
+        let hashed_key = Scrambler::new().hash(&api_key);
 
-        let existing_value = self.redis.get(hashed_key.clone())?;
+        let existing_value = self.redis.get(hashed_key)?;
         match existing_value {
             Some(value) => {
                 error!("API key already registered for: {}", value);
-                Err(anyhow::Error::msg("API key already registered"))
+                Err(anyhow::anyhow!("API key already registered"))
             }
             None => {
                 let res = self
@@ -51,7 +51,7 @@ impl Warden {
                 match res {
                     None => {
                         error!("Error registering user, upserted as None");
-                        panic!("Error registering user, upserted as None")
+                        Err(anyhow::anyhow!("Error registering user, upserted as None"))
                     }
                     Some(epoch_token_acct) => {
                         info!("Registered user: {}", epoch_token_acct);
@@ -66,14 +66,14 @@ impl Warden {
     /// Warning: This will overwrite the pubkey if the API key is already registered.
     /// For new users, use [`register_user`] instead.
     pub fn update_user(&self, api_key: String, epoch_vault: Pubkey) -> anyhow::Result<String> {
-        let hashed_key = Hasher::hash(api_key.as_bytes())?;
+        let hashed_key = Scrambler::new().hash(&api_key);
         let res = self
             .redis
             .upsert(hashed_key, Some(epoch_vault.to_string()))?;
         match res {
             None => {
                 error!("Error registering user, upserted as None");
-                panic!("Error registering user, upserted as None")
+                Err(anyhow::anyhow!("Error registering user, upserted as None"))
             }
             Some(epoch_token_acct) => {
                 info!("Registered user: {}", epoch_token_acct);
@@ -84,9 +84,9 @@ impl Warden {
 
     /// Delete the Redis key-value pair for the hashed API key.
     pub fn delete_user(&self, api_key: String, epoch_vault: Pubkey) -> anyhow::Result<()> {
-        let hashed_key = Hasher::hash(api_key.as_bytes())?;
+        let hashed_key = Scrambler::new().hash(&api_key);
 
-        let existing_value = self.redis.get(hashed_key.clone())?;
+        let existing_value = self.redis.get(hashed_key)?;
         match existing_value {
             Some(value) => match epoch_vault.to_string() == value {
                 true => {
@@ -96,14 +96,12 @@ impl Warden {
                 }
                 false => {
                     error!("Failed to delete API key, as it does not match the registered account");
-                    Err(anyhow::Error::msg(
-                        "API key does not match registered account",
-                    ))
+                    Err(anyhow::anyhow!("API key does not match registered account",))
                 }
             },
             None => {
                 error!("Failed to delete API key, as it is not registered");
-                Err(anyhow::Error::msg("API key not registered"))
+                Err(anyhow::anyhow!("API key not registered"))
             }
         }
     }

@@ -22,10 +22,9 @@ use decoder::Decoder;
 use dotenv::dotenv;
 use errors::EpochError;
 use gcs::bq::BigQueryClient;
-use handler::EpochHandler;
+use handler::*;
 use log::*;
 use logger::*;
-use std::collections::HashMap;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
@@ -102,6 +101,7 @@ async fn main() -> EpochResult<()> {
             .service(all_registered_types)
             .service(test)
             .service(register_user)
+            .service(delete_user)
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
     })
     .bind(bind_address)?
@@ -221,7 +221,7 @@ async fn register_user(
 ) -> EpochResult<HttpResponse> {
     let epoch_api_key = req
         .headers()
-        .get("epoch_api_key")
+        .get(EPOCH_API_KEY_HEADER)
         .map(|v| match v.to_str() {
             Ok(s) => Some(s.to_string()),
             Err(_) => None,
@@ -229,6 +229,25 @@ async fn register_user(
         .unwrap_or_else(|| None);
 
     let res = state.handler.register_user(payload, epoch_api_key).await?;
+    Ok(HttpResponse::Ok().json(res))
+}
+
+#[post("/delete-user")]
+async fn delete_user(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+    req: HttpRequest,
+) -> EpochResult<HttpResponse> {
+    let epoch_api_key = req
+        .headers()
+        .get(EPOCH_API_KEY_HEADER)
+        .map(|v| match v.to_str() {
+            Ok(s) => Some(s.to_string()),
+            Err(_) => None,
+        })
+        .unwrap_or_else(|| None);
+
+    let res = state.handler.delete_user(payload, epoch_api_key).await?;
     Ok(HttpResponse::Ok().json(res))
 }
 

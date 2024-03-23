@@ -16,4 +16,8 @@ pub enum WardenError {
 
     #[error("Failed to connect to Redis client")]
     RedisConnectionError,
+
+    // api key does not match hash
+    #[error("API key does not match hash")]
+    ApiKeyMismatch,
 }

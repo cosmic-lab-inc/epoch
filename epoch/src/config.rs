@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use std::path::PathBuf;
+use warden::RedisClient;
 
 #[derive(Debug, Deserialize)]
 pub struct EpochConfig {
@@ -24,9 +25,11 @@ impl EpochConfig {
     }
 
     pub fn redis_url(&self) -> String {
-        format!(
-            "redis://{}:{}@{}:{}",
-            self.redis_username, self.redis_password, self.redis_host, self.redis_port
+        RedisClient::fmt_url(
+            &self.redis_username,
+            &self.redis_password,
+            &self.redis_host,
+            self.redis_port,
         )
     }
 }

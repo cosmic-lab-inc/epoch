@@ -66,6 +66,18 @@ impl EpochHandler {
         }
     }
 
+    pub async fn delete_user(&self, payload: Payload, api_key: Option<String>) -> EpochResult<()> {
+        match api_key {
+            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
+            Some(api_key) => {
+                let body = self.checked_payload(payload).await?;
+                let query = serde_json::from_slice::<EpochVault>(&body)?;
+
+                Ok(self.warden.delete_user(api_key, query.epoch_vault)?)
+            }
+        }
+    }
+
     //
     //
     // Interact with Google BigQuery

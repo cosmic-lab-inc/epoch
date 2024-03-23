@@ -1,11 +1,11 @@
 pub use errors::*;
-pub use hasher::*;
 pub use redis::*;
+pub use scrambler::*;
 pub use vault::*;
 pub use warden::*;
 
 pub mod errors;
-pub mod hasher;
 pub mod redis;
+pub mod scrambler;
 pub mod vault;
 pub mod warden;
