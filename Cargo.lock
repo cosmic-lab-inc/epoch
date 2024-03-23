@@ -1649,20 +1649,28 @@ source = "git+https://github.com/staratlasmeta/common_utils.git?branch=token_202
 dependencies = [
  "anchor-lang 0.25.26",
  "anchor-spl",
+ "anyhow",
  "array-init",
+ "async-trait",
  "bitflags 2.5.0",
  "borsh 0.10.3",
  "bytemuck",
  "common_proc",
  "derivative",
  "derive_more",
+ "futures",
  "itertools",
  "num-traits",
+ "solana-account-decoder",
+ "solana-client",
  "solana-program",
+ "solana-sdk",
+ "solana-transaction-status",
  "spl-token 3.5.0",
  "static_assertions",
  "strum",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -3730,6 +3738,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
+name = "player_profile"
+version = "0.7.3"
+source = "git+https://github.com/cosmic-lab-inc/player_profile.git?branch=main#b420690f179e9074b599924b833577ae89b6eb89"
+dependencies = [
+ "anchor-lang 0.25.26",
+ "bitflags 1.3.2",
+ "bytemuck",
+ "common_utils",
+ "serde",
+ "strum",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "polyval"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3831,6 +3853,17 @@ dependencies = [
  "syn 1.0.109",
  "version_check",
  "yansi",
+]
+
+[[package]]
+name = "profile_vault"
+version = "0.7.1"
+source = "git+https://github.com/cosmic-lab-inc/player_profile.git?branch=main#b420690f179e9074b599924b833577ae89b6eb89"
+dependencies = [
+ "anchor-lang 0.25.26",
+ "common_utils",
+ "player_profile",
+ "spl-token 4.0.0",
 ]
 
 [[package]]
@@ -6636,6 +6669,8 @@ dependencies = [
  "argon2",
  "common_utils",
  "log",
+ "player_profile",
+ "profile_vault",
  "redis",
  "solana-sdk",
  "thiserror",
