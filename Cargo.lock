@@ -3719,7 +3719,7 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 [[package]]
 name = "player_profile"
 version = "0.7.3"
-source = "git+https://github.com/cosmic-lab-inc/player_profile.git?branch=main#b420690f179e9074b599924b833577ae89b6eb89"
+source = "git+https://github.com/cosmic-lab-inc/player_profile.git?branch=main#f05b25a8b83daf78a30807ad4f63d1b9add33b37"
 dependencies = [
  "anchor-lang 0.25.26",
  "bitflags 1.3.2",
@@ -3837,7 +3837,7 @@ dependencies = [
 [[package]]
 name = "profile_vault"
 version = "0.7.1"
-source = "git+https://github.com/cosmic-lab-inc/player_profile.git?branch=main#b420690f179e9074b599924b833577ae89b6eb89"
+source = "git+https://github.com/cosmic-lab-inc/player_profile.git?branch=main#f05b25a8b83daf78a30807ad4f63d1b9add33b37"
 dependencies = [
  "anchor-lang 0.25.26",
  "common_utils",

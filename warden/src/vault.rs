@@ -113,16 +113,6 @@ async fn token_2022_test() -> Result<()> {
         .await?;
     println!("Minted tokens to vault authority");
 
-    let account_info = client
-        .get_account_with_commitment(&vault.pubkey(), CommitmentConfig::confirmed())
-        .await?
-        .value
-        .ok_or(anyhow::anyhow!("Token account not found"))?;
-    let state =
-        StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account_info.data).unwrap();
-    println!("Token amount left over: {}", state.base.amount);
-    assert_eq!(state.base.amount, 10000);
-
     let token_info = client.get_token_2022_account_info(&vault.pubkey()).await?;
     println!("Token amount left over: {}", token_info.amount);
     assert_eq!(token_info.amount, 10000);
@@ -218,8 +208,6 @@ async fn drain_vault_test() -> Result<()> {
     ];
     client.build_send_and_check(ixs, &funder).await?;
 
-    let token_info = client.get_token_2022_account_info(&vault.pubkey()).await?;
-
     let vault_authority_account = client
         .get_parsed_account::<VaultAuthority>(vault_authority_key)
         .await?;
@@ -233,8 +221,16 @@ async fn drain_vault_test() -> Result<()> {
             vault_bump: vault_authority_bump,
         }
     );
-    println!("Token amount left over: {}", token_info.amount);
-    assert_eq!(token_info.amount, 8500);
+
+    let vault_token_info = client.get_token_2022_account_info(&vault.pubkey()).await?;
+    println!("Vault tokens left over: {}", vault_token_info.amount);
+    assert_eq!(vault_token_info.amount, 0);
+
+    let funder_token_info = client
+        .get_token_2022_account_info(&funder_tokens.pubkey())
+        .await?;
+    println!("Funder tokens: {}", funder_token_info.amount);
+    assert_eq!(funder_token_info.amount, 8500);
 
     Ok(())
 }
