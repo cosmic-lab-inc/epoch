@@ -35,11 +35,7 @@ impl Warden {
 
     /// Update a user's Epoch token account under the hashed API key.
     /// This will error if the API key is already registered.
-    pub fn register_user(
-        &self,
-        api_key: String,
-        epoch_token_acct: Pubkey,
-    ) -> anyhow::Result<String> {
+    pub fn register_user(&self, api_key: String, epoch_vault: Pubkey) -> anyhow::Result<String> {
         let hashed_key = Hasher::hash(api_key.as_bytes())?;
 
         let existing_value = self.redis.get(hashed_key.clone())?;
@@ -51,7 +47,7 @@ impl Warden {
             None => {
                 let res = self
                     .redis
-                    .upsert(hashed_key, Some(epoch_token_acct.to_string()))?;
+                    .upsert(hashed_key, Some(epoch_vault.to_string()))?;
                 match res {
                     None => {
                         error!("Error registering user, upserted as None");
@@ -69,11 +65,11 @@ impl Warden {
     /// Update a user's Epoch token account under the hashed API key.
     /// Warning: This will overwrite the pubkey if the API key is already registered.
     /// For new users, use [`register_user`] instead.
-    pub fn update_user(&self, api_key: String, epoch_token_acct: Pubkey) -> anyhow::Result<String> {
+    pub fn update_user(&self, api_key: String, epoch_vault: Pubkey) -> anyhow::Result<String> {
         let hashed_key = Hasher::hash(api_key.as_bytes())?;
         let res = self
             .redis
-            .upsert(hashed_key, Some(epoch_token_acct.to_string()))?;
+            .upsert(hashed_key, Some(epoch_vault.to_string()))?;
         match res {
             None => {
                 error!("Error registering user, upserted as None");
@@ -87,12 +83,12 @@ impl Warden {
     }
 
     /// Delete the Redis key-value pair for the hashed API key.
-    pub fn delete_user(&self, api_key: String, epoch_token_acct: Pubkey) -> anyhow::Result<()> {
+    pub fn delete_user(&self, api_key: String, epoch_vault: Pubkey) -> anyhow::Result<()> {
         let hashed_key = Hasher::hash(api_key.as_bytes())?;
 
         let existing_value = self.redis.get(hashed_key.clone())?;
         match existing_value {
-            Some(value) => match epoch_token_acct.to_string() == value {
+            Some(value) => match epoch_vault.to_string() == value {
                 true => {
                     let res = self.redis.upsert(hashed_key, None)?;
                     info!("Deleted user: {:?}", res);

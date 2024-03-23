@@ -10,19 +10,24 @@ use futures::StreamExt;
 use gcs::bq::*;
 use log::*;
 use std::sync::Arc;
+use warden::Warden;
 
 const MAX_SIZE: usize = 262_144; // max payload size is 256k
+
+pub const EPOCH_API_KEY_HEADER: &str = "epoch_api_key";
 
 pub struct EpochHandler {
     pub client: BigQueryClient,
     pub decoder: Arc<ProgramDecoder>,
+    pub warden: Warden,
 }
 
 impl EpochHandler {
-    pub fn new(client: BigQueryClient) -> anyhow::Result<Self> {
+    pub fn new(client: BigQueryClient, redis_url: &str) -> anyhow::Result<Self> {
         Ok(Self {
             client,
             decoder: Arc::new(ProgramDecoder::new()?),
+            warden: Warden::new(redis_url)?,
         })
     }
 
@@ -41,14 +46,26 @@ impl EpochHandler {
     //
     //
     // Interact with Redis to validate hashed API key
-    // and attempt to debit EPOCH tokens from user's token account
+    // and attempt to debit EPOCH tokens from user's vault
     //
     //
-    
-    
-    
-    
-    
+
+    pub async fn register_user(
+        &self,
+        payload: Payload,
+        api_key: Option<String>,
+    ) -> EpochResult<String> {
+        match api_key {
+            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
+            Some(api_key) => {
+                let body = self.checked_payload(payload).await?;
+                let query = serde_json::from_slice::<EpochVault>(&body)?;
+
+                Ok(self.warden.register_user(api_key, query.epoch_vault)?)
+            }
+        }
+    }
+
     //
     //
     // Interact with Google BigQuery

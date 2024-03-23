@@ -12,7 +12,7 @@ use actix_cors::Cors;
 use actix_web::{
     get, post, web,
     web::{Data, Payload},
-    App, HttpResponse, HttpServer,
+    App, HttpRequest, HttpResponse, HttpServer,
 };
 use actix_web_httpauth::middleware::HttpAuthentication;
 use auth::*;
@@ -25,6 +25,7 @@ use gcs::bq::BigQueryClient;
 use handler::EpochHandler;
 use log::*;
 use logger::*;
+use std::collections::HashMap;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
@@ -66,7 +67,11 @@ async fn main() -> EpochResult<()> {
             return Err(EpochError::from(e));
         }
     };
-    let handler = match tokio::task::spawn_blocking(move || EpochHandler::new(bq_client)).await? {
+    let handler = match tokio::task::spawn_blocking(move || {
+        EpochHandler::new(bq_client, &epoch_config.redis_url())
+    })
+    .await?
+    {
         Ok(handler) => handler,
         Err(e) => {
             error!("Error creating EpochHandler: {:?}", e);
@@ -96,6 +101,7 @@ async fn main() -> EpochResult<()> {
             .service(filtered_registered_types)
             .service(all_registered_types)
             .service(test)
+            .service(register_user)
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
     })
     .bind(bind_address)?
@@ -205,6 +211,25 @@ async fn filtered_registered_types(
 async fn all_registered_types(state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
     let accts = state.handler.registered_types(None).await?;
     Ok(HttpResponse::Ok().json(accts))
+}
+
+#[post("/register-user")]
+async fn register_user(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+    req: HttpRequest,
+) -> EpochResult<HttpResponse> {
+    let epoch_api_key = req
+        .headers()
+        .get("epoch_api_key")
+        .map(|v| match v.to_str() {
+            Ok(s) => Some(s.to_string()),
+            Err(_) => None,
+        })
+        .unwrap_or_else(|| None);
+
+    let res = state.handler.register_user(payload, epoch_api_key).await?;
+    Ok(HttpResponse::Ok().json(res))
 }
 
 // ================================== ADMIN ================================== //

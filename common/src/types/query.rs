@@ -54,3 +54,10 @@ pub struct RegisteredType {
     pub account_discriminant: String,
     pub account_type: serde_json::Value,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EpochVault {
+    #[serde(serialize_with = "serialize_pubkey")]
+    #[serde(deserialize_with = "deserialize_pubkey")]
+    pub epoch_vault: Pubkey,
+}

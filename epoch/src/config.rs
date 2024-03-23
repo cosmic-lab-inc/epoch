@@ -22,4 +22,11 @@ impl EpochConfig {
         let contents = String::from_utf8(std::fs::read(path)?)?;
         Ok(serde_yaml::from_str(&contents)?)
     }
+
+    pub fn redis_url(&self) -> String {
+        format!(
+            "redis://{}:{}@{}:{}",
+            self.redis_username, self.redis_password, self.redis_host, self.redis_port
+        )
+    }
 }
