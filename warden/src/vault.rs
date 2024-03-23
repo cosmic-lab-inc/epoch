@@ -1,5 +1,3 @@
-// #![cfg(feature = "local-validator")]
-//
 // use anyhow::Result;
 // use common_utils::prelude::*;
 // use player_profile::{
