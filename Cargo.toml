@@ -23,7 +23,6 @@ keywords = ["solana"]
 
 [workspace.dependencies]
 anchor-gen = { version = "0.3.1" }
-#anchor-lang = { git = "https://github.com/staratlasmeta/anchor.git", branch = "token_2022" }
 anchor-lang = "0.29.0"
 anyhow = "1.0.75"
 base64 = "0.22.0"
