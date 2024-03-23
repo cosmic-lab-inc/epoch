@@ -46,7 +46,7 @@ impl Warden {
         match existing_value {
             Some(value) => {
                 error!("API key already registered for: {}", value);
-                return Err(anyhow::Error::msg("API key already registered"));
+                Err(anyhow::Error::msg("API key already registered"))
             }
             None => {
                 let res = self

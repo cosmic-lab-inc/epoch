@@ -10,7 +10,7 @@ pub struct RedisClient {
 
 impl RedisClient {
     pub fn new(redis_url: &str) -> anyhow::Result<Self> {
-        let client = Client::open(redis_url).map_err(|e| anyhow::Error::from(e))?;
+        let client = Client::open(redis_url).map_err(anyhow::Error::from)?;
         Ok(Self { client })
     }
 
