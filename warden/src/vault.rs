@@ -1,9 +1,6 @@
-use anchor_spl::token_2022::spl_token_2022;
 use anyhow::Result;
-use common_utils::prelude::anchor_spl::token_2022::spl_token_2022::extension::{
-    ExtensionType, StateWithExtensions,
-};
 use common_utils::prelude::*;
+use player_profile::state::{Profile, ProfileKey};
 use player_profile::{
     client::AddProfileKey, instructions::create_profile_ix, state::ProfilePermissions,
 };
@@ -206,6 +203,46 @@ async fn drain_vault_test() -> Result<()> {
         ),
     ];
     client.build_send_and_check(ixs, &funder).await?;
+
+    let profile_account = client
+        .get_wrapped_account::<Profile, Vec<ProfileKey>>(profile_key.pubkey())
+        .await?;
+
+    assert_eq!(
+        profile_account.header,
+        Profile {
+            version: 0,
+            auth_key_count: 1,
+            key_threshold: 1,
+            next_seq_id: 0,
+            created_at: profile_account.header.created_at,
+        }
+    );
+    assert_eq!(
+        profile_account.remaining,
+        vec![
+            ProfileKey {
+                key: key.pubkey(),
+                scope: player_profile::ID,
+                expire_time: -1,
+                permissions: ProfilePermissions::AUTH.bits().to_le_bytes(),
+            },
+            ProfileKey {
+                key: create_vault_key.pubkey(),
+                scope: profile_vault::ID,
+                expire_time: -1,
+                permissions: ProfileVaultPermissions::CREATE_VAULT_AUTHORITY
+                    .bits()
+                    .to_le_bytes(),
+            },
+            ProfileKey {
+                key: drain_vault_key.pubkey(),
+                scope: profile_vault::ID,
+                expire_time: -1,
+                permissions: ProfileVaultPermissions::DRAIN_VAULT.bits().to_le_bytes(),
+            },
+        ]
+    );
 
     let vault_authority_account = client
         .get_parsed_account::<VaultAuthority>(vault_authority_key)

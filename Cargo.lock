@@ -329,7 +329,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-access-control"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -354,7 +354,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-account"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -381,7 +381,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-constant"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-syn 0.25.26",
  "proc-macro2",
@@ -402,7 +402,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-error"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-syn 0.25.26",
  "proc-macro2",
@@ -424,7 +424,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-event"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -448,7 +448,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-interface"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -461,7 +461,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-program"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -484,7 +484,7 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-state"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -496,7 +496,7 @@ dependencies = [
 [[package]]
 name = "anchor-derive-accounts"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -589,7 +589,7 @@ dependencies = [
 [[package]]
 name = "anchor-lang"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "ahash 0.8.5",
  "anchor-attribute-access-control 0.25.26",
@@ -638,7 +638,7 @@ dependencies = [
 [[package]]
 name = "anchor-spl"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anchor-lang 0.25.26",
  "solana-program",
@@ -669,7 +669,7 @@ dependencies = [
 [[package]]
 name = "anchor-syn"
 version = "0.25.26"
-source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#1f2336cff441510f9ed1d0ab8521162f02eeaeaf"
+source = "git+https://github.com/staratlasmeta/anchor.git?branch=token_2022#e177467c5dc9db85d65f01f45b757bee40ec9b88"
 dependencies = [
  "anyhow",
  "bs58 0.3.1",
@@ -1231,7 +1231,7 @@ checksum = "4114279215a005bc675e386011e594e1d9b800918cea18fcadadcce864a2046b"
 dependencies = [
  "borsh-derive 0.10.3",
  "bytes",
- "hashbrown 0.13.2",
+ "hashbrown 0.12.3",
 ]
 
 [[package]]
