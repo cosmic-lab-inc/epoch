@@ -1,16 +1,13 @@
 use crate::{redis::redis_client::RedisClient, scrambler::Scrambler, HasherTrait, ToRedisKey};
-use anchor_lang::Id;
 use anchor_spl::associated_token;
 use common_utils::prelude::*;
 use log::{error, info};
-use player_profile::client::{find_key_in_profile};
+use player_profile::client::find_key_in_profile;
 use player_profile::state::{Profile, ProfileKey};
-use profile_vault::{
-    drain_vault_ix, ProfileVaultPermissions, VaultAuthority,
-};
+use profile_vault::{drain_vault_ix, ProfileVaultPermissions, VaultAuthority};
+use solana_sdk::bs58;
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
-use solana_sdk::bs58;
 
 pub const EPOCH_MINT: &str = "EPCHJ3JhGrx2y9NKR5BsmCLwBpFxFheMHDZsmn59BwAi";
 pub const EPOCH_PROTOCOL: &str = "EPCH4ot3VAbB6nfiy7mdZYuk9C8WyjuAkEhyLyhZshCU";
@@ -60,7 +57,7 @@ impl Warden {
         );
         Ok(epoch_vault)
     }
-    
+
     pub async fn debit_vault<T: ToRedisKey>(
         &self,
         api_key: &T,
@@ -79,18 +76,20 @@ impl Warden {
             epoch_protocol_signer.pubkey(),
             [profile_vault::ID],
             ProfileVaultPermissions::DRAIN_VAULT,
-        ).ok_or(
-            anyhow::anyhow!(
-                "Profile {} missing drain vault key",
-                profile
-            )
-        )?;
+        )
+        .ok_or(anyhow::anyhow!(
+            "Profile {} missing drain vault key",
+            profile
+        ))?;
 
         let mint = Pubkey::from_str(EPOCH_MINT)?;
         let (vault_auth, _) = VaultAuthority::find_program_address(&profile, &mint);
         let epoch_vault = Warden::find_epoch_vault(&vault_auth)?;
 
-        assert_eq!(epoch_protocol_signer.pubkey(), Pubkey::from_str(EPOCH_PROTOCOL)?);
+        assert_eq!(
+            epoch_protocol_signer.pubkey(),
+            Pubkey::from_str(EPOCH_PROTOCOL)?
+        );
         let protocol_vault = Warden::find_epoch_vault(&epoch_protocol_signer.pubkey())?;
 
         let ix = drain_vault_ix(
@@ -104,18 +103,17 @@ impl Warden {
             debit_amount,
             EPOCH_MINT_DECIMALS,
         );
-        match self.client
-          .build_send_and_check(
-              [ix],
-              epoch_protocol_signer,
-          )
-          .await {
-              Ok((sig, _slot)) => {
-                  Ok(bs58::encode(sig).into_string())
-              },
-              Err(e) => {
-                  Err(anyhow::anyhow!("Error debiting vault for Profile {} with error: {}", profile, e))
-          }
+        match self
+            .client
+            .build_send_and_check([ix], epoch_protocol_signer)
+            .await
+        {
+            Ok((sig, _slot)) => Ok(bs58::encode(sig).into_string()),
+            Err(e) => Err(anyhow::anyhow!(
+                "Error debiting vault for Profile {} with error: {}",
+                profile,
+                e
+            )),
         }
     }
 
@@ -211,8 +209,6 @@ impl Warden {
     }
 }
 
-
-
 #[cfg(tests)]
 mod tests {
     use crate::{redis::redis_client::RedisClient, scrambler::Scrambler, HasherTrait, ToRedisKey};
@@ -221,7 +217,7 @@ mod tests {
     use common_utils::prelude::solana_client::rpc_config::RpcRequestAirdropConfig;
     use common_utils::prelude::*;
     use log::{error, info};
-    use player_profile::client::{AddProfileKey, find_key_in_profile};
+    use player_profile::client::{find_key_in_profile, AddProfileKey};
     use player_profile::instructions::create_profile_ix;
     use player_profile::state::{Profile, ProfileKey, ProfilePermissions};
     use profile_vault::{
@@ -231,20 +227,20 @@ mod tests {
     use solana_sdk::native_token::LAMPORTS_PER_SOL;
     use solana_sdk::pubkey::Pubkey;
     use std::str::FromStr;
-    
+
     #[tokio::test]
     async fn test_debit_epoch_vault() -> anyhow::Result<()> {
         dotenv::dotenv().ok();
-    
+
         let client = get_client();
         let [user] = client.create_funded_keys().await?;
-    
+
         let epoch_protocol = Warden::read_keypair_from_env("EPOCH_PROTOCOL")?;
         let mint = Warden::read_keypair_from_env("EPOCH_MINT")?;
         let decimals = 2;
         println!("mint: {}", mint.pubkey());
         println!("protocol: {}", epoch_protocol.pubkey());
-    
+
         client
             .request_airdrop_with_config(
                 &epoch_protocol.pubkey(),
@@ -255,11 +251,11 @@ mod tests {
                 },
             )
             .await?;
-    
+
         let profile_key = Keypair::new();
         let (vault_auth, vault_bump) =
             VaultAuthority::find_program_address(&profile_key.pubkey(), &mint.pubkey());
-    
+
         let epoch_vault = associated_token::get_associated_token_address_with_program_id(
             &vault_auth,
             &mint.pubkey(),
@@ -270,7 +266,7 @@ mod tests {
             &mint.pubkey(),
             &Token2022::id(),
         );
-    
+
         let cfg = CreateMint2022Config {
             funder: Keypair::from_bytes(&user.to_bytes())?,
             mint: Keypair::from_bytes(&mint.to_bytes())?,
@@ -280,7 +276,7 @@ mod tests {
             fee_basis_points: 1500,
             decimals,
         };
-    
+
         match client
             .create_mint_2022_with_config(&user as &DynSigner, cfg)
             .await
@@ -296,7 +292,7 @@ mod tests {
             }
             Ok(_res) => Ok(()),
         }?;
-    
+
         let create_epoch_vault_ix = InstructionWithSigners::build(|_| {
             (
                 associated_token::instruction::create_associated_token_account_idempotent(
@@ -326,13 +322,13 @@ mod tests {
                 &user as &DynSigner,
             )
             .await?;
-    
+
         println!("Epoch vault: {}", epoch_vault);
         println!("Protocol vault: {}", protocol_vault);
         client
             .mint_to_token_2022_account(&user, &mint.pubkey(), epoch_vault, 10000, &epoch_protocol)
             .await?;
-    
+
         let create_profile_ixs = [
             create_profile_ix(
                 &profile_key,
@@ -358,7 +354,7 @@ mod tests {
         client
             .build_send_and_check(create_profile_ixs, &user)
             .await?;
-    
+
         // validate profile created correctly
         let profile_account = client
             .get_wrapped_account::<Profile, Vec<ProfileKey>>(profile_key.pubkey())
@@ -410,7 +406,7 @@ mod tests {
                 vault_bump,
             }
         );
-    
+
         // create Epoch user in Redis
         let redis_url = RedisClient::fmt_redis_url(
             "default",
@@ -423,7 +419,7 @@ mod tests {
         let api_key = "warden_test_api_key".to_string();
         let user_profile = warden.upsert_user(&api_key, profile_key.pubkey())?;
         assert_eq!(user_profile, profile_key.pubkey());
-    
+
         // pretend user made an API request and attempt to debit their vault.
         client
             .build_send_and_check(
@@ -441,18 +437,16 @@ mod tests {
                 &user,
             )
             .await?;
-    
+
         // validate vault states
         let vault_token_info = client.get_token_2022_account_info(&epoch_vault).await?;
         println!("Epoch vault: {}", vault_token_info.amount);
         assert_eq!(vault_token_info.amount, 0);
-    
+
         let funder_token_info = client.get_token_2022_account_info(&protocol_vault).await?;
         println!("Funder vault: {}", funder_token_info.amount);
         assert_eq!(funder_token_info.amount, 8500);
-    
+
         Ok(())
     }
-    
 }
-
