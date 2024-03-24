@@ -11,7 +11,6 @@ use profile_vault::{
     close_vault_ix, create_vault_authority_ix, drain_vault_ix, ProfileVaultPermissions,
     VaultAuthority,
 };
-use solana_sdk::commitment_config::CommitmentConfig;
 
 // Examples of more token extension tests and code
 // https://github.com/solana-labs/solana-program-library/blob/c38a1b5/token/program-2022-test/tests

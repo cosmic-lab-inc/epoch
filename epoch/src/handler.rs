@@ -9,7 +9,9 @@ use decoder::program_decoder::ProgramDecoder;
 use futures::StreamExt;
 use gcs::bq::*;
 use log::*;
+use serde::de::DeserializeOwned;
 use std::sync::Arc;
+use solana_sdk::pubkey::Pubkey;
 use warden::Warden;
 
 const MAX_SIZE: usize = 262_144; // max payload size is 256k
@@ -31,7 +33,7 @@ impl EpochHandler {
         })
     }
 
-    async fn checked_payload(&self, mut payload: Payload) -> EpochResult<BytesMut> {
+    async fn parse_query<T: DeserializeOwned>(&self, mut payload: Payload) -> EpochResult<T> {
         let mut body = BytesMut::new();
         while let Some(chunk) = payload.next().await {
             let chunk = chunk?;
@@ -40,17 +42,35 @@ impl EpochHandler {
             }
             body.extend_from_slice(&chunk);
         }
-        Ok(body)
+        Ok(serde_json::from_slice::<T>(&body)?)
     }
 
     //
     //
-    // Interact with Redis to validate hashed API key
-    // and attempt to debit EPOCH tokens from user's vault
+    // Interact with Warden to manage user API key and Epoch vault stored in Redis.
+    // If user requests data, validate API key against Redis data,
+    // then attempt to debit user's Epoch vault of tokens.
     //
     //
 
-    pub async fn register_user(
+    pub async fn debit_vault(
+        &self,
+        payload: Payload,
+        api_key: Option<String>,
+    ) -> anyhow::Result<()> {
+        let epoch_vault = self.read_user(api_key).await?;
+
+        Ok(())
+    }
+
+    pub async fn read_user(&self, api_key: Option<String>) -> EpochResult<Pubkey> {
+        match api_key {
+            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
+            Some(api_key) => Ok(self.warden.read_user(&api_key)?),
+        }
+    }
+
+    pub async fn create_user(
         &self,
         payload: Payload,
         api_key: Option<String>,
@@ -58,10 +78,22 @@ impl EpochHandler {
         match api_key {
             None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
             Some(api_key) => {
-                let body = self.checked_payload(payload).await?;
-                let query = serde_json::from_slice::<EpochVault>(&body)?;
+                let query = self.parse_query::<EpochVault>(payload).await?;
+                Ok(self.warden.create_user(&api_key, query.epoch_vault)?)
+            }
+        }
+    }
 
-                Ok(self.warden.register_user(api_key, query.epoch_vault)?)
+    pub async fn update_user(
+        &self,
+        payload: Payload,
+        api_key: Option<String>,
+    ) -> EpochResult<String> {
+        match api_key {
+            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
+            Some(api_key) => {
+                let query = self.parse_query::<EpochVault>(payload).await?;
+                Ok(self.warden.update_user(&api_key, query.epoch_vault)?)
             }
         }
     }
@@ -70,10 +102,8 @@ impl EpochHandler {
         match api_key {
             None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
             Some(api_key) => {
-                let body = self.checked_payload(payload).await?;
-                let query = serde_json::from_slice::<EpochVault>(&body)?;
-
-                Ok(self.warden.delete_user(api_key, query.epoch_vault)?)
+                let query = self.parse_query::<EpochVault>(payload).await?;
+                Ok(self.warden.delete_user(&api_key, query.epoch_vault)?)
             }
         }
     }
@@ -85,8 +115,7 @@ impl EpochHandler {
     //
 
     pub async fn account_id(&self, payload: Payload) -> EpochResult<Option<EpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccountId>(&body)?;
+        let query = self.parse_query::<QueryAccountId>(payload).await?;
         Ok(match self.client.account_id(&query).await? {
             None => None,
             Some(acct) => EpochAccount::try_from(acct).ok(),
@@ -94,8 +123,7 @@ impl EpochHandler {
     }
 
     pub async fn accounts(&self, payload: Payload) -> EpochResult<Vec<EpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryAccounts>(&body)?;
+        let query = self.parse_query::<QueryAccounts>(payload).await?;
         Ok(self
             .client
             .accounts(&query)
@@ -109,8 +137,7 @@ impl EpochHandler {
         &self,
         payload: Payload,
     ) -> anyhow::Result<Vec<DecodedEpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryDecodedAccounts>(&body)?;
+        let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
         let archive_accts = self.client.account_type(&query).await?;
 
         // TODO: par iter by wrapping ProgramDecoder in Arc
@@ -156,8 +183,7 @@ impl EpochHandler {
         &self,
         payload: Payload,
     ) -> anyhow::Result<Vec<JsonEpochAccount>> {
-        let body = self.checked_payload(payload).await?;
-        let query = serde_json::from_slice::<QueryDecodedAccounts>(&body)?;
+        let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
         let archive_accts = self.client.account_type(&query).await?;
 
         // TODO: par iter by making EpochAccount try from reference. Data must be borrowed Cow (use BytesWrapper)
@@ -210,9 +236,7 @@ impl EpochHandler {
         match payload {
             None => self.decoder.registred_types(),
             Some(payload) => {
-                let body = self.checked_payload(payload).await?;
-                let query = serde_json::from_slice::<QueryRegisteredTypes>(&body)?;
-
+                let query = self.parse_query::<QueryRegisteredTypes>(payload).await?;
                 Ok(self
                     .decoder
                     .registred_types()?

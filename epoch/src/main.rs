@@ -100,7 +100,7 @@ async fn main() -> EpochResult<()> {
             .service(filtered_registered_types)
             .service(all_registered_types)
             .service(test)
-            .service(register_user)
+            .service(create_user)
             .service(delete_user)
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
     })
@@ -213,8 +213,8 @@ async fn all_registered_types(state: Data<Arc<AppState>>) -> EpochResult<HttpRes
     Ok(HttpResponse::Ok().json(accts))
 }
 
-#[post("/register-user")]
-async fn register_user(
+#[post("/create-user")]
+async fn create_user(
     state: Data<Arc<AppState>>,
     payload: Payload,
     req: HttpRequest,
@@ -228,7 +228,7 @@ async fn register_user(
         })
         .unwrap_or_else(|| None);
 
-    let res = state.handler.register_user(payload, epoch_api_key).await?;
+    let res = state.handler.create_user(payload, epoch_api_key).await?;
     Ok(HttpResponse::Ok().json(res))
 }
 

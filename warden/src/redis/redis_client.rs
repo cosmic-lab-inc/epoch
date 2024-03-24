@@ -42,12 +42,6 @@ impl RedisClient {
         let old_val: Vec<Option<String>> = con.get(&key)?;
         info!("old Redis value: {:?}", old_val.first());
 
-        // let result: Option<String> = match &value {
-        //     Some(value) => con.set(&key, value),
-        //     None => con.del(&key),
-        // }?;
-        // info!("new Redis value: {:?}", result);
-
         let (result,): (Option<String>,) = match &value {
             Some(value) => redis::pipe()
                 .atomic()
