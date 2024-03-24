@@ -67,7 +67,11 @@ async fn main() -> EpochResult<()> {
         }
     };
     let handler = match tokio::task::spawn_blocking(move || {
-        EpochHandler::new(bq_client, &epoch_config.redis_url())
+        EpochHandler::new(
+            bq_client,
+            &epoch_config.redis_url(),
+            epoch_config.solana_rpc,
+        )
     })
     .await?
     {
@@ -102,6 +106,7 @@ async fn main() -> EpochResult<()> {
             .service(test)
             .service(create_user)
             .service(delete_user)
+            .service(user_balance)
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
     })
     .bind(bind_address)?
@@ -211,6 +216,21 @@ async fn filtered_registered_types(
 async fn all_registered_types(state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
     let accts = state.handler.registered_types(None).await?;
     Ok(HttpResponse::Ok().json(accts))
+}
+
+#[get("/user-balance")]
+async fn user_balance(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResult<HttpResponse> {
+    let epoch_api_key = req
+        .headers()
+        .get(EPOCH_API_KEY_HEADER)
+        .map(|v| match v.to_str() {
+            Ok(s) => Some(s.to_string()),
+            Err(_) => None,
+        })
+        .unwrap_or_else(|| None);
+
+    let res = state.handler.read_vault(epoch_api_key).await?;
+    Ok(HttpResponse::Ok().json(res))
 }
 
 #[post("/create-user")]

@@ -1,18 +1,23 @@
+use std::sync::Arc;
+
+use actix_web::web::{BytesMut, Payload};
+use common_utils::prelude::{DynSigner, RpcClientToken2022Ext};
+use futures::StreamExt;
+use log::*;
+use serde::de::DeserializeOwned;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
+
+use common::types::query::*;
+use decoder::program_decoder::ProgramDecoder;
+use gcs::bq::*;
+use warden::{ToRedisKey, Warden, EPOCH_MINT_DECIMALS};
+
 use crate::{
     account::EpochAccount,
     decoded_account::{DecodedEpochAccount, JsonEpochAccount},
     errors::{EpochError, EpochResult},
 };
-use actix_web::web::{BytesMut, Payload};
-use common::types::query::*;
-use decoder::program_decoder::ProgramDecoder;
-use futures::StreamExt;
-use gcs::bq::*;
-use log::*;
-use serde::de::DeserializeOwned;
-use std::sync::Arc;
-use solana_sdk::pubkey::Pubkey;
-use warden::Warden;
 
 const MAX_SIZE: usize = 262_144; // max payload size is 256k
 
@@ -22,14 +27,17 @@ pub struct EpochHandler {
     pub client: BigQueryClient,
     pub decoder: Arc<ProgramDecoder>,
     pub warden: Warden,
+    pub epoch_protocol_signer: Keypair,
 }
 
 impl EpochHandler {
-    pub fn new(client: BigQueryClient, redis_url: &str) -> anyhow::Result<Self> {
+    pub fn new(client: BigQueryClient, redis_url: &str, rpc_url: String) -> anyhow::Result<Self> {
+        let epoch_protocol_signer = Warden::read_keypair_from_env("EPOCH_PROTOCOL")?;
         Ok(Self {
             client,
             decoder: Arc::new(ProgramDecoder::new()?),
-            warden: Warden::new(redis_url)?,
+            warden: Warden::new(redis_url, rpc_url)?,
+            epoch_protocol_signer,
         })
     }
 
@@ -53,15 +61,54 @@ impl EpochHandler {
     //
     //
 
-    pub async fn debit_vault(
+    pub async fn debit_vault<T: ToRedisKey>(
         &self,
-        payload: Payload,
-        api_key: Option<String>,
-    ) -> anyhow::Result<()> {
-        let epoch_vault = self.read_user(api_key).await?;
-
-        Ok(())
+        api_key: &T,
+        debit_amount: u64,
+    ) -> EpochResult<String> {
+        Ok(self
+            .warden
+            .debit_vault(
+                api_key,
+                &self.epoch_protocol_signer as &DynSigner,
+                debit_amount,
+            )
+            .await?)
     }
+
+    async fn vault_balance<T: ToRedisKey>(&self, api_key: &T) -> EpochResult<f64> {
+        // validate vault states
+        let vault = self.warden.read_user(api_key)?;
+        let vault_token_info = self
+            .warden
+            .client
+            .get_token_2022_account_info(&vault)
+            .await
+            .map_err(|e| {
+                EpochError::Anyhow(anyhow::anyhow!(
+                    "Error reading vault token account: {:?}",
+                    e
+                ))
+            })?;
+        let factor = 10_f64.powi(EPOCH_MINT_DECIMALS as i32);
+        Ok(vault_token_info.amount as f64 / factor)
+    }
+
+    pub async fn read_vault(&self, api_key: Option<String>) -> EpochResult<f64> {
+        match api_key {
+            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
+            Some(api_key) => {
+                let balance = self.vault_balance(&api_key).await?;
+                Ok(balance)
+            }
+        }
+    }
+
+    //
+    //
+    // CRUD ops for user in Redis
+    //
+    //
 
     pub async fn read_user(&self, api_key: Option<String>) -> EpochResult<Pubkey> {
         match api_key {
@@ -74,7 +121,7 @@ impl EpochHandler {
         &self,
         payload: Payload,
         api_key: Option<String>,
-    ) -> EpochResult<String> {
+    ) -> EpochResult<Pubkey> {
         match api_key {
             None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
             Some(api_key) => {
@@ -88,12 +135,12 @@ impl EpochHandler {
         &self,
         payload: Payload,
         api_key: Option<String>,
-    ) -> EpochResult<String> {
+    ) -> EpochResult<Pubkey> {
         match api_key {
             None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
             Some(api_key) => {
                 let query = self.parse_query::<EpochVault>(payload).await?;
-                Ok(self.warden.update_user(&api_key, query.epoch_vault)?)
+                Ok(self.warden.upsert_user(&api_key, query.epoch_vault)?)
             }
         }
     }

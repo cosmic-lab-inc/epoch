@@ -25,7 +25,7 @@ impl EpochConfig {
     }
 
     pub fn redis_url(&self) -> String {
-        RedisClient::fmt_url(
+        RedisClient::fmt_redis_url(
             &self.redis_username,
             &self.redis_password,
             &self.redis_host,

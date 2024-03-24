@@ -12,7 +12,7 @@ impl RedisClient {
         Ok(Self { client })
     }
 
-    pub fn fmt_url(user: &str, password: &str, host: &str, port: u16) -> String {
+    pub fn fmt_redis_url(user: &str, password: &str, host: &str, port: u16) -> String {
         format!("redis://{user}:{password}@{host}:{port}")
     }
 
