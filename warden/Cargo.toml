@@ -25,3 +25,4 @@ common_utils = { git = "https://github.com/staratlasmeta/common_utils.git", bran
 player_profile = { git = "https://github.com/cosmic-lab-inc/player_profile.git", branch = "main", features = ["client"] }
 profile_vault = { git = "https://github.com/cosmic-lab-inc/player_profile.git", branch = "main", features = ["client"] }
 anchor-lang = { git = "https://github.com/staratlasmeta/anchor.git", branch = "token_2022" }
+dotenv = "0.7.2"
