@@ -70,8 +70,8 @@ index = "ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
 # but will not be enabled if you are building with
 # rust stable.
 #
-#[unstable]
-#registry-auth = true
+[unstable]
+registry-auth = true
 
 
 # 3b. Authenticated Downloads (Stable)
@@ -113,5 +113,5 @@ user-agent = "shipyard mFZsceD7dSG/cyW/LaM4EVLs/ytrCCoLh0t3ii0HDz/VfatMnhWaIam6H
 # much broader range of authentication contexts
 # gracefully vs. libgit2.
 #
-[net]
-git-fetch-with-cli = true
+#[net]
+#git-fetch-with-cli = true
