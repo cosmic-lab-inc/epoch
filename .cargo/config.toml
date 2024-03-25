@@ -107,8 +107,10 @@ registry-auth = true
 [http]
 user-agent = "shipyard mFZsceD7dSG/cyW/LaM4EVLs/ytrCCoLh0t3ii0HDz/VfatMnhWaIam6HCj2EY7cceM="
 
-#[net.ssh]
+[net.ssh]
+known-hosts = ["|1|Nd+IBXkJkrIrSIAKq6z8DDQ0pGg=|JhhNR5A5svgLwRskiKYyjc0fq7E= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHnY0iOesuCz8QzWY4Bdz+jyXlzC0H/Jo2qnnAQRgDam/gER2tfJjBtrwoEJwC8i5/aMMMB501UB4qvK6sM8iz0="]
 #known-hosts = ["ssh.shipyard.rs ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHnY0iOesuCz8QzWY4Bdz+jyXlzC0H/Jo2qnnAQRgDam/gER2tfJjBtrwoEJwC8i5/aMMMB501UB4qvK6sM8iz0="]
+
 
 # 4. Git Fetch With Cli
 #
