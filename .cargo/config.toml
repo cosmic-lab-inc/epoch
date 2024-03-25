@@ -56,8 +56,7 @@
 # ```
 #
 [registries.epoch]
-index = "https://git.shipyard.rs/epoch/crate-index.git"
-#index = "ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+index = "ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
 
 #[registry]
 #global-credential-providers = ["cargo:token"]
