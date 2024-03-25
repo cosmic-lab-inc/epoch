@@ -329,7 +329,8 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-access-control"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "0c7ff4465af092756e6edb293104604e79b01e1d71cb3f142b1b017ea5d7c36b"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -354,7 +355,8 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-account"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "9ca58f3f330d034fd89655d5fd6962bfc88daccb9a1bedfd3da2fd5a1ac7a971"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -381,7 +383,8 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-constant"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "f4af2c7bf1aa072e12a9e8c55ffb1d4cf15693e7dc7199248b219d4ed001b002"
 dependencies = [
  "anchor-syn 0.25.26",
  "proc-macro2",
@@ -402,7 +405,8 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-error"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "e1a0dcaf63012733dbd98adf927cce749e11d1e367e8d07eebd0ab193374c3a8"
 dependencies = [
  "anchor-syn 0.25.26",
  "proc-macro2",
@@ -424,7 +428,8 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-event"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "523b066c42ac00d5072573f784371f8ee589e5cfc8b06382384479e736284a80"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -448,7 +453,8 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-interface"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "c38ee435e1c9f6bfb524c88c231d6bf2e85c69718af348d31243d3b6e9ac0230"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -461,7 +467,8 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-program"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "fed7f1eeb56c3cfe45ae8fb4b5d16f68e7e7c414aca26099e0f0b0ee9c1dca1a"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -484,7 +491,8 @@ dependencies = [
 [[package]]
 name = "anchor-attribute-state"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "0735a536d460d47740e125ea5e4affe719628677e53178ca65e991c93726c2a2"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -496,7 +504,8 @@ dependencies = [
 [[package]]
 name = "anchor-derive-accounts"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "773752d1fe60846ca8ddaadd339134ba8638fe1c781654e0b579b5a4b321c09b"
 dependencies = [
  "anchor-syn 0.25.26",
  "anyhow",
@@ -589,7 +598,8 @@ dependencies = [
 [[package]]
 name = "anchor-lang"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "e42dca90c42b430cd8bc676782dfa50e52460a4a8d734b5f6b534f92de7ecea0"
 dependencies = [
  "ahash 0.8.5",
  "anchor-attribute-access-control 0.25.26",
@@ -638,7 +648,8 @@ dependencies = [
 [[package]]
 name = "anchor-spl"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "26d758fbfd70de95107bd94618c038b8397504de5a8e5c54663ed5760c1c49d9"
 dependencies = [
  "anchor-lang 0.25.26",
  "solana-program",
@@ -669,7 +680,8 @@ dependencies = [
 [[package]]
 name = "anchor-syn"
 version = "0.25.26"
-source = "git+https://github.com/cosmic-lab-inc/anchor.git?branch=main#76a5a1cc10cb0b7ec3c8289b4d6e59701bea53c3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "93ac8045df9b32fdbfa952b159950d69fc0fee4f3d4f4d24e708ee10100f00a7"
 dependencies = [
  "anyhow",
  "bs58 0.3.1",
@@ -1633,7 +1645,8 @@ dependencies = [
 [[package]]
 name = "common_proc"
 version = "0.1.5"
-source = "git+https://github.com/cosmic-lab-inc/common_utils.git?branch=main#6fa3147166c2517aa8dea2adb30d0de66b5ebd7c"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "b6e9b78fc30cd1084e354a872643698559f6d14549f6a6d23686d791afe1aa12"
 dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro-error",
@@ -1645,7 +1658,8 @@ dependencies = [
 [[package]]
 name = "common_utils"
 version = "0.2.0"
-source = "git+https://github.com/cosmic-lab-inc/common_utils.git?branch=main#6fa3147166c2517aa8dea2adb30d0de66b5ebd7c"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "8190365fead6274eee3e6ab463342be02701b3840246d3d9dc099bb27570510a"
 dependencies = [
  "anchor-lang 0.25.26",
  "anchor-spl",
@@ -3286,6 +3300,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "nom8"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae01545c9c7fc4486ab7debaf2aad7003ac19431791868fb2e8066df97fad2f8"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "num"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3721,7 +3744,8 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 [[package]]
 name = "player_profile"
 version = "0.7.3"
-source = "git+https://github.com/cosmic-lab-inc/player_profile.git?branch=main#7b128133eacad200450f09b5f994a98e1f2315f5"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "533142a5eb8c1e62b542e84e40f96c1d9e86ed7a1b188d13cab8b7243bfa7de6"
 dependencies = [
  "anchor-lang 0.25.26",
  "bitflags 1.3.2",
@@ -3729,6 +3753,7 @@ dependencies = [
  "common_utils",
  "serde",
  "strum",
+ "toml_edit 0.16.2",
  "wasm-bindgen",
 ]
 
@@ -3838,8 +3863,9 @@ dependencies = [
 
 [[package]]
 name = "profile_vault"
-version = "0.7.1"
-source = "git+https://github.com/cosmic-lab-inc/player_profile.git?branch=main#7b128133eacad200450f09b5f994a98e1f2315f5"
+version = "0.7.3"
+source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+checksum = "4ac9c1167a4cda27e7e132cdecd971c212cad89de8860fecad1a8117190b77af"
 dependencies = [
  "anchor-lang 0.25.26",
  "common_utils",
@@ -6335,9 +6361,27 @@ dependencies = [
 
 [[package]]
 name = "toml_datetime"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4553f467ac8e3d374bc9a177a26801e5d0f9b211aa1673fb137a403afd1c9cf5"
+
+[[package]]
+name = "toml_datetime"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3550f4e9685620ac18a50ed434eb3aec30db8ba93b0287467bca5826ea25baf1"
+
+[[package]]
+name = "toml_edit"
+version = "0.16.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd30deba9a1cd7153c22aecf93e86df639e7b81c622b0af8d9255e989991a7b7"
+dependencies = [
+ "indexmap 1.9.3",
+ "itertools",
+ "nom8",
+ "toml_datetime 0.5.1",
+]
 
 [[package]]
 name = "toml_edit"
@@ -6346,7 +6390,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
 dependencies = [
  "indexmap 2.2.6",
- "toml_datetime",
+ "toml_datetime 0.6.5",
  "winnow",
 ]
 
@@ -6357,7 +6401,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a8534fd7f78b5405e860340ad6575217ce99f38d4d5c8f2442cb5ecb50090e1"
 dependencies = [
  "indexmap 2.2.6",
- "toml_datetime",
+ "toml_datetime 0.6.5",
  "winnow",
 ]
 

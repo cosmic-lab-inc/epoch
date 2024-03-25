@@ -1,38 +1,117 @@
-[unstable]
-registry-auth = true
+# 1. Configuration Path
+# ---------------------
+#
+# For global (user-wide) configuration, put these
+# settings in:
+#
+#   ~/.cargo/config.toml
+#
+# Alternatively, you can put in a crate
+# subdirectory for the settings to only apply
+# when working in that subdirectory, i.e. for a
+# crate at
+#
+#   ~/src/my-crate
+#
+# put settings in
+#
+#   ~/src/my-crate/.cargo/config.toml
 
-[registries.star-atlas]
-index = "ssh://git@ssh.shipyard.rs/star-atlas/crate-index.git"
 
+# 2. Registries Entry
+# -------------------
+#
+# Maps a registry name to an index url
+# so Cargo knows where to fetch data
+# from for dependencies from that registry.
+#
+# The index url used below is for ssh-based auth
+# to the crate index repo. You will need to have
+# added an ssh public key for this to work. use
+# the "Add SSH Public Key" form on this page
+# to do so.
+#
+# NOTE: the `index` value below, i.e.:
+#
+#  ssh://git@ssh.shipyard.rs/epoch/crate-index.git
+#
+# is the actual value you should use in your
+# configuration, assuming SSH-based auth.
+#
+# NOTE: this example names the registry
+# "cosmic-lab", but you can use whatever
+# name you want. the name will need to match
+# whatever you use in Cargo.toml files for deps
+# that are from your registry, e.g.:
+#
+# ```toml
+# # in Cargo.toml
+# [dependencies.my-crate]
+# version = "1.2.3"
+# registry = "cosmic-lab"
+# ```
+#
+[registries.epoch]
+index = "ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+
+#[registry]
+#global-credential-providers = ["cargo:token"]
+
+# 3a. Authenticated Downloads (Nightly)
+# -------------------------------------
+#
+# Enable registry-auth feature: this allows the
+# use of the registry-auth unstable feature when
+# using cargo. It is equivalent to passing
+# `-Z registry-auth` to a cargo command.
+#
+# This is our recommended way to configure authenticated
+# downloads if you are building with rust nightly,
+# but will not be enabled if you are building with
+# rust stable.
+#
+#[unstable]
+#registry-auth = true
+
+
+# 3b. Authenticated Downloads (Stable)
+# --------------------------------
+#
+# This setting is something of a hack to get Cargo
+# to send an auth token along with download requests,
+# for use until RFC 3193 (registry-auth) is stabilized.
+#
+# If you are building with rust stable, this is the
+# configuration you want. If you are building with
+# nightly, the unstable registry-auth feature is
+# recommended instead.
+#
+# NOTE: this setting instructs Cargo to use
+# the provided user-agent header for all requests,
+# which will almost undoubtedly include requests
+# to Crates.io and possibly other (non-Shipyard.rs)
+# servers. However, this is preferable, in our minds,
+# to allowing crates to be downloaded over the public
+# Internet with zero authentication.
+#
+# NOTE: the token value ('6MZafJNolbd...')
+# is only an example. you should substitute an
+# actual token value (create one on the Tokens page)
+# instead of copying the example verbatim.
+#
+[http]
+user-agent = "shipyard mFZsceD7dSG/cyW/LaM4EVLs/ytrCCoLh0t3ii0HDz/VfatMnhWaIam6HCj2EY7cceM="
+
+
+# 4. Git Fetch With Cli
+#
+# This setting is **strongly** recommended,
+# although not absolutely required. It
+# instructs cargo to use git (the command-line
+# program) to perform clone/pull instead of
+# the libgit2 library. Git handles a
+# much broader range of authentication contexts
+# gracefully vs. libgit2.
+#
 [net]
 git-fetch-with-cli = true
-
-[registry]
-global-credential-providers = ["cargo:token"]
-## Uncomment if on stable
-## Make sure to gitignore this file if uncommented
-## authenticated downloads
-## -----------------------
-##
-## this setting is a hack to get cargo
-## to send an auth token along with
-## download requests. until RFC 3193 is
-## implemented, this is our solution to ensure
-## that crates can't be downloaded over the
-## public internet with zero authentication (!)
-##
-## note: this setting is only needed if you are
-## not using the currently unstable registry-auth
-## feature in cargo. this setting is only available
-## in cargo nightly 2022-11-17 or newer currently,
-## and requires the unstable registry-auth feature
-## to be enabled.
-##
-## note: the token value ('6MZafJNolbd...')
-## is only an example. you should substitute an
-## actual token value (create one on the
-## Shipyard.rs/tokens page) instead of copying
-## the example verbatim.
-##
-#[http]
-#user-agent = "shipyard 6MZafJNolbdX6/NYE4q5lh7sPGl5fC8MFa5Ae4SbHHpULrEGMSK2/dKTuqxpGUQZTAE="
