@@ -119,5 +119,5 @@ known-hosts = ["ssh.shipyard.rs ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAy
 # much broader range of authentication contexts
 # gracefully vs. libgit2.
 #
-[net]
-git-fetch-with-cli = true
+#[net]
+#git-fetch-with-cli = true
