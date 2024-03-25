@@ -1,125 +1,19 @@
 # For more config options:
 # https://doc.rust-lang.org/cargo/reference/config.html
 
-
-# 1. Configuration Path
-# ---------------------
-#
-# For global (user-wide) configuration, put these
-# settings in:
-#
-#   ~/.cargo/config.toml
-#
-# Alternatively, you can put in a crate
-# subdirectory for the settings to only apply
-# when working in that subdirectory, i.e. for a
-# crate at
-#
-#   ~/src/my-crate
-#
-# put settings in
-#
-#   ~/src/my-crate/.cargo/config.toml
-
-
-# 2. Registries Entry
-# -------------------
-#
-# Maps a registry name to an index url
-# so Cargo knows where to fetch data
-# from for dependencies from that registry.
-#
-# The index url used below is for ssh-based auth
-# to the crate index repo. You will need to have
-# added an ssh public key for this to work. use
-# the "Add SSH Public Key" form on this page
-# to do so.
-#
-# NOTE: the `index` value below, i.e.:
-#
-#  ssh://git@ssh.shipyard.rs/epoch/crate-index.git
-#
-# is the actual value you should use in your
-# configuration, assuming SSH-based auth.
-#
-# NOTE: this example names the registry
-# "cosmic-lab", but you can use whatever
-# name you want. the name will need to match
-# whatever you use in Cargo.toml files for deps
-# that are from your registry, e.g.:
-#
-# ```toml
-# # in Cargo.toml
-# [dependencies.my-crate]
-# version = "1.2.3"
-# registry = "cosmic-lab"
-# ```
-#
 [registries.epoch]
 index = "ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
+token = "mFZsceD7dSG/cyW/LaM4EVLs/ytrCCoLh0t3ii0HDz/VfatMnhWaIam6HCj2EY7cceM="
 
 [registry]
 global-credential-providers = ["cargo:token"]
 
-# 3a. Authenticated Downloads (Nightly)
-# -------------------------------------
-#
-# Enable registry-auth feature: this allows the
-# use of the registry-auth unstable feature when
-# using cargo. It is equivalent to passing
-# `-Z registry-auth` to a cargo command.
-#
-# This is our recommended way to configure authenticated
-# downloads if you are building with rust nightly,
-# but will not be enabled if you are building with
-# rust stable.
-#
-[unstable]
-registry-auth = true
-
-
-# 3b. Authenticated Downloads (Stable)
-# --------------------------------
-#
-# This setting is something of a hack to get Cargo
-# to send an auth token along with download requests,
-# for use until RFC 3193 (registry-auth) is stabilized.
-#
-# If you are building with rust stable, this is the
-# configuration you want. If you are building with
-# nightly, the unstable registry-auth feature is
-# recommended instead.
-#
-# NOTE: this setting instructs Cargo to use
-# the provided user-agent header for all requests,
-# which will almost undoubtedly include requests
-# to Crates.io and possibly other (non-Shipyard.rs)
-# servers. However, this is preferable, in our minds,
-# to allowing crates to be downloaded over the public
-# Internet with zero authentication.
-#
-# NOTE: the token value ('6MZafJNolbd...')
-# is only an example. you should substitute an
-# actual token value (create one on the Tokens page)
-# instead of copying the example verbatim.
-#
-[http]
-user-agent = "shipyard mFZsceD7dSG/cyW/LaM4EVLs/ytrCCoLh0t3ii0HDz/VfatMnhWaIam6HCj2EY7cceM="
+#[http]
+#user-agent = "shipyard mFZsceD7dSG/cyW/LaM4EVLs/ytrCCoLh0t3ii0HDz/VfatMnhWaIam6HCj2EY7cceM="
 
 [net.ssh]
 known-hosts = ["|1|Nd+IBXkJkrIrSIAKq6z8DDQ0pGg=|JhhNR5A5svgLwRskiKYyjc0fq7E= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHnY0iOesuCz8QzWY4Bdz+jyXlzC0H/Jo2qnnAQRgDam/gER2tfJjBtrwoEJwC8i5/aMMMB501UB4qvK6sM8iz0="]
 #known-hosts = ["ssh.shipyard.rs ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHnY0iOesuCz8QzWY4Bdz+jyXlzC0H/Jo2qnnAQRgDam/gER2tfJjBtrwoEJwC8i5/aMMMB501UB4qvK6sM8iz0="]
 
-
-# 4. Git Fetch With Cli
-#
-# This setting is **strongly** recommended,
-# although not absolutely required. It
-# instructs cargo to use git (the command-line
-# program) to perform clone/pull instead of
-# the libgit2 library. Git handles a
-# much broader range of authentication contexts
-# gracefully vs. libgit2.
-#
 [net]
 git-fetch-with-cli = true
