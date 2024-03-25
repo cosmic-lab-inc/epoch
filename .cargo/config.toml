@@ -1,3 +1,7 @@
+# For more config options:
+# https://doc.rust-lang.org/cargo/reference/config.html
+
+
 # 1. Configuration Path
 # ---------------------
 #
@@ -102,6 +106,8 @@ registry-auth = true
 [http]
 user-agent = "shipyard mFZsceD7dSG/cyW/LaM4EVLs/ytrCCoLh0t3ii0HDz/VfatMnhWaIam6HCj2EY7cceM="
 
+[net.ssh]
+known-hosts = ["ssh.shipyard.rs ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHnY0iOesuCz8QzWY4Bdz+jyXlzC0H/Jo2qnnAQRgDam/gER2tfJjBtrwoEJwC8i5/aMMMB501UB4qvK6sM8iz0="]
 
 # 4. Git Fetch With Cli
 #
