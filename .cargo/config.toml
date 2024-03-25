@@ -58,8 +58,8 @@
 [registries.epoch]
 index = "ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
 
-#[registry]
-#global-credential-providers = ["cargo:token"]
+[registry]
+global-credential-providers = ["cargo:token"]
 
 # 3a. Authenticated Downloads (Nightly)
 # -------------------------------------
