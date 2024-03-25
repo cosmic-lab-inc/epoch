@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use actix_web::web::{BytesMut, Payload};
+use actix_web::HttpRequest;
 use common_utils::prelude::{DynSigner, RpcClientToken2022Ext};
 use futures::StreamExt;
 use log::*;
@@ -9,6 +10,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 
 use common::types::query::*;
+use common::VaultBalance;
 use decoder::program_decoder::ProgramDecoder;
 use gcs::bq::*;
 use warden::{ToRedisKey, Warden, EPOCH_MINT_DECIMALS};
@@ -53,6 +55,21 @@ impl EpochHandler {
         Ok(serde_json::from_slice::<T>(&body)?)
     }
 
+    pub fn parse_api_key_header(req: HttpRequest) -> EpochResult<String> {
+        match req
+            .headers()
+            .get(EPOCH_API_KEY_HEADER)
+            .map(|v| match v.to_str() {
+                Ok(s) => Some(s.to_string()),
+                Err(_) => None,
+            })
+            .unwrap_or_else(|| None)
+        {
+            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
+            Some(api_key) => Ok(api_key),
+        }
+    }
+
     //
     //
     // Interact with Warden to manage user API key and Epoch vault stored in Redis.
@@ -61,6 +78,7 @@ impl EpochHandler {
     //
     //
 
+    /// Returns signature of the debit transaction
     pub async fn debit_vault<T: ToRedisKey>(
         &self,
         api_key: &T,
@@ -76,32 +94,8 @@ impl EpochHandler {
             .await?)
     }
 
-    async fn vault_balance<T: ToRedisKey>(&self, api_key: &T) -> EpochResult<f64> {
-        // validate vault states
-        let vault = self.warden.read_user(api_key)?;
-        let vault_token_info = self
-            .warden
-            .client
-            .get_token_2022_account_info(&vault)
-            .await
-            .map_err(|e| {
-                EpochError::Anyhow(anyhow::anyhow!(
-                    "Error reading vault token account: {:?}",
-                    e
-                ))
-            })?;
-        let factor = 10_f64.powi(EPOCH_MINT_DECIMALS as i32);
-        Ok(vault_token_info.amount as f64 / factor)
-    }
-
-    pub async fn read_vault(&self, api_key: Option<String>) -> EpochResult<f64> {
-        match api_key {
-            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
-            Some(api_key) => {
-                let balance = self.vault_balance(&api_key).await?;
-                Ok(balance)
-            }
-        }
+    pub async fn user_balance<T: ToRedisKey>(&self, api_key: &T) -> EpochResult<VaultBalance> {
+        Ok(self.warden.user_balance(api_key).await?)
     }
 
     //
@@ -109,50 +103,37 @@ impl EpochHandler {
     // CRUD ops for user in Redis
     //
     //
+    
 
-    pub async fn read_user(&self, api_key: Option<String>) -> EpochResult<Pubkey> {
-        match api_key {
-            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
-            Some(api_key) => Ok(self.warden.read_user(&api_key)?),
-        }
+    pub async fn read_user<T: ToRedisKey>(&self, api_key: &T) -> EpochResult<Pubkey> {
+        Ok(self.warden.read_user(api_key)?)
     }
 
-    pub async fn create_user(
+    pub async fn create_user<T: ToRedisKey>(
         &self,
         payload: Payload,
-        api_key: Option<String>,
+        api_key: &T,
     ) -> EpochResult<Pubkey> {
-        match api_key {
-            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
-            Some(api_key) => {
-                let query = self.parse_query::<EpochVault>(payload).await?;
-                Ok(self.warden.create_user(&api_key, query.epoch_vault)?)
-            }
-        }
+        let query = self.parse_query::<EpochProfile>(payload).await?;
+        Ok(self.warden.create_user(api_key, query.profile)?)
     }
 
-    pub async fn update_user(
+    pub async fn update_user<T: ToRedisKey>(
         &self,
         payload: Payload,
-        api_key: Option<String>,
+        api_key: &T,
     ) -> EpochResult<Pubkey> {
-        match api_key {
-            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
-            Some(api_key) => {
-                let query = self.parse_query::<EpochVault>(payload).await?;
-                Ok(self.warden.upsert_user(&api_key, query.epoch_vault)?)
-            }
-        }
+        let query = self.parse_query::<EpochProfile>(payload).await?;
+        Ok(self.warden.upsert_user(api_key, query.profile)?)
     }
 
-    pub async fn delete_user(&self, payload: Payload, api_key: Option<String>) -> EpochResult<()> {
-        match api_key {
-            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
-            Some(api_key) => {
-                let query = self.parse_query::<EpochVault>(payload).await?;
-                Ok(self.warden.delete_user(&api_key, query.epoch_vault)?)
-            }
-        }
+    pub async fn delete_user<T: ToRedisKey>(
+        &self,
+        payload: Payload,
+        api_key: &T,
+    ) -> EpochResult<()> {
+        let query = self.parse_query::<EpochProfile>(payload).await?;
+        Ok(self.warden.delete_user(api_key, query.profile)?)
     }
 
     //
@@ -226,10 +207,16 @@ impl EpochHandler {
         Ok(decoded_accts)
     }
 
-    pub async fn json_decoded_accounts(
+    pub async fn json_decoded_accounts<T: ToRedisKey>(
         &self,
         payload: Payload,
+        api_key: &T,
+        debit_uiamount: f64,
     ) -> anyhow::Result<Vec<JsonEpochAccount>> {
+        let debit_amount = Warden::to_real_amount(debit_uiamount);
+        let debit_sig = self.debit_vault(api_key, debit_amount).await?;
+        info!("Debit transaction signature: {}", debit_sig);
+
         let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
         let archive_accts = self.client.account_type(&query).await?;
 

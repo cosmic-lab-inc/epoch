@@ -56,8 +56,8 @@ pub struct RegisteredType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EpochVault {
+pub struct EpochProfile {
     #[serde(serialize_with = "serialize_pubkey")]
     #[serde(deserialize_with = "deserialize_pubkey")]
-    pub epoch_vault: Pubkey,
+    pub profile: Pubkey,
 }

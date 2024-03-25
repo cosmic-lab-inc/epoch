@@ -198,8 +198,13 @@ async fn borsh_decoded_accounts(
 async fn json_decoded_accounts(
     state: Data<Arc<AppState>>,
     payload: Payload,
+    req: HttpRequest,
 ) -> EpochResult<HttpResponse> {
-    let accts = state.handler.json_decoded_accounts(payload).await?;
+    let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
+    let accts = state
+        .handler
+        .json_decoded_accounts(payload, &epoch_api_key, 1_f64)
+        .await?;
     Ok(HttpResponse::Ok().json(accts))
 }
 
@@ -220,16 +225,8 @@ async fn all_registered_types(state: Data<Arc<AppState>>) -> EpochResult<HttpRes
 
 #[get("/user-balance")]
 async fn user_balance(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResult<HttpResponse> {
-    let epoch_api_key = req
-        .headers()
-        .get(EPOCH_API_KEY_HEADER)
-        .map(|v| match v.to_str() {
-            Ok(s) => Some(s.to_string()),
-            Err(_) => None,
-        })
-        .unwrap_or_else(|| None);
-
-    let res = state.handler.read_vault(epoch_api_key).await?;
+    let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
+    let res = state.handler.user_balance(&epoch_api_key).await?;
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -239,17 +236,9 @@ async fn create_user(
     payload: Payload,
     req: HttpRequest,
 ) -> EpochResult<HttpResponse> {
-    let epoch_api_key = req
-        .headers()
-        .get(EPOCH_API_KEY_HEADER)
-        .map(|v| match v.to_str() {
-            Ok(s) => Some(s.to_string()),
-            Err(_) => None,
-        })
-        .unwrap_or_else(|| None);
-
-    let res = state.handler.create_user(payload, epoch_api_key).await?;
-    Ok(HttpResponse::Ok().json(res))
+    let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
+    let res = state.handler.create_user(payload, &epoch_api_key).await?;
+    Ok(HttpResponse::Ok().json(res.to_string()))
 }
 
 #[post("/delete-user")]
@@ -258,17 +247,9 @@ async fn delete_user(
     payload: Payload,
     req: HttpRequest,
 ) -> EpochResult<HttpResponse> {
-    let epoch_api_key = req
-        .headers()
-        .get(EPOCH_API_KEY_HEADER)
-        .map(|v| match v.to_str() {
-            Ok(s) => Some(s.to_string()),
-            Err(_) => None,
-        })
-        .unwrap_or_else(|| None);
-
-    let res = state.handler.delete_user(payload, epoch_api_key).await?;
-    Ok(HttpResponse::Ok().json(res))
+    let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
+    state.handler.delete_user(payload, &epoch_api_key).await?;
+    Ok(HttpResponse::Ok().json("User deleted"))
 }
 
 // ================================== ADMIN ================================== //

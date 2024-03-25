@@ -26,3 +26,4 @@ dotenv = { workspace = true }
 player_profile = { version = "0.7.3", registry = "epoch", features = ["client"] }
 profile_vault = { versions = "0.7.3", registry = "epoch", features = ["client"] }
 anchor-lang = { verion = "0.25.26", registry = "epoch" }
+common = { path = "../common" }

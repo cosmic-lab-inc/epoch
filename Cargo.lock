@@ -6677,6 +6677,7 @@ dependencies = [
  "anchor-lang 0.25.26",
  "anyhow",
  "argon2",
+ "common",
  "common_utils",
  "dotenv",
  "log",
