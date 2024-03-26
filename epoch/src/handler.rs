@@ -103,7 +103,6 @@ impl EpochHandler {
     // CRUD ops for user in Redis
     //
     //
-    
 
     pub async fn read_user<T: ToRedisKey>(&self, api_key: &T) -> EpochResult<Pubkey> {
         Ok(self.warden.read_user(api_key)?)
@@ -214,8 +213,8 @@ impl EpochHandler {
         debit_uiamount: f64,
     ) -> anyhow::Result<Vec<JsonEpochAccount>> {
         let debit_amount = Warden::to_real_amount(debit_uiamount);
-        let debit_sig = self.debit_vault(api_key, debit_amount).await?;
-        info!("Debit transaction signature: {}", debit_sig);
+        // let debit_sig = self.debit_vault(api_key, debit_amount).await?;
+        // info!("Debit transaction signature: {}", debit_sig);
 
         let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
         let archive_accts = self.client.account_type(&query).await?;
@@ -268,12 +267,12 @@ impl EpochHandler {
         payload: Option<Payload>,
     ) -> anyhow::Result<Vec<RegisteredType>> {
         match payload {
-            None => self.decoder.registred_types(),
+            None => self.decoder.registered_types(),
             Some(payload) => {
                 let query = self.parse_query::<QueryRegisteredTypes>(payload).await?;
                 Ok(self
                     .decoder
-                    .registred_types()?
+                    .registered_types()?
                     .into_iter()
                     .filter_map(|t| {
                         match (&query.program_name, &query.program, &query.discriminant) {

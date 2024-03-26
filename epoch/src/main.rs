@@ -107,6 +107,7 @@ async fn main() -> EpochResult<()> {
             .service(create_user)
             .service(delete_user)
             .service(user_balance)
+            .service(read_user)
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
     })
     .bind(bind_address)?
@@ -228,6 +229,13 @@ async fn user_balance(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResu
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
     let res = state.handler.user_balance(&epoch_api_key).await?;
     Ok(HttpResponse::Ok().json(res))
+}
+
+#[get("/read-user")]
+async fn read_user(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResult<HttpResponse> {
+    let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
+    let res = state.handler.read_user(&epoch_api_key).await?;
+    Ok(HttpResponse::Ok().json(res.to_string()))
 }
 
 #[post("/create-user")]

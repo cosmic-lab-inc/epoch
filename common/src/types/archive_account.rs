@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct ArchiveAccount {
     pub key: Pubkey,
     /// historical snapshot slot at which this state existed

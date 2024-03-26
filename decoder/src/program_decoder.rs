@@ -95,7 +95,7 @@ impl ProgramDecoder {
             .ok_or_else(|| anyhow::anyhow!("No IDL found for program"))
     }
 
-    pub fn registred_types(&self) -> anyhow::Result<Vec<RegisteredType>> {
+    pub fn registered_types(&self) -> anyhow::Result<Vec<RegisteredType>> {
         let registered_types: Vec<anyhow::Result<Vec<RegisteredType>>> = PROGRAMS
             .iter()
             .map(|(_, program_id)| self.program_registered_types(program_id))
@@ -114,15 +114,18 @@ impl ProgramDecoder {
         let idl_str = self.idl(program_id)?;
         let idl = serde_json::from_str::<Value>(&idl_str)?;
         let accounts = serde_json::from_value::<Vec<Value>>(idl["accounts"].clone())?;
-        Ok(accounts
+        let types = serde_json::from_value::<Vec<Value>>(idl["types"].clone())?;
+        let schemas = accounts
             .into_iter()
+            .chain(types)
             .map(|raw_acct| RegisteredType {
                 program_name: idl["name"].as_str().unwrap().to_string(),
                 program: *program_id,
-                account_discriminant: raw_acct["name"].as_str().unwrap().to_string(),
-                account_type: raw_acct,
+                discriminant: raw_acct["name"].as_str().unwrap().to_string(),
+                schema: raw_acct,
             })
-            .collect::<Vec<RegisteredType>>())
+            .collect::<Vec<RegisteredType>>();
+        Ok(schemas)
     }
 
     pub fn name_to_discrim(&self, account_name: &str) -> [u8; 8] {

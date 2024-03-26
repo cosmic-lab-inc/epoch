@@ -51,8 +51,8 @@ pub struct RegisteredType {
     #[serde(serialize_with = "serialize_pubkey")]
     #[serde(deserialize_with = "deserialize_pubkey")]
     pub program: Pubkey,
-    pub account_discriminant: String,
-    pub account_type: serde_json::Value,
+    pub discriminant: String,
+    pub schema: serde_json::Value,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
