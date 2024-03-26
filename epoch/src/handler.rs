@@ -279,8 +279,7 @@ impl EpochHandler {
                             (Some(program_name), Some(program), Some(discriminant)) => {
                                 if t.program_name.to_lowercase() == *program_name.to_lowercase()
                                     && t.program == *program
-                                    && t.account_discriminant.to_lowercase()
-                                        == *discriminant.to_lowercase()
+                                    && t.discriminant.to_lowercase() == *discriminant.to_lowercase()
                                 {
                                     Some(t)
                                 } else {
@@ -298,8 +297,7 @@ impl EpochHandler {
                             }
                             (Some(program_name), None, Some(discriminant)) => {
                                 if t.program_name.to_lowercase() == *program_name.to_lowercase()
-                                    && t.account_discriminant.to_lowercase()
-                                        == *discriminant.to_lowercase()
+                                    && t.discriminant.to_lowercase() == *discriminant.to_lowercase()
                                 {
                                     Some(t)
                                 } else {
@@ -315,8 +313,7 @@ impl EpochHandler {
                             }
                             (None, Some(program), Some(discriminant)) => {
                                 if t.program == *program
-                                    && t.account_discriminant.to_lowercase()
-                                        == *discriminant.to_lowercase()
+                                    && t.discriminant.to_lowercase() == *discriminant.to_lowercase()
                                 {
                                     Some(t)
                                 } else {
@@ -331,9 +328,7 @@ impl EpochHandler {
                                 }
                             }
                             (None, None, Some(discriminant)) => {
-                                if t.account_discriminant.to_lowercase()
-                                    == *discriminant.to_lowercase()
-                                {
+                                if t.discriminant.to_lowercase() == *discriminant.to_lowercase() {
                                     Some(t)
                                 } else {
                                     None
