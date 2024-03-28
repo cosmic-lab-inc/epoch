@@ -63,6 +63,12 @@ impl Warden {
         Ok(Keypair::from_bytes(&raw)?)
     }
 
+    /// UNIX timestamp (in seconds) of the given slot.
+    pub async fn get_slot_timestamp(&self, slot: u64) -> anyhow::Result<Option<i64>> {
+        let block = self.client.get_block(slot).await?;
+        Ok(block.block_time)
+    }
+
     pub async fn airdrop(&self, key: Pubkey) -> anyhow::Result<()> {
         if self.is_mainnet {
             warn!("Airdrop requested on mainnet");
@@ -203,17 +209,12 @@ impl Warden {
             .value
             .ok_or(WardenError::TokenAccountNotFound(vault.to_string()))?;
 
-        // errors with InvalidAccountData because ExtensionType is not defined in the program
         let state = StateWithExtensions::<spl_token_2022::state::Account>::unpack(&info.data)?;
 
-        let transfer_fee_amount = match state.get_extension::<TransferFeeAmount>() {
-            Ok(ext) => Ok(ext),
-            Err(e) => {
-                error!("Error parsing vault TransferAmount extension: {:?}", e);
-                Err(e)
-            }
-        }?;
-        let withheld_amount: u64 = transfer_fee_amount.withheld_amount.into();
+        let withheld_amount = client
+            .get_token_2022_transfer_fee_withheld_amount(&state)
+            .await?;
+
         let factor = 10_f64.powi(EPOCH_MINT_DECIMALS as i32);
         let vault_info = VaultBalance {
             amount: state.base.amount,

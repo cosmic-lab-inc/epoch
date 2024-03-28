@@ -23,7 +23,7 @@ uuid = { version = "1.3.0", features = [
 ] }
 dotenv = { workspace = true }
 common = { path = "../common" }
-common_utils = { version = "0.2.0", registry = "epoch" }
+common_utils = { version = "0.2.1", registry = "epoch" }
 player_profile = { version = "0.7.4", registry = "epoch", features = ["client"] }
 profile_vault = { version = "0.7.4", registry = "epoch", features = ["client"] }
 anchor-lang = { verion = "0.25.26", registry = "epoch" }

@@ -1657,9 +1657,9 @@ dependencies = [
 
 [[package]]
 name = "common_utils"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
-checksum = "8190365fead6274eee3e6ab463342be02701b3840246d3d9dc099bb27570510a"
+checksum = "29fb4fc1e6ccf5e5de77b0b131806a33e3e13afa43df6cd6785140a14d962fff"
 dependencies = [
  "anchor-lang 0.25.26",
  "anchor-spl",

@@ -192,6 +192,7 @@ impl BigQueryClient {
                 true => "AND",
             };
             query = format!("{} {} slot = {}", &query, clause, slot);
+            where_added = true;
         }
         if let Some(owner) = &params.owner {
             let clause = match where_added {
@@ -199,6 +200,7 @@ impl BigQueryClient {
                 true => "AND",
             };
             query = format!("{} {} owner = \"{}\"", &query, clause, owner);
+            where_added = true;
         }
 
         query = format!("{} LIMIT {} OFFSET {}", &query, params.limit, params.offset);
@@ -238,6 +240,7 @@ impl BigQueryClient {
                 true => "AND",
             };
             query = format!("{} {} slot = {}", &query, clause, slot);
+            where_added = true;
         }
 
         let clause = match where_added {
@@ -245,6 +248,7 @@ impl BigQueryClient {
             true => "AND",
         };
         query = format!("{} {} owner = \"{}\"", &query, clause, params.owner);
+        where_added = true;
 
         let base64_discrim = ProgramDecoder::name_to_base64_discrim(&params.discriminant);
         query = format!(
@@ -253,6 +257,7 @@ impl BigQueryClient {
         );
 
         query = format!("{} LIMIT {} OFFSET {}", &query, params.limit, params.offset);
+        info!("decoded accounts query: {:#?}", query);
         Ok(query)
     }
 

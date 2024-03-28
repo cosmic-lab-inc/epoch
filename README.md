@@ -102,6 +102,8 @@ to `pub static ref PROGRAMS` in `decoder/src/program_decoder.rs`.
 Install Rust buildpack: [link](https://github.com/emk/heroku-buildpack-rust)
 
 Install SSH key buildpack: [link](https://github.com/heroku/heroku-buildpack-ssh-key)
+Follow the directions on the link to generate the SSH key.
+Add the `BUILDPACK_SSH_KEY` to the Heroku config vars (env).
 
 If it doesn't exist create a file in the root of this repo called `.cargo/config.toml`.
 Add the following to the file and replace the "Token you created on Shipyard".

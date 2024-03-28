@@ -228,6 +228,7 @@ impl EpochHandler {
         // info!("Debit transaction signature: {}", debit_sig);
 
         let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
+        info!("Decoded accounts request: {:#?}", query);
         let archive_accts = self.client.account_type(&query).await?;
 
         // TODO: par iter by making EpochAccount try from reference. Data must be borrowed Cow (use BytesWrapper)
