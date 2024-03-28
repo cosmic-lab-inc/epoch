@@ -204,6 +204,7 @@ impl BigQueryClient {
         }
 
         query = format!("{} LIMIT {} OFFSET {}", &query, params.limit, params.offset);
+        debug!("accounts query: {:#?}", query);
         query
     }
 
@@ -257,7 +258,7 @@ impl BigQueryClient {
         );
 
         query = format!("{} LIMIT {} OFFSET {}", &query, params.limit, params.offset);
-        info!("decoded accounts query: {:#?}", query);
+        debug!("decoded accounts query: {:#?}", query);
         Ok(query)
     }
 

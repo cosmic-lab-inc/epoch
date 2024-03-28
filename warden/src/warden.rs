@@ -188,13 +188,9 @@ impl Warden {
         let profile = self
             .read_user(api_key)?
             .ok_or(WardenError::UserNotFound(api_key.to_redis_key()))?;
-        info!("read balance for profile: {}", profile);
         let mint = Pubkey::from_str(EPOCH_MINT)?;
-        info!("find vault auth with program: {}", profile_vault::ID);
         let (vault_auth, _) = VaultAuthority::find_program_address(&profile, &mint);
-        info!("read balance for vault auth: {}", vault_auth);
         let epoch_vault = Warden::find_epoch_vault(&vault_auth)?;
-        info!("read balance for vault: {}", epoch_vault);
         Warden::read_epoch_vault(&self.client, &epoch_vault).await
     }
 

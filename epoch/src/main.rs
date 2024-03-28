@@ -72,7 +72,7 @@ async fn main() -> EpochResult<()> {
         .map_err(|_e| EpochError::EnvVarError("IS_MAINNET must be a boolean".to_string()))?;
 
     // bootstrap network
-    bootstrap::bootstrap_epoch(is_mainnet, rpc_url.clone()).await?;
+    bootstrap::bootstrap_epoch(rpc_url.clone()).await?;
 
     // init Google BigQuery client to read historical accounts
     let bq_client = match BigQueryClient::new(Path::new(&epoch_config.gcs_sa_key)).await {

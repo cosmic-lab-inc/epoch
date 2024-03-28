@@ -224,8 +224,8 @@ impl EpochHandler {
         debit_uiamount: f64,
     ) -> anyhow::Result<Vec<JsonEpochAccount>> {
         let debit_amount = Warden::to_real_amount(debit_uiamount);
-        // let debit_sig = self.debit_vault(api_key, debit_amount).await?;
-        // info!("Debit transaction signature: {}", debit_sig);
+        let debit_sig = self.debit_vault(api_key, debit_amount).await?;
+        info!("Debit transaction signature: {}", debit_sig);
 
         let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
         info!("Decoded accounts request: {:#?}", query);

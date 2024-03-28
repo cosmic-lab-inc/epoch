@@ -10,9 +10,12 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use warden::Warden;
 
-pub async fn bootstrap_epoch(is_mainnet: bool, rpc_url: String) -> anyhow::Result<()> {
-    info!("Bootstrapping network...");
+pub async fn bootstrap_epoch(rpc_url: String) -> anyhow::Result<()> {
+    info!("Bootstrap Epoch with RPC: {}", rpc_url);
     dotenv::dotenv().ok();
+
+    // check if localnet by seeing http in beginning of rpc url and not https
+    let is_localnet = rpc_url.starts_with("http://") && !rpc_url.starts_with("https://");
 
     let client = RpcClient::new(rpc_url);
 
@@ -23,7 +26,7 @@ pub async fn bootstrap_epoch(is_mainnet: bool, rpc_url: String) -> anyhow::Resul
     info!("Epoch mint: {}", mint.pubkey());
     info!("Epoch protocol: {}", epoch_protocol.pubkey());
 
-    if !is_mainnet {
+    if is_localnet {
         client
             .request_airdrop_with_config(
                 &epoch_protocol.pubkey(),
