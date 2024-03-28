@@ -27,6 +27,9 @@ pub enum EpochError {
     #[error("Invalid variable: {0}")]
     VarError(#[from] std::env::VarError),
 
+    #[error("Environment variable error: {0}")]
+    EnvVarError(String),
+
     // io Error
     #[error("IO Error: {0}")]
     IoError(#[from] std::io::Error),
@@ -63,6 +66,7 @@ impl ResponseError for EpochError {
             Self::PayloadError(_) => StatusCode::BAD_REQUEST,
             Self::JoinError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::ApiKeyError => StatusCode::UNAUTHORIZED,
+            Self::EnvVarError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 

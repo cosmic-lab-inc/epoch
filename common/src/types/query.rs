@@ -61,3 +61,10 @@ pub struct EpochProfile {
     #[serde(deserialize_with = "deserialize_pubkey")]
     pub profile: Pubkey,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AirdropRequest {
+    #[serde(serialize_with = "serialize_pubkey")]
+    #[serde(deserialize_with = "deserialize_pubkey")]
+    pub key: Pubkey,
+}

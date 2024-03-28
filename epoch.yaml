@@ -1,17 +1,5 @@
 gcs_sa_key: epoch_sa_key.json
 
-# mainnet
-#solana_rpc: https://mainnet.helius-rpc.com/?api-key=0b810c4e-acb6-49a3-b2cd-90e671480ca8
-#is_mainnet: true
-
-# devnet
-#solana_rpc: https://devnet.helius-rpc.com/?api-key=0b810c4e-acb6-49a3-b2cd-90e671480ca8
-#is_mainnet: false
-
-# localnet
-solana_rpc: http://localhost:8899
-is_mainnet: false
-
 redis_username: default
 redis_password: IJD4LqEHEk3mjoMxvcXDvDIKSUyNUSDD
 redis_host: redis-17359.c284.us-east1-2.gce.cloud.redislabs.com

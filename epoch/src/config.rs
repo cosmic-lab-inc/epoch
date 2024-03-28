@@ -6,10 +6,6 @@ use warden::RedisClient;
 pub struct EpochConfig {
     /// GCS service account JSON file
     pub gcs_sa_key: String,
-    /// Solana RPC endpoint
-    pub solana_rpc: String,
-    /// Mainnet flag
-    pub is_mainnet: bool,
     /// Redis username
     pub redis_username: String,
     /// Redis password

@@ -33,14 +33,25 @@ pub struct EpochHandler {
 }
 
 impl EpochHandler {
-    pub fn new(client: BigQueryClient, redis_url: &str, rpc_url: String) -> anyhow::Result<Self> {
+    pub fn new(
+        client: BigQueryClient,
+        redis_url: &str,
+        rpc_url: String,
+        is_mainnet: bool,
+    ) -> anyhow::Result<Self> {
         let epoch_protocol_signer = Warden::read_keypair_from_env("EPOCH_PROTOCOL")?;
         Ok(Self {
             client,
             decoder: Arc::new(ProgramDecoder::new()?),
-            warden: Warden::new(redis_url, rpc_url)?,
+            warden: Warden::new(redis_url, rpc_url, is_mainnet)?,
             epoch_protocol_signer,
         })
+    }
+
+    pub async fn airdrop(&self, payload: Payload) -> anyhow::Result<()> {
+        let req = self.parse_query::<AirdropRequest>(payload).await?;
+        info!("Airdrop to {}", req.key);
+        self.warden.airdrop(req.key).await
     }
 
     async fn parse_query<T: DeserializeOwned>(&self, mut payload: Payload) -> EpochResult<T> {

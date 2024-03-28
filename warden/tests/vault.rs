@@ -577,7 +577,7 @@ async fn test_debit_epoch_vault() -> anyhow::Result<()> {
         17359,
     );
     let rpc_url = "http://localhost:8899".to_string();
-    let warden = Warden::new(&redis_url, rpc_url)?;
+    let warden = Warden::new(&redis_url, rpc_url, false)?;
     let api_key = "warden_test_api_key".to_string();
     let user_profile = warden.upsert_user(&api_key, profile_key.pubkey())?;
     assert_eq!(user_profile, profile_key.pubkey());
@@ -597,10 +597,10 @@ async fn test_debit_epoch_vault() -> anyhow::Result<()> {
         .await?;
     println!("Debit sig: {}", debit_sig);
 
-    let user_vault_after = Warden::read_epoch_vault(&epoch_vault).await?;
+    let user_vault_after = Warden::read_epoch_vault(&client, &epoch_vault).await?;
     println!("User vault after: {:?}", user_vault_after);
 
-    let protocol_vault_after = Warden::read_epoch_vault(&protocol_vault).await?;
+    let protocol_vault_after = Warden::read_epoch_vault(&client, &protocol_vault).await?;
     println!("Protocol vault after: {:?}", protocol_vault_after);
 
     Ok(())

@@ -64,8 +64,15 @@ async fn main() -> EpochResult<()> {
         }
     };
 
+    let rpc_url = std::env::var("RPC_URL")
+        .map_err(|_e| EpochError::EnvVarError("RPC_URL missing".to_string()))?;
+    let is_mainnet = std::env::var("IS_MAINNET")
+        .map_err(|_e| EpochError::EnvVarError("IS_MAINNET missing".to_string()))?
+        .parse::<bool>()
+        .map_err(|_e| EpochError::EnvVarError("IS_MAINNET must be a boolean".to_string()))?;
+
     // bootstrap network
-    bootstrap::bootstrap_epoch(epoch_config.is_mainnet, epoch_config.solana_rpc.clone()).await?;
+    bootstrap::bootstrap_epoch(is_mainnet, rpc_url.clone()).await?;
 
     // init Google BigQuery client to read historical accounts
     let bq_client = match BigQueryClient::new(Path::new(&epoch_config.gcs_sa_key)).await {
@@ -76,11 +83,7 @@ async fn main() -> EpochResult<()> {
         }
     };
     let handler = tokio::task::spawn_blocking(move || {
-        EpochHandler::new(
-            bq_client,
-            &epoch_config.redis_url(),
-            epoch_config.solana_rpc,
-        )
+        EpochHandler::new(bq_client, &epoch_config.redis_url(), rpc_url, is_mainnet)
     })
     .await??;
 
@@ -110,6 +113,7 @@ async fn main() -> EpochResult<()> {
             .service(delete_user)
             .service(user_balance)
             .service(read_user)
+            .service(airdrop)
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
     })
     .bind(bind_address)?
@@ -316,6 +320,18 @@ async fn delete_user(
         }
     }?;
     Ok(HttpResponse::Ok().json("User deleted"))
+}
+
+#[post("/airdrop")]
+async fn airdrop(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    match state.handler.airdrop(payload).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
+    Ok(HttpResponse::Ok().json("Airdrop successful"))
 }
 
 // ================================== ADMIN ================================== //

@@ -75,7 +75,7 @@ pub async fn bootstrap_epoch(is_mainnet: bool, rpc_url: String) -> anyhow::Resul
         Err(e) => {
             // if error contains "already in use" then ignore
             if e.to_string().contains("already in use") {
-                println!("Mint already initialized");
+                info!("Mint already initialized");
                 Ok(())
             } else {
                 Err(anyhow::Error::from(e))
@@ -102,11 +102,11 @@ pub async fn bootstrap_epoch(is_mainnet: bool, rpc_url: String) -> anyhow::Resul
 
     let protocol_vault_before = Warden::read_epoch_vault(&client, &protocol_vault).await?;
     if protocol_vault_before.amount >= 100_000_000_000_000_00 {
-        println!("Protocol vault already has enough tokens");
+        info!("Protocol vault already has enough tokens");
         return Ok(());
     }
 
-    println!("Protocol vault: {}", protocol_vault);
+    info!("Protocol vault: {}", protocol_vault);
     client
         .mint_to_token_2022_account(
             &epoch_protocol,
@@ -118,7 +118,7 @@ pub async fn bootstrap_epoch(is_mainnet: bool, rpc_url: String) -> anyhow::Resul
         .await?;
 
     let protocol_vault_after = Warden::read_epoch_vault(&client, &protocol_vault).await?;
-    println!("Epoch protocol vault balance: {:?}", protocol_vault_after);
+    info!("Epoch protocol vault balance: {:?}", protocol_vault_after);
 
     Ok(())
 }

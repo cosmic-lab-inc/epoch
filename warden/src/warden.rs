@@ -1,4 +1,4 @@
-use std::str::FromStr;
+#![allow(clippy::inconsistent_digit_grouping)]
 
 use anchor_spl::associated_token;
 use common::VaultBalance;
@@ -15,6 +15,7 @@ use profile_vault::{drain_vault_ix, ProfileVaultPermissions, VaultAuthority};
 use solana_sdk::bs58;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
+use std::str::FromStr;
 
 use crate::{
     redis::redis_client::RedisClient, scrambler::Scrambler, HasherTrait, ToRedisKey, WardenError,
@@ -39,13 +40,15 @@ pub struct DebitVaultConfig<T: ToRedisKey> {
 pub struct Warden {
     pub redis: RedisClient,
     pub client: RpcClient,
+    pub is_mainnet: bool,
 }
 
 impl Warden {
-    pub fn new(redis_url: &str, rpc_url: String) -> anyhow::Result<Self> {
+    pub fn new(redis_url: &str, rpc_url: String, is_mainnet: bool) -> anyhow::Result<Self> {
         Ok(Self {
             redis: RedisClient::new(redis_url)?,
             client: RpcClient::new(rpc_url),
+            is_mainnet,
         })
     }
 
@@ -58,6 +61,26 @@ impl Warden {
             .filter_map(|s| s.trim().parse().ok()) // Parse each substring to u8, filtering out any errors
             .collect(); // Collect the values into a Vec<u8>
         Ok(Keypair::from_bytes(&raw)?)
+    }
+
+    pub async fn airdrop(&self, key: Pubkey) -> anyhow::Result<()> {
+        if self.is_mainnet {
+            warn!("Airdrop requested on mainnet");
+            Ok(())
+        } else {
+            let epoch_protocol = Warden::read_keypair_from_env("EPOCH_PROTOCOL")?;
+            let mint = Warden::read_keypair_from_env("EPOCH_MINT")?;
+            Ok(self
+                .client
+                .mint_to_token_2022_account(
+                    &epoch_protocol as &DynSigner,
+                    &mint.pubkey(),
+                    key,
+                    1000_00,
+                    &epoch_protocol as &DynSigner,
+                )
+                .await?)
+        }
     }
 
     pub fn find_epoch_vault(owner: &Pubkey) -> anyhow::Result<Pubkey> {
