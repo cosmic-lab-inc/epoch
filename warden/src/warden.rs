@@ -8,7 +8,7 @@ use common_utils::prelude::anchor_spl::token_2022::spl_token_2022::extension::{
     BaseStateWithExtensions, StateWithExtensions,
 };
 use common_utils::prelude::*;
-use log::{error, info};
+use log::{error, info, warn};
 use player_profile::client::find_key_in_profile;
 use player_profile::state::{Profile, ProfileKey};
 use profile_vault::{drain_vault_ix, ProfileVaultPermissions, VaultAuthority};
@@ -16,7 +16,9 @@ use solana_sdk::bs58;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 
-use crate::{redis::redis_client::RedisClient, scrambler::Scrambler, HasherTrait, ToRedisKey};
+use crate::{
+    redis::redis_client::RedisClient, scrambler::Scrambler, HasherTrait, ToRedisKey, WardenError,
+};
 
 pub const EPOCH_MINT: &str = "EPCHJ3JhGrx2y9NKR5BsmCLwBpFxFheMHDZsmn59BwAi";
 pub const EPOCH_PROTOCOL: &str = "EPCH4ot3VAbB6nfiy7mdZYuk9C8WyjuAkEhyLyhZshCU";
@@ -67,6 +69,11 @@ impl Warden {
         Ok(epoch_vault)
     }
 
+    pub fn verify_signature(msg: &[u8], sig: &[u8], wallet: Pubkey) -> anyhow::Result<bool> {
+        nacl::sign::verify(msg, sig, &wallet.to_bytes())
+            .map_err(|e| anyhow::anyhow!("Error verifying signature: {:?}", e))
+    }
+
     /// Convert a UI transfer amount to the real amount by multiplying by the decimals of the mint.
     pub fn to_real_amount(amount: f64) -> u64 {
         let factor = 10u64.pow(EPOCH_MINT_DECIMALS as u32) as f64;
@@ -86,7 +93,9 @@ impl Warden {
         epoch_protocol_signer: &DynSigner<'static>,
         debit_amount: u64,
     ) -> anyhow::Result<String> {
-        let profile = self.read_user(api_key)?;
+        let profile = self
+            .read_user(api_key)?
+            .ok_or(anyhow::anyhow!("User not found"))?;
 
         let profile_account = self
             .client
@@ -147,21 +156,29 @@ impl Warden {
     }
 
     pub async fn user_balance<T: ToRedisKey>(&self, api_key: &T) -> anyhow::Result<VaultBalance> {
-        let profile = self.read_user(api_key)?;
+        let profile = self
+            .read_user(api_key)?
+            .ok_or(WardenError::UserNotFound(api_key.to_redis_key()))?;
+        info!("read balance for profile: {}", profile);
         let mint = Pubkey::from_str(EPOCH_MINT)?;
+        info!("find vault auth with program: {}", profile_vault::ID);
         let (vault_auth, _) = VaultAuthority::find_program_address(&profile, &mint);
+        info!("read balance for vault auth: {}", vault_auth);
         let epoch_vault = Warden::find_epoch_vault(&vault_auth)?;
-        self.read_epoch_vault(&epoch_vault).await
+        info!("read balance for vault: {}", epoch_vault);
+        Warden::read_epoch_vault(&self.client, &epoch_vault).await
     }
 
-    pub async fn read_epoch_vault(&self, vault: &Pubkey) -> anyhow::Result<VaultBalance> {
+    pub async fn read_epoch_vault(
+        client: &RpcClient,
+        vault: &Pubkey,
+    ) -> anyhow::Result<VaultBalance> {
         // get ATA from RPC
-        let info = self
-            .client
-            .get_account_with_commitment(&vault, CommitmentConfig::confirmed())
+        let info = client
+            .get_account_with_commitment(vault, CommitmentConfig::confirmed())
             .await?
             .value
-            .ok_or(anyhow::anyhow!("ATA not found"))?;
+            .ok_or(WardenError::TokenAccountNotFound(vault.to_string()))?;
 
         // errors with InvalidAccountData because ExtensionType is not defined in the program
         let state = StateWithExtensions::<spl_token_2022::state::Account>::unpack(&info.data)?;
@@ -186,14 +203,14 @@ impl Warden {
     }
 
     /// Hash the api key and check against the hashed key in Redis.
-    pub fn read_user<T: ToRedisKey>(&self, api_key: &T) -> anyhow::Result<Pubkey> {
+    pub fn read_user<T: ToRedisKey>(&self, api_key: &T) -> anyhow::Result<Option<Pubkey>> {
         let hashed_key = Scrambler::new().hash(api_key);
         match self.redis.get(hashed_key)? {
             None => {
-                error!("API key not recognized");
-                Err(anyhow::anyhow!("API key not recognized"))
+                warn!("API key not registered");
+                Ok(None)
             }
-            Some(user_profile) => Ok(Pubkey::from_str(&user_profile)?),
+            Some(user_profile) => Ok(Some(Pubkey::from_str(&user_profile)?)),
         }
     }
 

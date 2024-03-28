@@ -1,13 +1,8 @@
-mod account;
-mod auth;
-mod config;
-mod decoded_account;
-mod errors;
-mod handler;
-mod logger;
-mod utils;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
-use crate::{config::EpochConfig, errors::EpochResult};
 use actix_cors::Cors;
 use actix_web::{
     get, post, web,
@@ -15,20 +10,29 @@ use actix_web::{
     App, HttpRequest, HttpResponse, HttpServer,
 };
 use actix_web_httpauth::middleware::HttpAuthentication;
-use auth::*;
 use borsh::BorshSerialize;
 use clap::Parser;
-use decoder::Decoder;
 use dotenv::dotenv;
+use log::*;
+
+use auth::*;
+use decoder::Decoder;
 use errors::EpochError;
 use gcs::bq::BigQueryClient;
 use handler::*;
-use log::*;
 use logger::*;
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+
+use crate::{config::EpochConfig, errors::EpochResult};
+
+mod account;
+mod auth;
+mod bootstrap;
+mod config;
+mod decoded_account;
+mod errors;
+mod handler;
+mod logger;
+mod utils;
 
 struct AppState {
     handler: EpochHandler,
@@ -59,6 +63,11 @@ async fn main() -> EpochResult<()> {
             return Err(EpochError::from(e));
         }
     };
+
+    // bootstrap network
+    bootstrap::bootstrap_epoch(epoch_config.is_mainnet, epoch_config.solana_rpc.clone()).await?;
+
+    // init Google BigQuery client to read historical accounts
     let bq_client = match BigQueryClient::new(Path::new(&epoch_config.gcs_sa_key)).await {
         Ok(client) => client,
         Err(e) => {
@@ -66,21 +75,14 @@ async fn main() -> EpochResult<()> {
             return Err(EpochError::from(e));
         }
     };
-    let handler = match tokio::task::spawn_blocking(move || {
+    let handler = tokio::task::spawn_blocking(move || {
         EpochHandler::new(
             bq_client,
             &epoch_config.redis_url(),
             epoch_config.solana_rpc,
         )
     })
-    .await?
-    {
-        Ok(handler) => handler,
-        Err(e) => {
-            error!("Error creating EpochHandler: {:?}", e);
-            return Err(EpochError::from(e));
-        }
-    };
+    .await??;
 
     let state = Data::new(Arc::new(AppState { handler }));
 
@@ -120,40 +122,46 @@ async fn main() -> EpochResult<()> {
 async fn test() -> EpochResult<HttpResponse> {
     Ok(HttpResponse::Ok().body(
         r#"
- _____                      _
-|  ___|                    | |
-| |__   _ __    ___    ___ | |__
-|  __| | '_ \  / _ \  / __|| '_ \
-| |___ | |_) || (_) || (__ | | | |
-\____/ | .__/  \___/  \___||_| |_|
-       | |
-       |_|
-
-Everything back to genesis.
-Every account for every program.
-Every answer to any inquiry.
-Solana data is a gold mine, and this is your pickaxe.
+                         _____                      _
+                        |  ___|                    | |
+                        | |__   _ __    ___    ___ | |__
+                        |  __| | '_ \  / _ \  / __|| '_ \
+                        | |___ | |_) || (_) || (__ | | | |
+                        \____/ | .__/  \___/  \___||_| |_|
+                               | |
+                               |_|
+                        
+                        Everything back to genesis.
+                        Every account for every program.
+                        Every answer to any inquiry.
+                        Solana data is a gold mine, and this is your pickaxe.
 "#,
     ))
 }
 
-// ================================== API ================================== //
+// ================================== ACCOUNTS ================================== //
 
 #[post("/account-id")]
 async fn account_id(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
-    let accts = state.handler.account_id(payload).await?;
+    let accts = match state.handler.account_id(payload).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
     Ok(HttpResponse::Ok().json(accts))
 }
 
 #[post("/accounts")]
 async fn accounts(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
     let accts = match state.handler.accounts(payload).await {
-        Ok(accts) => accts,
+        Ok(res) => Ok(res),
         Err(e) => {
-            error!("Error fetching accounts: {:?}", e);
-            return Ok(HttpResponse::InternalServerError().json(e.to_string()));
+            error!("{:?}", e);
+            Err(e)
         }
-    };
+    }?;
     Ok(HttpResponse::Ok().json(accts))
 }
 
@@ -202,40 +210,78 @@ async fn json_decoded_accounts(
     req: HttpRequest,
 ) -> EpochResult<HttpResponse> {
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
-    let accts = state
+    let accts = match state
         .handler
         .json_decoded_accounts(payload, &epoch_api_key, 1_f64)
-        .await?;
+        .await
+    {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
     Ok(HttpResponse::Ok().json(accts))
 }
+
+// ================================== TYPES ================================== //
 
 #[post("/registered-types")]
 async fn filtered_registered_types(
     state: Data<Arc<AppState>>,
     payload: Payload,
 ) -> EpochResult<HttpResponse> {
-    let accts = state.handler.registered_types(Some(payload)).await?;
+    let accts = match state.handler.registered_types(Some(payload)).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
     Ok(HttpResponse::Ok().json(accts))
 }
 
 #[get("/registered-types")]
 async fn all_registered_types(state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
-    let accts = state.handler.registered_types(None).await?;
+    let accts = match state.handler.registered_types(None).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
     Ok(HttpResponse::Ok().json(accts))
 }
+
+// ================================== USER ================================== //
 
 #[get("/user-balance")]
 async fn user_balance(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResult<HttpResponse> {
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
-    let res = state.handler.user_balance(&epoch_api_key).await?;
+    let res = match state.handler.user_balance(&epoch_api_key).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
     Ok(HttpResponse::Ok().json(res))
 }
 
 #[get("/read-user")]
 async fn read_user(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResult<HttpResponse> {
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
-    let res = state.handler.read_user(&epoch_api_key).await?;
-    Ok(HttpResponse::Ok().json(res.to_string()))
+    let res = match state.handler.read_user(&epoch_api_key).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
+    // map to Option<String>
+    let res = res.map(|user| user.to_string());
+
+    Ok(HttpResponse::Ok().json(res))
 }
 
 #[post("/create-user")]
@@ -245,7 +291,13 @@ async fn create_user(
     req: HttpRequest,
 ) -> EpochResult<HttpResponse> {
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
-    let res = state.handler.create_user(payload, &epoch_api_key).await?;
+    let res = match state.handler.create_user(payload, &epoch_api_key).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
     Ok(HttpResponse::Ok().json(res.to_string()))
 }
 
@@ -256,13 +308,19 @@ async fn delete_user(
     req: HttpRequest,
 ) -> EpochResult<HttpResponse> {
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
-    state.handler.delete_user(payload, &epoch_api_key).await?;
+    match state.handler.delete_user(payload, &epoch_api_key).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
     Ok(HttpResponse::Ok().json("User deleted"))
 }
 
 // ================================== ADMIN ================================== //
 
-#[get("/admin-test")]
+#[get("/test")]
 async fn admin_test(_state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
     Ok(HttpResponse::Ok().json("Ok"))
 }

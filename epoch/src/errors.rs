@@ -43,6 +43,9 @@ pub enum EpochError {
 
     #[error("Join error: {0}")]
     JoinError(#[from] tokio::task::JoinError),
+
+    #[error("Missing API key header epoch_api_key")]
+    ApiKeyError,
 }
 
 impl ResponseError for EpochError {
@@ -59,6 +62,7 @@ impl ResponseError for EpochError {
             Self::SerdeError(_) => StatusCode::BAD_REQUEST,
             Self::PayloadError(_) => StatusCode::BAD_REQUEST,
             Self::JoinError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::ApiKeyError => StatusCode::UNAUTHORIZED,
         }
     }
 

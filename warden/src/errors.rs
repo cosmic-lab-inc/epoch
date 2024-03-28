@@ -20,4 +20,10 @@ pub enum WardenError {
     // api key does not match hash
     #[error("API key does not match hash")]
     ApiKeyMismatch,
+
+    #[error("User not found for api key: {0}")]
+    UserNotFound(String),
+
+    #[error("Token account not found: {0}")]
+    TokenAccountNotFound(String),
 }

@@ -2260,6 +2260,7 @@ dependencies = [
  "actix-cors",
  "actix-web",
  "actix-web-httpauth",
+ "anchor-lang 0.25.26",
  "anyhow",
  "borsh 0.10.3",
  "chrono",
@@ -2273,6 +2274,8 @@ dependencies = [
  "gcs",
  "lazy_static",
  "log",
+ "player_profile",
+ "profile_vault",
  "rayon",
  "reqwest",
  "serde",
@@ -3259,6 +3262,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nacl"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30aefc44d813c51b5e7952950e87c17f2e0e1a3274d63c8281a701e05323d548"
+
+[[package]]
 name = "native-tls"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3743,9 +3752,9 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
 name = "player_profile"
-version = "0.7.3"
+version = "0.7.4"
 source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
-checksum = "533142a5eb8c1e62b542e84e40f96c1d9e86ed7a1b188d13cab8b7243bfa7de6"
+checksum = "3b69d0a5973b6f949635099fd8cc76cbdbf301171c81fa7e84f3a88aba6100fa"
 dependencies = [
  "anchor-lang 0.25.26",
  "bitflags 1.3.2",
@@ -3863,9 +3872,9 @@ dependencies = [
 
 [[package]]
 name = "profile_vault"
-version = "0.7.3"
+version = "0.7.4"
 source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
-checksum = "4ac9c1167a4cda27e7e132cdecd971c212cad89de8860fecad1a8117190b77af"
+checksum = "36dd15207c39d5183ff15b2b38c0f096c933b6bafd3493ee01f99efcaefa877e"
 dependencies = [
  "anchor-lang 0.25.26",
  "common_utils",
@@ -6677,13 +6686,16 @@ dependencies = [
  "anchor-lang 0.25.26",
  "anyhow",
  "argon2",
+ "base64 0.22.0",
  "common",
  "common_utils",
  "dotenv",
  "log",
+ "nacl",
  "player_profile",
  "profile_vault",
  "redis",
+ "serde_json",
  "solana-sdk",
  "thiserror",
  "tokio",

@@ -65,7 +65,7 @@ impl EpochHandler {
             })
             .unwrap_or_else(|| None)
         {
-            None => Err(EpochError::Anyhow(anyhow::anyhow!("API key required"))),
+            None => Err(EpochError::ApiKeyError),
             Some(api_key) => Ok(api_key),
         }
     }
@@ -104,7 +104,7 @@ impl EpochHandler {
     //
     //
 
-    pub async fn read_user<T: ToRedisKey>(&self, api_key: &T) -> EpochResult<Pubkey> {
+    pub async fn read_user<T: ToRedisKey>(&self, api_key: &T) -> EpochResult<Option<Pubkey>> {
         Ok(self.warden.read_user(api_key)?)
     }
 

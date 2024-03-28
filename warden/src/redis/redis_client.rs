@@ -1,6 +1,8 @@
 use crate::{ToRedisKey, WardenError};
+use common::RedisUser;
 use log::*;
-use redis::{Client, Commands};
+use redis::Client;
+// use base64::{engine::general_purpose, Engine as _};
 
 pub struct RedisClient {
     client: Client,
@@ -16,6 +18,14 @@ impl RedisClient {
         format!("redis://{user}:{password}@{host}:{port}")
     }
 
+    fn encode(value: RedisUser) -> anyhow::Result<String> {
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    fn decode(value: String) -> anyhow::Result<RedisUser> {
+        Ok(serde_json::from_str(&value)?)
+    }
+
     pub fn get<K: ToRedisKey>(&self, key: K) -> anyhow::Result<Option<String>> {
         let key = key.to_redis_key();
         let mut con = self
@@ -23,7 +33,6 @@ impl RedisClient {
             .get_connection()
             .map_err(|_| WardenError::RedisConnectionError)?;
         let (result,): (Option<String>,) = redis::pipe().atomic().get(&key).query(&mut con)?;
-
         info!("get Redis key {}, value: {:?}", key, result);
         Ok(result)
     }
@@ -38,9 +47,6 @@ impl RedisClient {
             .client
             .get_connection()
             .map_err(|_| WardenError::RedisConnectionError)?;
-
-        let old_val: Vec<Option<String>> = con.get(&key)?;
-        info!("old Redis value: {:?}", old_val.first());
 
         let (result,): (Option<String>,) = match &value {
             Some(value) => redis::pipe()

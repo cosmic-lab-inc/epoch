@@ -23,7 +23,7 @@ use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::transaction::Transaction;
 
-use warden::{RedisClient, Warden};
+use warden::{RedisClient, Warden, WardenError};
 
 // Examples of more token extension tests and code
 // https://github.com/solana-labs/solana-program-library/blob/c38a1b5/token/program-2022-test/tests
@@ -597,10 +597,10 @@ async fn test_debit_epoch_vault() -> anyhow::Result<()> {
         .await?;
     println!("Debit sig: {}", debit_sig);
 
-    let user_vault_after = warden.read_epoch_vault(&epoch_vault).await?;
+    let user_vault_after = Warden::read_epoch_vault(&epoch_vault).await?;
     println!("User vault after: {:?}", user_vault_after);
 
-    let protocol_vault_after = warden.read_epoch_vault(&protocol_vault).await?;
+    let protocol_vault_after = Warden::read_epoch_vault(&protocol_vault).await?;
     println!("Protocol vault after: {:?}", protocol_vault_after);
 
     Ok(())
@@ -730,7 +730,7 @@ async fn ata_token_ext() -> anyhow::Result<()> {
         .get_account_with_commitment(&ata, CommitmentConfig::processed())
         .await?
         .value
-        .ok_or(anyhow::anyhow!("ATA not found"))?;
+        .ok_or(WardenError::TokenAccountNotFound(ata.to_string()))?;
 
     // errors with InvalidAccountData because ExtensionType is not defined in the program
     let state = StateWithExtensions::<spl_token_2022::state::Account>::unpack(&info.data)?;
