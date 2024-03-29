@@ -13,7 +13,7 @@ use common::types::query::*;
 use common::VaultBalance;
 use decoder::program_decoder::ProgramDecoder;
 use gcs::bq::*;
-use warden::{ToRedisKey, Warden, EPOCH_MINT_DECIMALS};
+use warden::{ToRedisKey, Warden};
 
 use crate::{
     account::EpochAccount,
@@ -49,9 +49,19 @@ impl EpochHandler {
     }
 
     pub async fn airdrop(&self, payload: Payload) -> anyhow::Result<()> {
-        let req = self.parse_query::<AirdropRequest>(payload).await?;
+        let req = self.parse_query::<RequestAirdrop>(payload).await?;
         info!("Airdrop to {}", req.key);
         self.warden.airdrop(req.key).await
+    }
+
+    pub async fn request_challenge(&self, payload: Payload) -> EpochResult<String> {
+        let req = self.parse_query::<RequestChallenge>(payload).await?;
+        Ok(Warden::request_challenge(&req.key))
+    }
+
+    pub async fn authenticate_signature(&self, payload: Payload) -> EpochResult<Option<String>> {
+        let req = self.parse_query::<AuthenticateSignature>(payload).await?;
+        Ok(Warden::authenticate_signature(&req.key, &req.signature)?)
     }
 
     async fn parse_query<T: DeserializeOwned>(&self, mut payload: Payload) -> EpochResult<T> {

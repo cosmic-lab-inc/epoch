@@ -52,6 +52,39 @@ impl Warden {
         })
     }
 
+    /// Step 1
+    /// Deterministically produces a message by hashing the wallet.
+    /// This hash is returned to the client to sign with their wallet.
+    /// The hash is base58 decoded on the client to turn the string into a buffer,
+    /// since wallets only sign buffers.
+    pub fn request_challenge(wallet: &Pubkey) -> String {
+        Scrambler::new().hash(&wallet.to_string()).to_string()
+    }
+
+    /// Step 2
+    /// User has signed the message and returned the signature.
+    /// The message is a deterministic hash using the wallet, so we don't need it as a parameter.
+    /// The message is base58 decoded on the client to turn the string into a buffer, so we do the same here.
+    /// The signature is verified using the wallet's public key, signature, and message.
+    /// If verified, the signature is base58 encoded and hashed to create the API key.
+    /// This API key is eventually stored in Redis with the user's Profile pubkey.
+    pub fn authenticate_signature(
+        wallet: &Pubkey,
+        base58_sig: &str,
+    ) -> anyhow::Result<Option<String>> {
+        let sig = bs58::decode(base58_sig).into_vec()?;
+        let msg = bs58::decode(Self::request_challenge(wallet)).into_vec()?;
+        let verified = nacl::sign::verify(&msg, &sig, &wallet.to_bytes())
+            .map_err(|e| anyhow::anyhow!("Error verifying signature: {:?}", e))?;
+        match verified {
+            false => Ok(None),
+            true => {
+                let sig = bs58::encode(sig).into_string();
+                Ok(Some(Scrambler::new().hash(&sig).to_string()))
+            }
+        }
+    }
+
     pub fn read_keypair_from_env(env_var: &str) -> anyhow::Result<Keypair> {
         let raw_mint = std::env::var(env_var)
             .map_err(|e| anyhow::anyhow!("Failed to get {} from env: {}", env_var, e))?;
@@ -96,11 +129,6 @@ impl Warden {
             &Token2022::id(),
         );
         Ok(epoch_vault)
-    }
-
-    pub fn verify_signature(msg: &[u8], sig: &[u8], wallet: Pubkey) -> anyhow::Result<bool> {
-        nacl::sign::verify(msg, sig, &wallet.to_bytes())
-            .map_err(|e| anyhow::anyhow!("Error verifying signature: {:?}", e))
     }
 
     /// Convert a UI transfer amount to the real amount by multiplying by the decimals of the mint.

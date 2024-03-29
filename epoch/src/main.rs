@@ -114,6 +114,8 @@ async fn main() -> EpochResult<()> {
             .service(user_balance)
             .service(read_user)
             .service(airdrop)
+            .service(request_challenge)
+            .service(authenticate)
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
     })
     .bind(bind_address)?
@@ -258,6 +260,33 @@ async fn all_registered_types(state: Data<Arc<AppState>>) -> EpochResult<HttpRes
 }
 
 // ================================== USER ================================== //
+
+#[post("/challenge")]
+async fn request_challenge(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+) -> EpochResult<HttpResponse> {
+    let res = match state.handler.request_challenge(payload).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
+    Ok(HttpResponse::Ok().json(res))
+}
+
+#[post("/authenticate")]
+async fn authenticate(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<HttpResponse> {
+    let res = match state.handler.authenticate_signature(payload).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
+    Ok(HttpResponse::Ok().json(res))
+}
 
 #[get("/user-balance")]
 async fn user_balance(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResult<HttpResponse> {

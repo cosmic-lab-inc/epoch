@@ -63,8 +63,24 @@ pub struct EpochProfile {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct AirdropRequest {
+pub struct RequestAirdrop {
     #[serde(serialize_with = "serialize_pubkey")]
     #[serde(deserialize_with = "deserialize_pubkey")]
     pub key: Pubkey,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RequestChallenge {
+    #[serde(serialize_with = "serialize_pubkey")]
+    #[serde(deserialize_with = "deserialize_pubkey")]
+    pub key: Pubkey,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthenticateSignature {
+    #[serde(serialize_with = "serialize_pubkey")]
+    #[serde(deserialize_with = "deserialize_pubkey")]
+    pub key: Pubkey,
+    /// Base58 encoded signature
+    pub signature: String,
 }

@@ -3752,9 +3752,9 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
 name = "player_profile"
-version = "0.7.4"
+version = "0.7.5"
 source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
-checksum = "3b69d0a5973b6f949635099fd8cc76cbdbf301171c81fa7e84f3a88aba6100fa"
+checksum = "be52cc43b2e9b370c1f75397121e636b7dce8bba6d452400ed3968ec9409eeca"
 dependencies = [
  "anchor-lang 0.25.26",
  "bitflags 1.3.2",
@@ -3872,9 +3872,9 @@ dependencies = [
 
 [[package]]
 name = "profile_vault"
-version = "0.7.4"
+version = "0.7.5"
 source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
-checksum = "36dd15207c39d5183ff15b2b38c0f096c933b6bafd3493ee01f99efcaefa877e"
+checksum = "3d6549fe2b817746fcd3da16147e1dbe0d901a1e6dcb886143f4f92aa7b927f9"
 dependencies = [
  "anchor-lang 0.25.26",
  "common_utils",
