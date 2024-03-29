@@ -1,7 +1,8 @@
 #![allow(clippy::inconsistent_digit_grouping)]
 
+use std::str::FromStr;
+
 use anchor_spl::associated_token;
-use common::VaultBalance;
 use common_utils::prelude::anchor_spl::token_2022::spl_token_2022;
 use common_utils::prelude::anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::TransferFeeAmount;
 use common_utils::prelude::anchor_spl::token_2022::spl_token_2022::extension::{
@@ -9,13 +10,15 @@ use common_utils::prelude::anchor_spl::token_2022::spl_token_2022::extension::{
 };
 use common_utils::prelude::*;
 use log::{error, info, warn};
+use nacl::sign::generate_keypair;
 use player_profile::client::find_key_in_profile;
 use player_profile::state::{Profile, ProfileKey};
 use profile_vault::{drain_vault_ix, ProfileVaultPermissions, VaultAuthority};
 use solana_sdk::bs58;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
-use std::str::FromStr;
+
+use common::VaultBalance;
 
 use crate::{
     redis::redis_client::RedisClient, scrambler::Scrambler, HasherTrait, ToRedisKey, WardenError,
@@ -56,9 +59,14 @@ impl Warden {
     /// Deterministically produces a message by hashing the wallet.
     /// This hash is returned to the client to sign with their wallet.
     /// The hash is hex decoded on the client to turn the string into a buffer.
-    pub fn request_challenge(wallet: &Pubkey) -> String {
-        let hash = Scrambler::new().hash(&wallet.to_string()).to_le_bytes();
-        hex::encode(hash)
+    pub fn request_challenge(wallet: &Pubkey) -> anyhow::Result<String> {
+        let hash = Scrambler::new().hash(&wallet.to_string());
+        let pk =
+            Pubkey::find_program_address(&[&hash.to_le_bytes()], &Pubkey::from_str(EPOCH_MINT)?).0;
+        Ok(format!(
+            "Sign this hash {} to prove ownership of your wallet",
+            pk
+        ))
     }
 
     /// Step 2
@@ -70,24 +78,22 @@ impl Warden {
     /// This API key is eventually stored in Redis with the user's Profile pubkey.
     pub fn authenticate_signature(
         wallet: &Pubkey,
-        hex_sig: &str,
+        bs58_sig: String,
     ) -> anyhow::Result<Option<String>> {
-        let sig = hex::decode(hex_sig)?;
-        info!("sig: {:?}", sig);
-        let msg = hex::decode(Self::request_challenge(wallet))?;
-        info!("msg: {:?}", msg);
-        let verified = match nacl::sign::verify(&msg, &sig, &wallet.to_bytes()) {
-            Ok(res) => Ok(true),
+        let sig = bs58::decode(bs58_sig.clone()).into_vec()?;
+        let msg = Self::request_challenge(wallet)?;
+        let verified = match nacl::sign::verify(&sig, msg.as_bytes(), &wallet.to_bytes()) {
+            Ok(res) => Ok(res),
             Err(e) => {
                 error!("Error verifying signature: {:?}", e);
                 Err(anyhow::anyhow!("Error verifying signature: {:?}", e))
             }
         }?;
-        info!("verified: {:?}", verified);
+
         match verified {
             false => Ok(None),
             true => {
-                let api_key = hex::encode(&sig);
+                let api_key = Scrambler::new().hash(&bs58_sig).to_string();
                 Ok(Some(api_key))
             }
         }
@@ -348,4 +354,27 @@ impl Warden {
             }
         }
     }
+}
+
+#[test]
+fn nacl_test() -> anyhow::Result<()> {
+    let keypair = generate_keypair(&Pubkey::new_unique().to_bytes());
+    let pk = Pubkey::from(keypair.pkey);
+    let msg = Warden::request_challenge(&pk)?;
+    let sig = nacl::sign::sign(msg.as_bytes(), &keypair.skey)
+        .map_err(|e| anyhow::anyhow!("Error signing message: {:?}", e))?;
+    let verify = nacl::sign::verify(&sig, msg.as_bytes(), &pk.to_bytes())
+        .map_err(|e| anyhow::anyhow!("Error verifying signature: {:?}", e))?;
+    println!("Verified: {:?}", verify);
+    assert!(verify);
+
+    let bs58_sig = bs58::encode(&sig).into_string();
+    let undo_sig = bs58::decode(bs58_sig).into_vec()?;
+    assert_eq!(sig, undo_sig);
+
+    let api_key = Warden::authenticate_signature(&pk, bs58::encode(sig).into_string())?;
+    println!("API key: {:?}", api_key);
+    assert!(api_key.is_some());
+
+    Ok(())
 }
