@@ -6690,6 +6690,7 @@ dependencies = [
  "common",
  "common_utils",
  "dotenv",
+ "hex",
  "log",
  "nacl",
  "player_profile",

@@ -1,7 +1,10 @@
-use crate::{ToRedisKey, WardenError};
-use common::RedisUser;
 use log::*;
 use redis::Client;
+
+use common::RedisUser;
+
+use crate::{ToRedisKey, WardenError};
+
 // use base64::{engine::general_purpose, Engine as _};
 
 pub struct RedisClient {
@@ -33,7 +36,6 @@ impl RedisClient {
             .get_connection()
             .map_err(|_| WardenError::RedisConnectionError)?;
         let (result,): (Option<String>,) = redis::pipe().atomic().get(&key).query(&mut con)?;
-        info!("get Redis key {}, value: {:?}", key, result);
         Ok(result)
     }
 

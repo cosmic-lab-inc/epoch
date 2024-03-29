@@ -55,32 +55,40 @@ impl Warden {
     /// Step 1
     /// Deterministically produces a message by hashing the wallet.
     /// This hash is returned to the client to sign with their wallet.
-    /// The hash is base58 decoded on the client to turn the string into a buffer,
-    /// since wallets only sign buffers.
+    /// The hash is hex decoded on the client to turn the string into a buffer.
     pub fn request_challenge(wallet: &Pubkey) -> String {
-        Scrambler::new().hash(&wallet.to_string()).to_string()
+        let hash = Scrambler::new().hash(&wallet.to_string()).to_le_bytes();
+        hex::encode(hash)
     }
 
     /// Step 2
     /// User has signed the message and returned the signature.
     /// The message is a deterministic hash using the wallet, so we don't need it as a parameter.
-    /// The message is base58 decoded on the client to turn the string into a buffer, so we do the same here.
+    /// The message is hex decoded on the client to turn the string into a buffer, so we do the opposite here.
     /// The signature is verified using the wallet's public key, signature, and message.
-    /// If verified, the signature is base58 encoded and hashed to create the API key.
+    /// If verified, the signature is hex encoded to create the API key.
     /// This API key is eventually stored in Redis with the user's Profile pubkey.
     pub fn authenticate_signature(
         wallet: &Pubkey,
-        base58_sig: &str,
+        hex_sig: &str,
     ) -> anyhow::Result<Option<String>> {
-        let sig = bs58::decode(base58_sig).into_vec()?;
-        let msg = bs58::decode(Self::request_challenge(wallet)).into_vec()?;
-        let verified = nacl::sign::verify(&msg, &sig, &wallet.to_bytes())
-            .map_err(|e| anyhow::anyhow!("Error verifying signature: {:?}", e))?;
+        let sig = hex::decode(hex_sig)?;
+        info!("sig: {:?}", sig);
+        let msg = hex::decode(Self::request_challenge(wallet))?;
+        info!("msg: {:?}", msg);
+        let verified = match nacl::sign::verify(&msg, &sig, &wallet.to_bytes()) {
+            Ok(res) => Ok(true),
+            Err(e) => {
+                error!("Error verifying signature: {:?}", e);
+                Err(anyhow::anyhow!("Error verifying signature: {:?}", e))
+            }
+        }?;
+        info!("verified: {:?}", verified);
         match verified {
             false => Ok(None),
             true => {
-                let sig = bs58::encode(sig).into_string();
-                Ok(Some(Scrambler::new().hash(&sig).to_string()))
+                let api_key = hex::encode(&sig);
+                Ok(Some(api_key))
             }
         }
     }

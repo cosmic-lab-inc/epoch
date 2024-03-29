@@ -30,3 +30,4 @@ anchor-lang = { verion = "0.25.26", registry = "epoch" }
 base64 = { workspace = true }
 serde_json = { workspace = true }
 nacl = "0.5.3"
+hex = "0.4.3"
