@@ -102,7 +102,7 @@ impl EpochHandler {
     /// Returns signature of the debit transaction
     pub async fn debit_vault<T: ToRedisKey>(
         &self,
-        api_key: &T,
+        api_key: T,
         debit_amount: u64,
     ) -> EpochResult<String> {
         Ok(self
@@ -115,7 +115,7 @@ impl EpochHandler {
             .await?)
     }
 
-    pub async fn user_balance<T: ToRedisKey>(&self, api_key: &T) -> EpochResult<VaultBalance> {
+    pub async fn user_balance<T: ToRedisKey>(&self, api_key: T) -> EpochResult<VaultBalance> {
         Ok(self.warden.user_balance(api_key).await?)
     }
 
@@ -125,14 +125,14 @@ impl EpochHandler {
     //
     //
 
-    pub async fn read_user<T: ToRedisKey>(&self, api_key: &T) -> EpochResult<Option<Pubkey>> {
+    pub async fn read_user<T: ToRedisKey>(&self, api_key: T) -> EpochResult<Option<Pubkey>> {
         Ok(self.warden.read_user(api_key)?)
     }
 
     pub async fn create_user<T: ToRedisKey>(
         &self,
         payload: Payload,
-        api_key: &T,
+        api_key: T,
     ) -> EpochResult<Pubkey> {
         let query = self.parse_query::<EpochProfile>(payload).await?;
         Ok(self.warden.create_user(api_key, query.profile)?)
@@ -141,7 +141,7 @@ impl EpochHandler {
     pub async fn update_user<T: ToRedisKey>(
         &self,
         payload: Payload,
-        api_key: &T,
+        api_key: T,
     ) -> EpochResult<Pubkey> {
         let query = self.parse_query::<EpochProfile>(payload).await?;
         Ok(self.warden.upsert_user(api_key, query.profile)?)
@@ -150,7 +150,7 @@ impl EpochHandler {
     pub async fn delete_user<T: ToRedisKey>(
         &self,
         payload: Payload,
-        api_key: &T,
+        api_key: T,
     ) -> EpochResult<()> {
         let query = self.parse_query::<EpochProfile>(payload).await?;
         Ok(self.warden.delete_user(api_key, query.profile)?)
@@ -230,7 +230,7 @@ impl EpochHandler {
     pub async fn json_decoded_accounts<T: ToRedisKey>(
         &self,
         payload: Payload,
-        api_key: &T,
+        api_key: T,
         debit_uiamount: f64,
     ) -> anyhow::Result<Vec<JsonEpochAccount>> {
         let debit_amount = Warden::to_real_amount(debit_uiamount);

@@ -160,7 +160,7 @@ impl Warden {
     /// Returns signature of the debit transaction.
     pub async fn debit_vault<T: ToRedisKey>(
         &self,
-        api_key: &T,
+        api_key: T,
         epoch_protocol_signer: &DynSigner<'static>,
         debit_amount: u64,
     ) -> anyhow::Result<String> {
@@ -226,9 +226,9 @@ impl Warden {
         }
     }
 
-    pub async fn user_balance<T: ToRedisKey>(&self, api_key: &T) -> anyhow::Result<VaultBalance> {
+    pub async fn user_balance<T: ToRedisKey>(&self, api_key: T) -> anyhow::Result<VaultBalance> {
         let profile = self
-            .read_user(api_key)?
+            .read_user(api_key.clone())?
             .ok_or(WardenError::UserNotFound(api_key.to_redis_key()))?;
         let mint = Pubkey::from_str(EPOCH_MINT)?;
         let (vault_auth, _) = VaultAuthority::find_program_address(&profile, &mint);
@@ -265,9 +265,8 @@ impl Warden {
     }
 
     /// Hash the api key and check against the hashed key in Redis.
-    pub fn read_user<T: ToRedisKey>(&self, api_key: &T) -> anyhow::Result<Option<Pubkey>> {
-        let hashed_key = Scrambler::new().hash(api_key);
-        match self.redis.get(hashed_key)? {
+    pub fn read_user<T: ToRedisKey>(&self, api_key: T) -> anyhow::Result<Option<Pubkey>> {
+        match self.redis.get(api_key)? {
             None => {
                 warn!("API key not registered");
                 Ok(None)
@@ -281,19 +280,17 @@ impl Warden {
     /// Returns the new value in Redis.
     pub fn create_user<T: ToRedisKey>(
         &self,
-        api_key: &T,
+        api_key: T,
         profile: Pubkey,
     ) -> anyhow::Result<Pubkey> {
-        let hashed_key = Scrambler::new().hash(api_key);
-
-        let existing_value = self.redis.get(hashed_key)?;
+        let existing_value = self.redis.get(api_key.clone())?;
         match existing_value {
             Some(value) => {
                 error!("API key already registered for: {}", value);
                 Err(anyhow::anyhow!("API key already registered"))
             }
             None => {
-                let res = self.redis.upsert(hashed_key, Some(profile.to_string()))?;
+                let res = self.redis.upsert(api_key, Some(profile.to_string()))?;
                 match res {
                     None => {
                         error!("Error registering user, upserted as None");
@@ -314,11 +311,10 @@ impl Warden {
     /// Returns the new value in Redis.
     pub fn upsert_user<T: ToRedisKey>(
         &self,
-        api_key: &T,
+        api_key: T,
         profile: Pubkey,
     ) -> anyhow::Result<Pubkey> {
-        let hashed_key = Scrambler::new().hash(api_key);
-        let user_profile = self.redis.upsert(hashed_key, Some(profile.to_string()))?;
+        let user_profile = self.redis.upsert(api_key, Some(profile.to_string()))?;
         match user_profile {
             None => {
                 error!("Error registering user, upserted as None");
@@ -332,14 +328,12 @@ impl Warden {
     }
 
     /// Delete the Redis key-value pair for the hashed API key.
-    pub fn delete_user<T: ToRedisKey>(&self, api_key: &T, profile: Pubkey) -> anyhow::Result<()> {
-        let hashed_key = Scrambler::new().hash(api_key);
-
-        let user_profile = self.redis.get(hashed_key)?;
+    pub fn delete_user<T: ToRedisKey>(&self, api_key: T, profile: Pubkey) -> anyhow::Result<()> {
+        let user_profile = self.redis.get(api_key.clone())?;
         match user_profile {
             Some(value) => match profile.to_string() == value {
                 true => {
-                    let res = self.redis.upsert(hashed_key, None)?;
+                    let res = self.redis.upsert(api_key, None)?;
                     info!("Deleted user: {:?}", res);
                     Ok(())
                 }

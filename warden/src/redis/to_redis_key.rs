@@ -15,7 +15,7 @@ macro_rules! display_redis_key {
 display_redis_key!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, String);
 
 /// Type can be a redis key
-pub trait ToRedisKey: Debug {
+pub trait ToRedisKey: Debug + Clone {
     /// Converts this to a redis key
     fn to_redis_key(&self) -> String;
 }

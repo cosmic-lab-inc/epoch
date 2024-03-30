@@ -218,7 +218,7 @@ async fn json_decoded_accounts(
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
     let accts = match state
         .handler
-        .json_decoded_accounts(payload, &epoch_api_key, 1_f64)
+        .json_decoded_accounts(payload, epoch_api_key, 1_f64)
         .await
     {
         Ok(res) => Ok(res),
@@ -291,7 +291,7 @@ async fn authenticate(state: Data<Arc<AppState>>, payload: Payload) -> EpochResu
 #[get("/user-balance")]
 async fn user_balance(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResult<HttpResponse> {
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
-    let res = match state.handler.user_balance(&epoch_api_key).await {
+    let res = match state.handler.user_balance(epoch_api_key).await {
         Ok(res) => Ok(res),
         Err(e) => {
             error!("{:?}", e);
@@ -304,7 +304,7 @@ async fn user_balance(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResu
 #[get("/read-user")]
 async fn read_user(state: Data<Arc<AppState>>, req: HttpRequest) -> EpochResult<HttpResponse> {
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
-    let res = match state.handler.read_user(&epoch_api_key).await {
+    let res = match state.handler.read_user(epoch_api_key).await {
         Ok(res) => Ok(res),
         Err(e) => {
             error!("{:?}", e);
@@ -324,7 +324,24 @@ async fn create_user(
     req: HttpRequest,
 ) -> EpochResult<HttpResponse> {
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
-    let res = match state.handler.create_user(payload, &epoch_api_key).await {
+    let res = match state.handler.create_user(payload, epoch_api_key).await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
+    Ok(HttpResponse::Ok().json(res.to_string()))
+}
+
+#[post("/update-user")]
+async fn update_user(
+    state: Data<Arc<AppState>>,
+    payload: Payload,
+    req: HttpRequest,
+) -> EpochResult<HttpResponse> {
+    let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
+    let res = match state.handler.update_user(payload, epoch_api_key).await {
         Ok(res) => Ok(res),
         Err(e) => {
             error!("{:?}", e);
@@ -341,7 +358,7 @@ async fn delete_user(
     req: HttpRequest,
 ) -> EpochResult<HttpResponse> {
     let epoch_api_key = EpochHandler::parse_api_key_header(req)?;
-    match state.handler.delete_user(payload, &epoch_api_key).await {
+    match state.handler.delete_user(payload, epoch_api_key).await {
         Ok(res) => Ok(res),
         Err(e) => {
             error!("{:?}", e);
