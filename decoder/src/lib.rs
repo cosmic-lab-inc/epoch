@@ -1,8 +1,13 @@
+pub mod decoded_account;
 pub mod program_decoder;
 pub mod program_helpers;
 
+pub use decoded_account::*;
 pub use program_decoder::*;
 pub use program_helpers::*;
+
+// reexport drift_cpi
+pub use drift_cpi;
 
 #[test]
 fn test_base64_encoding() {

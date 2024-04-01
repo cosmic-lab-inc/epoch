@@ -31,3 +31,5 @@ solana-client = { workspace = true }
 sol-chainsaw = { workspace = true }
 solana-sdk = { workspace = true }
 tokio = { workspace = true }
+common_utils = { version = "0.2.3", registry = "epoch", features = ["client"] }
+anchor-lang = ">=0.20.0"

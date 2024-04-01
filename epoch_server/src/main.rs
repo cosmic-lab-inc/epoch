@@ -16,22 +16,19 @@ use dotenv::dotenv;
 use log::*;
 
 use auth::*;
+use common::init_logger;
 use decoder::Decoder;
 use errors::EpochError;
 use gcs::bq::BigQueryClient;
 use handler::*;
-use logger::*;
 
 use crate::{config::EpochConfig, errors::EpochResult};
 
-mod account;
 mod auth;
 mod bootstrap;
 mod config;
-mod decoded_account;
 mod errors;
 mod handler;
-mod logger;
 mod utils;
 
 struct AppState {
@@ -49,7 +46,7 @@ struct Args {
 #[actix_web::main]
 async fn main() -> EpochResult<()> {
     dotenv().ok();
-    init_logger()?;
+    init_logger();
     let args: Args = Args::parse();
     info!("Starting Epoch server ⏳ ");
 
@@ -116,6 +113,8 @@ async fn main() -> EpochResult<()> {
             .service(airdrop)
             .service(request_challenge)
             .service(authenticate)
+            .service(highest_slot)
+            .service(lowest_slot)
             .service(web::scope("/admin").wrap(admin_auth).service(admin_test))
     })
     .bind(bind_address)?
@@ -183,27 +182,6 @@ async fn borsh_decoded_accounts(
             return Ok(HttpResponse::InternalServerError().json(e.to_string()));
         }
     };
-    // TODO: remove after debugging
-    for acct in accts.iter() {
-        #[allow(irrefutable_let_patterns)]
-        if let Decoder::Drift(acc) = &acct.decoded {
-            match acc {
-                decoder::drift_cpi::AccountType::User(user) => {
-                    info!(
-                        "decoded user pnl: {:?}",
-                        user.settled_perp_pnl as f64 / decoder::drift::QUOTE_PRECISION as f64
-                    );
-                }
-                decoder::drift_cpi::AccountType::PerpMarket(market) => {
-                    info!("decoded perp market: {:?}", market.pubkey.to_string());
-                }
-                decoder::drift_cpi::AccountType::SpotMarket(market) => {
-                    info!("decoded spot market: {:?}", market.pubkey.to_string());
-                }
-                _ => {}
-            }
-        }
-    }
     let mut buf = Vec::new();
     accts.serialize(&mut buf)?;
     Ok(HttpResponse::Ok().body(buf))
@@ -378,6 +356,30 @@ async fn airdrop(state: Data<Arc<AppState>>, payload: Payload) -> EpochResult<Ht
         }
     }?;
     Ok(HttpResponse::Ok().json("Airdrop successful"))
+}
+
+#[get("/highest-slot")]
+async fn highest_slot(state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
+    let slot = match state.handler.highest_slot().await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
+    Ok(HttpResponse::Ok().json(slot))
+}
+
+#[get("/lowest-slot")]
+async fn lowest_slot(state: Data<Arc<AppState>>) -> EpochResult<HttpResponse> {
+    let slot = match state.handler.lowest_slot().await {
+        Ok(res) => Ok(res),
+        Err(e) => {
+            error!("{:?}", e);
+            Err(e)
+        }
+    }?;
+    Ok(HttpResponse::Ok().json(slot))
 }
 
 // ================================== ADMIN ================================== //

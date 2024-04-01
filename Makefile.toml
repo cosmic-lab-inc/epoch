@@ -5,5 +5,8 @@ default_to_workspace = false
 script = "cargo run -p backfill"
 
 [tasks.epoch]
-script = "cargo run -p epoch"
+script = "cargo run -p epoch_server"
+
+[tasks.covest]
+script = "cargo run -p covest"
 

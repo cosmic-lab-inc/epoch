@@ -1,5 +1,5 @@
+use crate::ArchiveAccount;
 use borsh::{BorshDeserialize, BorshSerialize};
-use common::ArchiveAccount;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, BorshDeserialize, BorshSerialize)]

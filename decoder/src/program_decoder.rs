@@ -1,8 +1,6 @@
 use base64::{engine::general_purpose, Engine as _};
 use borsh::{BorshDeserialize, BorshSerialize};
 use common::{DecodeProgramAccount, RegisteredType};
-// reexport drift_cpi
-pub use drift_cpi;
 use log::{error, info};
 use once_cell::sync::Lazy;
 use serde_json::Value;
@@ -10,13 +8,16 @@ use sol_chainsaw::{ChainsawDeserializer, IdlProvider};
 use solana_sdk::{hash::hash, pubkey::Pubkey};
 use std::collections::HashMap;
 
+// // reexport drift_cpi
+// pub use drift_cpi;
+
 /// Master list of supported programs that can provide decoded accounts based on an Anchor IDL.
 pub static PROGRAMS: Lazy<Vec<(String, Pubkey)>> =
     Lazy::new(|| vec![(drift_cpi::PROGRAM_NAME.clone(), *drift_cpi::PROGRAM_ID)]);
 
 /// Registry of program account decoders that match a discriminant,
 /// such as "User", to a specific account type.
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(Copy, Clone, BorshDeserialize, BorshSerialize)]
 pub enum Decoder {
     Drift(drift_cpi::AccountType),
 }

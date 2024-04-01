@@ -13,6 +13,7 @@ macro_rules! decode_account {
     }) => {
         #[repr(C)]
         #[derive(anchor_lang::prelude::AnchorDeserialize, anchor_lang::prelude::AnchorSerialize)]
+        #[derive(Copy, Clone)]
         $vis enum $ident {
             $($variant($account_type),)*
         }

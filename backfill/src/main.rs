@@ -1,16 +1,14 @@
 mod config;
 mod errors;
-mod logger;
 
 use clap::Parser;
-use common::ArchiveAccount;
+use common::{init_logger, ArchiveAccount};
 use config::*;
 use gcs::{
     bq::{BigQueryClient, BqAccount},
     bucket::*,
 };
 use log::*;
-use logger::*;
 use snapshot::stream_archived_accounts;
 use std::{
     path::{Path, PathBuf},
@@ -27,7 +25,7 @@ struct Args {
 
 fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
-    init_logger()?;
+    init_logger();
     let args: Args = Args::parse();
     info!("Starting with args: {:?}", args);
 

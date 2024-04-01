@@ -1657,9 +1657,9 @@ dependencies = [
 
 [[package]]
 name = "common_utils"
-version = "0.2.1"
+version = "0.2.3"
 source = "registry+ssh://git@ssh.shipyard.rs/epoch/crate-index.git"
-checksum = "29fb4fc1e6ccf5e5de77b0b131806a33e3e13afa43df6cd6785140a14d962fff"
+checksum = "a9df6a9771b16dd8f191f72c93a7e95aeba058a95251ccf759db59eb81780be6"
 dependencies = [
  "anchor-lang 0.25.26",
  "anchor-spl",
@@ -1773,6 +1773,37 @@ name = "core-foundation-sys"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
+
+[[package]]
+name = "covest"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "borsh 0.10.3",
+ "chrono",
+ "clap 4.2.7",
+ "crossbeam-channel",
+ "derive_more",
+ "dotenv",
+ "epoch_client",
+ "futures",
+ "gcs",
+ "lazy_static",
+ "log",
+ "nacl",
+ "rayon",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "simplelog",
+ "solana-client",
+ "solana-sdk",
+ "thiserror",
+ "tokio",
+ "tungstenite 0.21.0",
+ "uuid",
+]
 
 [[package]]
 name = "cpufeatures"
@@ -1966,11 +1997,13 @@ checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
 name = "decoder"
 version = "0.1.0"
 dependencies = [
+ "anchor-lang 0.29.0",
  "anyhow",
  "base64 0.22.0",
  "borsh 0.10.3",
  "chrono",
  "common",
+ "common_utils",
  "drift-cpi",
  "futures",
  "futures-util",
@@ -2254,7 +2287,44 @@ dependencies = [
 ]
 
 [[package]]
-name = "epoch"
+name = "epoch_client"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang 0.25.26",
+ "anyhow",
+ "borsh 0.10.3",
+ "chrono",
+ "clap 4.2.7",
+ "common",
+ "common_utils",
+ "decoder",
+ "derive_more",
+ "dotenv",
+ "futures",
+ "gcs",
+ "lazy_static",
+ "log",
+ "nacl",
+ "player_profile",
+ "profile_vault",
+ "rayon",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "simplelog",
+ "solana-account-decoder",
+ "solana-client",
+ "solana-sdk",
+ "thiserror",
+ "tokio",
+ "tungstenite 0.21.0",
+ "uuid",
+ "warden",
+]
+
+[[package]]
+name = "epoch_server"
 version = "0.1.0"
 dependencies = [
  "actix-cors",

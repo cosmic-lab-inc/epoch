@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use actix_web::web::{BytesMut, Payload};
 use actix_web::HttpRequest;
-use common_utils::prelude::{DynSigner, RpcClientToken2022Ext};
+use common_utils::prelude::DynSigner;
 use futures::StreamExt;
 use log::*;
 use serde::de::DeserializeOwned;
@@ -10,16 +10,13 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 
 use common::types::query::*;
-use common::VaultBalance;
+use common::{EpochAccount, VaultBalance};
 use decoder::program_decoder::ProgramDecoder;
+use decoder::{DecodedEpochAccount, JsonEpochAccount};
 use gcs::bq::*;
 use warden::{ToRedisKey, Warden};
 
-use crate::{
-    account::EpochAccount,
-    decoded_account::{DecodedEpochAccount, JsonEpochAccount},
-    errors::{EpochError, EpochResult},
-};
+use crate::errors::{EpochError, EpochResult};
 
 const MAX_SIZE: usize = 262_144; // max payload size is 256k
 
@@ -186,7 +183,7 @@ impl EpochHandler {
         payload: Payload,
     ) -> anyhow::Result<Vec<DecodedEpochAccount>> {
         let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
-        let archive_accts = self.client.account_type(&query).await?;
+        let archive_accts = self.client.registered_types(&query).await?;
 
         // TODO: par iter by wrapping ProgramDecoder in Arc
         let decoded_accts: Vec<DecodedEpochAccount> = archive_accts
@@ -239,7 +236,7 @@ impl EpochHandler {
 
         let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
         info!("Decoded accounts request: {:#?}", query);
-        let archive_accts = self.client.account_type(&query).await?;
+        let archive_accts = self.client.registered_types(&query).await?;
 
         // TODO: par iter by making EpochAccount try from reference. Data must be borrowed Cow (use BytesWrapper)
         let mut decoded_accts: Vec<JsonEpochAccount> = archive_accts
@@ -362,5 +359,13 @@ impl EpochHandler {
                     .collect())
             }
         }
+    }
+
+    pub async fn highest_slot(&self) -> anyhow::Result<u64> {
+        self.client.highest_slot().await
+    }
+
+    pub async fn lowest_slot(&self) -> anyhow::Result<u64> {
+        self.client.lowest_slot().await
     }
 }

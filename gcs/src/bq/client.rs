@@ -1,6 +1,7 @@
 use crate::{bq::*, errors::GcsError};
 use common::types::*;
 use decoder::ProgramDecoder;
+use gcp_bigquery_client::model::query_request::QueryRequest;
 use gcp_bigquery_client::{
     error::BQError,
     model::{
@@ -249,7 +250,6 @@ impl BigQueryClient {
             true => "AND",
         };
         query = format!("{} {} owner = \"{}\"", &query, clause, params.owner);
-        where_added = true;
 
         let base64_discrim = ProgramDecoder::name_to_base64_discrim(&params.discriminant);
         query = format!(
@@ -257,12 +257,15 @@ impl BigQueryClient {
             &query, base64_discrim
         );
 
-        query = format!("{} LIMIT {} OFFSET {}", &query, params.limit, params.offset);
+        query = format!(
+            "{} ORDER BY slot DESC LIMIT {} OFFSET {}",
+            &query, params.limit, params.offset
+        );
         debug!("decoded accounts query: {:#?}", query);
         Ok(query)
     }
 
-    pub async fn account_type(
+    pub async fn registered_types(
         &self,
         params: &QueryDecodedAccounts,
     ) -> anyhow::Result<Vec<ArchiveAccount>> {
@@ -279,5 +282,71 @@ impl BigQueryClient {
         );
         tokio::pin!(res);
         Self::read_stream(res).await
+    }
+
+    pub async fn highest_slot(&self) -> anyhow::Result<u64> {
+        let query = format!("SELECT MAX(slot) FROM {}", &self.accounts_table);
+        let result = self
+            .client
+            .job()
+            .query(BQ_PROJECT_ID, QueryRequest::new(query))
+            .await?;
+        let res = result.query_response().clone();
+        let rows = res.rows.ok_or(anyhow::Error::from(GcsError::EmptyRows))?;
+        let row = rows
+            .first()
+            .ok_or(anyhow::Error::from(GcsError::SlotNotFound))?
+            .to_owned();
+        let columns = row
+            .columns
+            .ok_or(anyhow::Error::from(GcsError::EmptyColumns))?
+            .to_owned();
+        let slot_col = columns
+            .first()
+            .ok_or(anyhow::Error::from(GcsError::ColumnMissing(
+                "slot".to_string(),
+            )))?
+            .to_owned();
+        let slot_value =
+            slot_col
+                .value
+                .ok_or(anyhow::Error::from(GcsError::ColumnValueMissing(
+                    "slot".to_string(),
+                )))?;
+        let slot = serde_json::from_value::<String>(slot_value)?;
+        Ok(slot.parse()?)
+    }
+
+    pub async fn lowest_slot(&self) -> anyhow::Result<u64> {
+        let query = format!("SELECT MIN(slot) FROM {}", &self.accounts_table);
+        let result = self
+            .client
+            .job()
+            .query(BQ_PROJECT_ID, QueryRequest::new(query))
+            .await?;
+        let res = result.query_response().clone();
+        let rows = res.rows.ok_or(anyhow::Error::from(GcsError::EmptyRows))?;
+        let row = rows
+            .first()
+            .ok_or(anyhow::Error::from(GcsError::SlotNotFound))?
+            .to_owned();
+        let columns = row
+            .columns
+            .ok_or(anyhow::Error::from(GcsError::EmptyColumns))?
+            .to_owned();
+        let slot_col = columns
+            .first()
+            .ok_or(anyhow::Error::from(GcsError::ColumnMissing(
+                "slot".to_string(),
+            )))?
+            .to_owned();
+        let slot_value =
+            slot_col
+                .value
+                .ok_or(anyhow::Error::from(GcsError::ColumnValueMissing(
+                    "slot".to_string(),
+                )))?;
+        let slot = serde_json::from_value::<String>(slot_value)?;
+        Ok(slot.parse()?)
     }
 }

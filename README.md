@@ -126,3 +126,19 @@ known-hosts = ["|1|Nd+IBXkJkrIrSIAKq6z8DDQ0pGg=|JhhNR5A5svgLwRskiKYyjc0fq7E= ecd
 [net]
 git-fetch-with-cli = true
 ```
+
+Perp pnl is `User.settled_perp_pnl`
+Spot pnl is `User.spot_positions` iterated, matched to `SpotMarket`, and calced with `get_spot_balance`
+Then multiply balance by token mint value on market to get USD value
+
+
+
+
+
+
+
+
+
+
+
+

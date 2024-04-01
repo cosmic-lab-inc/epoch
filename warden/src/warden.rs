@@ -129,7 +129,7 @@ impl Warden {
                     &epoch_protocol as &DynSigner,
                     &mint.pubkey(),
                     key,
-                    1000_00,
+                    10_00,
                     &epoch_protocol as &DynSigner,
                 )
                 .await?)

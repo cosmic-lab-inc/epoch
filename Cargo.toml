@@ -4,11 +4,13 @@ members = [
     "backfill",
     "common",
     "decoder",
-    "epoch",
+    "epoch_server",
+    "epoch_client",
     "gcs",
     "idls/*",
     "snapshot",
-    "warden"
+    "warden",
+    "covest"
 ]
 
 [workspace.package]
@@ -60,11 +62,6 @@ solana-runtime = { version = "1.17.2", features = ["dev-context-only-utils"] }
 solana-sdk = { version = "1.17.2", features = ["dev-context-only-utils"] }
 solana-client = "1.17.22"
 solana-account-decoder = "1.17.22"
-#solana-accounts-db = { version = "1.16.9", features = ["dev-context-only-utils"] }
-#solana-runtime = { version = "1.16.9", features = ["dev-context-only-utils"] }
-#solana-sdk = { version = "1.16.9", features = ["dev-context-only-utils"] }
-#solana-client = "1.16.9"
-#solana-account-decoder = "1.16.9"
 time = "0.3.14"
 tar = "0.4.38"
 thiserror = "1.0.44"
@@ -72,3 +69,4 @@ tokio = { version = "1.36.0", features = ["full"] }
 tokio-retry = "0.3.0"
 tokio-stream = { version = "0.1.14", features = ["net"] }
 zstd = "0.11.2"
+nacl = "0.5.3"

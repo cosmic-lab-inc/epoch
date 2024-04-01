@@ -22,6 +22,21 @@ pub enum GcsError {
 
     #[error("Value is None")]
     None,
+
+    #[error("Returned empty rows")]
+    EmptyRows,
+
+    #[error("Returned empty columns")]
+    EmptyColumns,
+
+    #[error("Column not found {0}")]
+    ColumnMissing(String),
+
+    #[error("Column value missing {0}")]
+    ColumnValueMissing(String),
+
+    #[error("Slot not found")]
+    SlotNotFound,
 }
 
 pub type GcsResult<T> = Result<T, GcsError>;

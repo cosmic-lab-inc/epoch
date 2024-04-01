@@ -8,9 +8,7 @@ use common_utils::prelude::anchor_spl::token_2022::spl_token_2022;
 use common_utils::prelude::anchor_spl::token_2022::spl_token_2022::extension::{ExtensionType, StateWithExtensions};
 use common_utils::prelude::anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::instruction::initialize_transfer_fee_config;
 use common_utils::prelude::anchor_spl::token_2022::spl_token_2022::instruction::initialize_mint2;
-use common_utils::prelude::solana_client::rpc_config::{
-    RpcRequestAirdropConfig, RpcSendTransactionConfig,
-};
+use common_utils::prelude::solana_client::rpc_config::{RpcRequestAirdropConfig, RpcSendTransactionConfig};
 use player_profile::{
     client::AddProfileKey, instructions::create_profile_ix, state::ProfilePermissions,
 };
@@ -19,6 +17,7 @@ use profile_vault::{
     close_vault_ix, create_vault_authority_ix, drain_vault_ix, ProfileVaultPermissions,
     VaultAuthority,
 };
+use solana_sdk::bs58;
 use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::transaction::Transaction;
@@ -579,10 +578,10 @@ async fn test_debit_epoch_vault() -> anyhow::Result<()> {
     let rpc_url = "http://localhost:8899".to_string();
     let warden = Warden::new(&redis_url, rpc_url, false)?;
     let api_key = "warden_test_api_key".to_string();
-    let user_profile = warden.upsert_user(&api_key, profile_key.pubkey())?;
+    let user_profile = warden.upsert_user(api_key.clone(), profile_key.pubkey())?;
     assert_eq!(user_profile, profile_key.pubkey());
 
-    let user_vault_before = match warden.user_balance(&api_key).await {
+    let user_vault_before = match warden.user_balance(api_key.clone()).await {
         Ok(balance) => Ok(balance),
         Err(e) => {
             eprintln!("Error reading vault {} with error: {:?}", epoch_vault, e);
@@ -593,7 +592,7 @@ async fn test_debit_epoch_vault() -> anyhow::Result<()> {
 
     // pretend user made an API request and attempt to debit their vault.
     let debit_sig = warden
-        .debit_vault(&api_key, &epoch_protocol as &DynSigner, 1_00)
+        .debit_vault(api_key, &epoch_protocol as &DynSigner, 1_00)
         .await?;
     println!("Debit sig: {}", debit_sig);
 
@@ -734,19 +733,115 @@ async fn ata_token_ext() -> anyhow::Result<()> {
 
     // errors with InvalidAccountData because ExtensionType is not defined in the program
     let state = StateWithExtensions::<spl_token_2022::state::Account>::unpack(&info.data)?;
-
-    // let ext_bytes = state.get_tlv_data();
-    // match ExtensionType::try_from(ext_bytes) {
-    //     Ok(ext) => {
-    //         println!("ATA state: {:?}", state.base);
-    //         println!("Extension: {:?}", ext);
-    //     }
-    //     Err(e) => {
-    //         eprintln!("Error parsing ATA extension: {:?}", e);
-    //     }
-    // }
-
     println!("ATA state: {:?}", state.base);
 
     Ok(())
+}
+
+#[tokio::test]
+async fn test_profiles_for_key() -> anyhow::Result<()> {
+    let client = get_client();
+    let [funder, key, create_vault_key, drain_vault_key, vault_seed] =
+        client.create_funded_keys().await?;
+
+    let profile_key = Keypair::new();
+    let profile_auth = key;
+
+    let ixs = [
+        create_profile_ix(
+            &profile_key,
+            [
+                AddProfileKey::new(
+                    &profile_auth,
+                    player_profile::ID,
+                    -1,
+                    ProfilePermissions::AUTH,
+                ),
+                AddProfileKey::new(
+                    &create_vault_key,
+                    profile_vault::ID,
+                    -1,
+                    ProfileVaultPermissions::CREATE_VAULT_AUTHORITY,
+                ),
+                AddProfileKey::new(
+                    &drain_vault_key,
+                    profile_vault::ID,
+                    -1,
+                    ProfileVaultPermissions::DRAIN_VAULT,
+                ),
+            ],
+            1,
+        ),
+        create_vault_authority_ix(
+            profile_key.pubkey(),
+            1,
+            &create_vault_key,
+            vault_seed.pubkey(),
+        ),
+    ];
+    let (sig, _) = client.build_send_and_check(ixs, &funder).await?;
+    let bs58_sig = bs58::encode(sig).into_string();
+    println!("Create profile sig: {}", bs58_sig);
+
+    // tokio::time::sleep(std::time::Duration::from_secs(4)).await;
+
+    let profiles = profiles_for_key(
+        &client,
+        profile_auth.pubkey(),
+        Some(ProfileKey {
+            key: drain_vault_key.pubkey(),
+            scope: profile_vault::ID,
+            permissions: ProfileVaultPermissions::DRAIN_VAULT.bits().to_le_bytes(),
+            expire_time: -1,
+        }),
+    )
+    .await?;
+    println!(
+        "Profiles for key {:?}: {:?}",
+        profile_auth.pubkey(),
+        profiles.len()
+    );
+    assert!(!profiles.is_empty());
+
+    Ok(())
+}
+
+pub async fn profiles_for_key(
+    client: &RpcClient,
+    auth: Pubkey,
+    search: Option<ProfileKey>,
+) -> anyhow::Result<Vec<AccountWithRemaining<Profile, Vec<ProfileKey>>>> {
+    let profiles = client
+        .get_wrapped_program_accounts::<Profile, Vec<ProfileKey>>()
+        .await?;
+    // filter first ProfileKey with key == auth
+    let profiles_for_auth: Vec<_> = profiles
+        .into_iter()
+        .filter_map(|p| match p.remaining.first() {
+            Some(key) => {
+                match key.key == auth
+                    && key.scope == player_profile::ID
+                    && key.permissions == ProfilePermissions::AUTH.bits().to_le_bytes()
+                {
+                    true => Some(p),
+                    false => None,
+                }
+            }
+            None => None,
+        })
+        .collect();
+    // if some search key then find all profiles with some remaining key == search
+    Ok(match search {
+        Some(search_key) => profiles_for_auth
+            .into_iter()
+            .filter(|p| {
+                p.remaining.iter().any(|k| {
+                    k.key == search_key.key
+                        && k.scope == search_key.scope
+                        && k.permissions == search_key.permissions
+                })
+            })
+            .collect::<Vec<_>>(),
+        None => profiles_for_auth,
+    })
 }

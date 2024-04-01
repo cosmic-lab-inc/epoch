@@ -1,4 +1,6 @@
-use crate::{deserialize_option_pubkey, deserialize_pubkey, serialize_pubkey};
+use crate::{
+    deserialize_option_pubkey, deserialize_pubkey, serialize_option_pubkey, serialize_pubkey,
+};
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
 
@@ -10,10 +12,13 @@ pub struct QueryAccountId {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryAccounts {
     #[serde(deserialize_with = "deserialize_option_pubkey")]
+    #[serde(serialize_with = "serialize_option_pubkey")]
     #[serde(default)]
     pub key: Option<Pubkey>,
+    #[serde(default)]
     pub slot: Option<u64>,
     #[serde(deserialize_with = "deserialize_option_pubkey")]
+    #[serde(serialize_with = "serialize_option_pubkey")]
     #[serde(default)]
     pub owner: Option<Pubkey>,
     pub limit: u64,
@@ -23,11 +28,13 @@ pub struct QueryAccounts {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryDecodedAccounts {
     #[serde(deserialize_with = "deserialize_option_pubkey")]
+    #[serde(serialize_with = "serialize_option_pubkey")]
     #[serde(default)]
     pub key: Option<Pubkey>,
-    pub slot: Option<u64>,
-    #[serde(deserialize_with = "deserialize_pubkey")]
     #[serde(default)]
+    pub slot: Option<u64>,
+    #[serde(serialize_with = "serialize_pubkey")]
+    #[serde(deserialize_with = "deserialize_pubkey")]
     pub owner: Pubkey,
     pub discriminant: String,
     pub limit: u64,
@@ -39,6 +46,7 @@ pub struct QueryRegisteredTypes {
     #[serde(default)]
     pub program_name: Option<String>,
     #[serde(deserialize_with = "deserialize_option_pubkey")]
+    #[serde(serialize_with = "serialize_option_pubkey")]
     #[serde(default)]
     pub program: Option<Pubkey>,
     #[serde(default)]
