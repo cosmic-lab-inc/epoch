@@ -1,1 +1,1 @@
-web: ./target/release/epoch
+web: ./target/release/epoch_server
