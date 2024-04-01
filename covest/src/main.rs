@@ -170,7 +170,6 @@ async fn epoch_demo() -> anyhow::Result<()> {
 
     // deletes your user from the Epoch database in case you want to start fresh with the same keypair
     client.reset_user().await?;
-    client.reset_user().await?;
     // automatically sign up or log in
     // if a new user, this will create a Profile account and Token account on-chain,
     // hence the need for devnet SOL.

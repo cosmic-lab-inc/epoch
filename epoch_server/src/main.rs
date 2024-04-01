@@ -307,7 +307,7 @@ async fn create_user(
             Err(e)
         }
     }?;
-    Ok(HttpResponse::Ok().json(res.to_string()))
+    Ok(HttpResponse::Ok().json(res))
 }
 
 #[post("/update-user")]
@@ -324,7 +324,7 @@ async fn update_user(
             Err(e)
         }
     }?;
-    Ok(HttpResponse::Ok().json(res.to_string()))
+    Ok(HttpResponse::Ok().json(res))
 }
 
 #[post("/delete-user")]

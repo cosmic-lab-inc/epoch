@@ -352,9 +352,15 @@ impl EpochClient {
                 self.update_user(&api_key, new_profile.pubkey()).await?
             }
             // profile and user -> do nothing
-            (Some(_profile), Some(_user)) => self.epoch_user(&api_key).await?.ok_or(
-                anyhow::anyhow!("Failed to find user after verifying wallet"),
-            )?,
+            (Some(profile), Some(user)) => match profile.key == user {
+                true => self.epoch_user(&api_key).await?.ok_or(anyhow::anyhow!(
+                    "Failed to find user after verifying wallet"
+                ))?,
+                false => {
+                    let new_profile = self.create_profile().await?;
+                    self.create_user(&api_key, new_profile.pubkey()).await?
+                }
+            },
         })
     }
 
