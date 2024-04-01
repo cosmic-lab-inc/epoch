@@ -17,7 +17,6 @@ use log::*;
 
 use auth::*;
 use common::init_logger;
-use decoder::Decoder;
 use errors::EpochError;
 use gcs::bq::BigQueryClient;
 use handler::*;
@@ -29,7 +28,6 @@ mod bootstrap;
 mod config;
 mod errors;
 mod handler;
-mod utils;
 
 struct AppState {
     handler: EpochHandler,

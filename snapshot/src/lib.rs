@@ -4,7 +4,6 @@ pub mod decode_accounts;
 pub mod errors;
 pub mod extract_snapshot;
 pub mod loader;
-pub mod utils;
 
 pub use archive::*;
 pub use archiver::*;
@@ -15,7 +14,6 @@ pub use errors::*;
 pub use extract_snapshot::*;
 pub use loader::*;
 use std::sync::Arc;
-pub use utils::*;
 
 pub fn stream_archived_accounts(
     source: String,

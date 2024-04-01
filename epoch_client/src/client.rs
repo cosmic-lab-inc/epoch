@@ -196,8 +196,12 @@ impl EpochClient {
     }
 
     /// UNIX timestamp (in seconds) of the given slot.
-    pub async fn get_slot_timestamp(&self, slot: u64) -> anyhow::Result<Option<i64>> {
-        let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".to_string());
+    pub async fn get_slot_timestamp(
+        &self,
+        slot: u64,
+        mainnet_rpc: String,
+    ) -> anyhow::Result<Option<i64>> {
+        let rpc_client = RpcClient::new(mainnet_rpc);
         let block = match rpc_client.get_block(slot).await {
             Ok(block) => block,
             Err(_) => return Ok(None),

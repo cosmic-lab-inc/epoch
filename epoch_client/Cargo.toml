@@ -44,3 +44,4 @@ profile_vault = { version = "0.7.5", registry = "epoch", features = ["client"] }
 anchor-lang = { verion = "0.25.26", registry = "epoch" }
 nacl = { workspace = true }
 solana-account-decoder = { workspace = true }
+plotters = "0.3.5"
