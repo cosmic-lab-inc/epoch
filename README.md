@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://epoch.fm">
-    <img alt="Epoch" src="./assets/logo.png" width="250px" style="border-radius: 50%;"/>
+    <img alt="Epoch" src="https://cosmic-lab-inc.github.io/logo/epoch_logo.png" width="250px" style="border-radius: 50%;"/>
   </a>
 </p>
 
@@ -9,25 +9,36 @@
     Epoch ⏳
 </h1>
 
-Epoch improves upon Solana RPC infrastructure to provide a smoother user experience.
+Epoch, the natural evolution of Solana infrastructure.
+Turn data into dollars without being a Solana expert.
 
-Solana RPC serves real-time **account** data only (historical transactions aren't meaningful in this context).
-Epoch provides **historical account state** back to genesis.
+Epoch provides **every program**, **every account**, **everything decoded**, and at **every slot**.
 
-Solana RPC serves raw accounts only, with the account data as an incomprehensible byte array.
-Epoch provides **deserialized accounts** that are human-readable and what the end-user often wants.
+All accounts are decoded into human-readable form
+so that you don't have to understand Solana to profit from it.
 
-Solana RPC serves simple requests for accounts, such as "get all accounts for the Jupiter program".
-Epoch provides **complex queries** such as "get all accounts for the Jupiter program that have a balance greater
-than 1000 and an average positive account change over the past 60 days".
+No other service on the planet decodes **any** account for **any** program.
+Most services, such as Dune and Flipside, have a subset of all Solana programs (such as only the major DEXs).
+Most services, such as StreamingFast, fail to provide **decoded** accounts for **every** program.
 
-Solana RPCs are validators that filled in the role of data servers while the Solana ecosystem grew.
-Validators are designed to validate blocks, not to store Terabytes of history and serve complex requests.
+This ends up forcing the end user to understand Solana programming to decode the data themselves 🤮.
+Or worse, they can't find the account data they need from certain, less-known programs.
 
-Solana created **Geyser** to let the validators push data to infrastructure that is better designed to
-store and serve it to end users.
+Existing historical data solutions all missed the mark.
 
-This is Epoch.
+I, the founder of Epoch, had a simple objective:
+*"Find the most profitable traders using the Drift DEX over the past 90 days."*
+He tried Dune, Flipside, StreamingFast, Google, and even talked directly to Triton One.
+
+No one provides historical account data for every program, every slot, and decoded automatically.
+So I created Epoch to serve my own needs.
+After one month of building for the Renaissance Hackathon,
+I backfilled the entirety of Solana and decoded every account.
+I fulfilled my objective of finding the most profitable traders using the Drift DEX.
+
+Epoch exists to provide a better solution to accessing historical data.
+
+Go data mine some alpha. This is what Epoch was built for.
 
 ## Local Development
 
@@ -126,16 +137,6 @@ known-hosts = ["|1|Nd+IBXkJkrIrSIAKq6z8DDQ0pGg=|JhhNR5A5svgLwRskiKYyjc0fq7E= ecd
 [net]
 git-fetch-with-cli = true
 ```
-
-Perp pnl is `User.settled_perp_pnl`
-Spot pnl is `User.spot_positions` iterated, matched to `SpotMarket`, and calced with `get_spot_balance`
-Then multiply balance by token mint value on market to get USD value
-
-
-
-
-
-
 
 
 
