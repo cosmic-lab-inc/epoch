@@ -105,6 +105,7 @@ async fn main() -> EpochResult<()> {
             .service(all_registered_types)
             .service(test)
             .service(create_user)
+            .service(update_user)
             .service(delete_user)
             .service(user_balance)
             .service(read_user)

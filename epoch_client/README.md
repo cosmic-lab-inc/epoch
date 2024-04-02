@@ -3,20 +3,23 @@
 ```rust
 #[tokio::test]
 async fn epoch_demo() -> anyhow::Result<()> {
-  use crate::{drift_cpi, program_helpers, EpochClient};
-  use crate::{init_logger, DecodedEpochAccount, Decoder, QueryDecodedAccounts};
+  use epoch_client::{drift_cpi, program_helpers, EpochClient};
+  use epoch_client::{init_logger, DecodedEpochAccount, Decoder, QueryDecodedAccounts};
   use log::*;
   use solana_sdk::pubkey::Pubkey;
   use std::collections::HashMap;
   use std::str::FromStr;
   use std::sync::Arc;
   use std::time::Instant;
+  use common_utils::prelude::*;
+  use plotters::prelude::*;
 
   init_logger();
   dotenv::dotenv().ok();
 
   // load a keypair from env as a buffer (e.g. [1,2,3,4,5,5,...])
-  // make sure this has devnet SOL, if not you can get some here: https://faucet.solana.com/
+  // during the demo phase make sure this has devnet SOL, 
+  // if not you can get some here: https://faucet.solana.com/
   let signer = EpochClient::read_keypair_from_env("WALLET")?;
   let rpc_url = "https://api.devnet.solana.com".to_string();
   let client = Arc::new(EpochClient::new(signer, rpc_url, None));

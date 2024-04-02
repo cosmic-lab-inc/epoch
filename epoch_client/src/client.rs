@@ -358,7 +358,7 @@ impl EpochClient {
                 ))?,
                 false => {
                     let new_profile = self.create_profile().await?;
-                    self.create_user(&api_key, new_profile.pubkey()).await?
+                    self.update_user(&api_key, new_profile.pubkey()).await?
                 }
             },
         })
@@ -453,7 +453,9 @@ impl EpochClient {
             .json(&EpochProfile { profile })
             .send()
             .await?;
-        let profile = Pubkey::from_str(&Self::parse_response::<String>(res).await?)?;
+        info!("create user res: {}", res.status());
+        let profile = Self::parse_response::<Pubkey>(res).await?;
+        info!("create user profile: {}", &profile);
         let epoch_user = EpochUser {
             profile,
             api_key: api_key.to_redis_key(),
@@ -475,7 +477,7 @@ impl EpochClient {
             .json(&EpochProfile { profile })
             .send()
             .await?;
-        let profile = Pubkey::from_str(&Self::parse_response::<String>(res).await?)?;
+        let profile = Self::parse_response::<Pubkey>(res).await?;
         let epoch_user = EpochUser {
             profile,
             api_key: api_key.to_redis_key(),

@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .await?;
 
-    client.reset_user().await?;
+    // client.reset_user().await?;
     let epoch_user = client.connect().await?;
     info!("Epoch user: {:#?}", epoch_user);
 

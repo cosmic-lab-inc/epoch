@@ -1,18 +1,16 @@
 pub mod client;
 
-use chrono::DateTime;
 pub use client::*;
 pub use common::*;
-use common_utils::prelude::*;
 pub use decoder::*;
-use plotters::prelude::full_palette::BLUE;
-use plotters::prelude::*;
 
 #[tokio::test]
 async fn epoch_demo() -> anyhow::Result<()> {
     use crate::{drift_cpi, program_helpers, EpochClient};
     use crate::{init_logger, DecodedEpochAccount, Decoder, QueryDecodedAccounts};
+    use common_utils::prelude::*;
     use log::*;
+    use plotters::prelude::*;
     use solana_sdk::pubkey::Pubkey;
     use std::collections::HashMap;
     use std::str::FromStr;
