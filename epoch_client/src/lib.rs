@@ -8,7 +8,6 @@ pub use decoder::*;
 async fn epoch_demo() -> anyhow::Result<()> {
     use crate::{drift_cpi, program_helpers, EpochClient};
     use crate::{init_logger, DecodedEpochAccount, Decoder, QueryDecodedAccounts};
-    use common_utils::prelude::*;
     use log::*;
     use plotters::prelude::*;
     use solana_sdk::pubkey::Pubkey;

@@ -1,14 +1,7 @@
 use std::str::FromStr;
 
 use anchor_lang::{Discriminator, Owner};
-use common::init_logger;
-use decoder::drift_cpi::{PerpMarket, SpotBalanceType, SpotMarket};
-use solana_account_decoder::UiAccountEncoding;
-use solana_client::rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig};
-use solana_client::rpc_filter::{Memcmp, RpcFilterType};
-use solana_sdk::account::Account;
 
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use anchor_lang::Id;
 use borsh::BorshDeserialize;
 use common_utils::prelude::anchor_spl::associated_token;
@@ -24,7 +17,9 @@ use profile_vault::{create_vault_authority_ix, ProfileVaultPermissions, VaultAut
 use reqwest::header::{HeaderMap, HeaderName};
 use reqwest::{Client, StatusCode};
 use serde::de::DeserializeOwned;
-use solana_client::rpc_config::RpcRequestAirdropConfig;
+use solana_account_decoder::UiAccountEncoding;
+use solana_client::rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig};
+use solana_client::rpc_filter::{Memcmp, RpcFilterType};
 use solana_sdk::bs58;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
@@ -616,53 +611,4 @@ impl EpochClient {
             .await?;
         Self::parse_response::<u64>(res).await
     }
-}
-
-#[tokio::test]
-async fn test_epoch_client() -> anyhow::Result<()> {
-    let rpc_url = "http://localhost:8899".to_string();
-    // let signer = Keypair::new();
-    let signer = EpochClient::read_keypair_from_env("COVEST")?;
-    let key = signer.pubkey();
-    let client = EpochClient::new(signer, rpc_url, Some("http://localhost:3333".to_string()));
-
-    client
-        .rpc
-        .request_airdrop_with_config(
-            &key,
-            LAMPORTS_PER_SOL,
-            RpcRequestAirdropConfig {
-                commitment: Some(CommitmentConfig::confirmed()),
-                ..Default::default()
-            },
-        )
-        .await?;
-
-    let epoch_user = client.connect().await?;
-    println!("Epoch user: {:#?}", epoch_user);
-
-    client
-        .epoch_airdrop(&epoch_user.api_key, epoch_user.vault)
-        .await?;
-
-    let decoded_accounts = client
-        .json_decoded_accounts(
-            &epoch_user.api_key,
-            QueryDecodedAccounts {
-                key: Some(Pubkey::from_str(
-                    "A8PudbQF6ALzqQLUNzYaenc6jsVE1kGPVJbjMyqixsWv",
-                )?),
-                slot: None,
-                owner: Pubkey::from_str("dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH")?,
-                discriminant: "User".to_string(),
-                limit: 5,
-                offset: 0,
-            },
-        )
-        .await?;
-    for account in decoded_accounts {
-        println!("{:#?}", account);
-    }
-
-    Ok(())
 }

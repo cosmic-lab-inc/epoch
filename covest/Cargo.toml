@@ -38,3 +38,4 @@ uuid = { version = "1.3.0", features = [
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
 ] }
 nacl = { workspace = true }
+plotters = "0.3.5"

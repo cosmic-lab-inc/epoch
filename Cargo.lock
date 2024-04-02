@@ -1839,6 +1839,7 @@ dependencies = [
  "lazy_static",
  "log",
  "nacl",
+ "plotters",
  "rayon",
  "reqwest",
  "serde",

@@ -10,8 +10,11 @@ use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 
-use epoch_client::{drift_cpi, program_helpers, EpochClient};
+use epoch_client::{drift_cpi, program_helpers, shorten_address, trunc, EpochClient};
 use epoch_client::{init_logger, DecodedEpochAccount, Decoder, QueryDecodedAccounts};
+
+// use common_utils::prelude::*;
+use plotters::prelude::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -144,15 +147,64 @@ async fn main() -> anyhow::Result<()> {
     // sort by slot with highest first
     states.sort_by(|a, b| b.slot.cmp(&a.slot));
 
+    #[derive(Debug)]
+    struct Data {
+        x: u64,
+        y: f64,
+    }
+    let mut series: Vec<Data> = vec![];
     for state in states {
         if let Decoder::Drift(drift_cpi::AccountType::User(user)) = state.decoded {
-            info!(
-                "slot: {}, pnl: {}",
-                state.slot,
-                user.settled_perp_pnl as f64 / program_helpers::QUOTE_PRECISION as f64
-            );
+            // println!(
+            //     "slot: {}, USDC profit: {}",
+            //     state.slot,
+            //     user.settled_perp_pnl as f64 / program_helpers::QUOTE_PRECISION as f64
+            // );
+            series.push(Data {
+                x: state.slot,
+                y: trunc!(
+                    user.settled_perp_pnl as f64 / program_helpers::QUOTE_PRECISION as f64,
+                    2
+                ),
+            })
         }
     }
+
+    let first = series.first().ok_or(anyhow::anyhow!("No series"))?;
+    let last = series.last().ok_or(anyhow::anyhow!("No series"))?;
+
+    let out_file = "trade_history.png";
+    let root = BitMapBackend::new(out_file, (2048, 1024)).into_drawing_area();
+    root.fill(&WHITE)?;
+    let mut chart = ChartBuilder::on(&root)
+        .margin(40)
+        .set_all_label_area_size(100)
+        .caption(
+            format!("User {} Performance", shorten_address(&top_dog_key)),
+            ("sans-serif", 40.0).into_font(),
+        )
+        .build_cartesian_2d(last.x..first.x, last.y..first.y)?;
+    chart
+        .configure_mesh()
+        .light_line_style(WHITE)
+        .label_style(("sans-serif", 30, &BLACK).into_text_style(&root))
+        .x_desc("Slot")
+        .y_desc("PnL")
+        .draw()?;
+
+    chart.draw_series(
+        LineSeries::new(
+            series.iter().map(|data| (data.x, data.y)),
+            ShapeStyle {
+                color: RGBAColor::from(BLUE),
+                filled: true,
+                stroke_width: 2,
+            },
+        )
+        .point_size(5),
+    )?;
+
+    root.present()?;
 
     Ok(())
 }
