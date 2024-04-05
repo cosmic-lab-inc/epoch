@@ -39,6 +39,19 @@ pub const EPOCH_API_URL: &str = "https://api.epoch.fm";
 pub const EPOCH_MINT: &str = "EPCHJ3JhGrx2y9NKR5BsmCLwBpFxFheMHDZsmn59BwAi";
 pub const EPOCH_PROTOCOL: &str = "EPCH4ot3VAbB6nfiy7mdZYuk9C8WyjuAkEhyLyhZshCU";
 
+pub enum Env {
+    Dev,
+    Prod,
+}
+impl Env {
+    fn to_api(&self) -> String {
+        match self {
+            Env::Dev => "http://localhost:3333".to_string(),
+            Env::Prod => EPOCH_API_URL.to_string(),
+        }
+    }
+}
+
 pub struct EpochClient {
     pub signer: Keypair,
     pub rpc: RpcClient,
@@ -47,13 +60,12 @@ pub struct EpochClient {
 }
 
 impl EpochClient {
-    pub fn new(signer: Keypair, rpc_url: String, epoch_api: Option<String>) -> Self {
-        let epoch_api = epoch_api.unwrap_or_else(|| EPOCH_API_URL.to_string());
+    pub fn new(signer: Keypair, rpc_url: String, epoch_api: Env) -> Self {
         Self {
             signer,
             rpc: RpcClient::new(rpc_url),
             client: Client::new(),
-            epoch_api,
+            epoch_api: epoch_api.to_api(),
         }
     }
 

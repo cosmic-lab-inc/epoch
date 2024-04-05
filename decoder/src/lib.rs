@@ -10,9 +10,12 @@ pub use program_helpers::*;
 pub use drift_cpi;
 
 #[test]
-fn test_base64_encoding() {
-    use base64::{engine::general_purpose, Engine as _};
-    let bytes: Vec<u8> = vec![159, 117, 95, 227, 239, 151, 58, 236];
-    let data = general_purpose::STANDARD.encode(&bytes);
-    println!("base64 data: {}", data);
+fn drift_user_discrim_to_base64() {
+    use base64::engine::general_purpose;
+    use base64::Engine;
+
+    let bytes = ProgramDecoder::account_discriminator("User");
+    let data = general_purpose::STANDARD.encode(bytes);
+    assert_eq!(data, "n3Vf4++XOuw=");
+    println!("\"User\" as base64: {}", data);
 }

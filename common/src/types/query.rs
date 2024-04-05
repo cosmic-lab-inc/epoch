@@ -9,7 +9,7 @@ pub struct QueryAccountId {
     pub id: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct QueryAccounts {
     #[serde(deserialize_with = "deserialize_option_pubkey")]
     #[serde(serialize_with = "serialize_option_pubkey")]
@@ -17,15 +17,21 @@ pub struct QueryAccounts {
     pub key: Option<Pubkey>,
     #[serde(default)]
     pub slot: Option<u64>,
+    #[serde(default)]
+    pub min_slot: Option<u64>,
+    #[serde(default)]
+    pub max_slot: Option<u64>,
     #[serde(deserialize_with = "deserialize_option_pubkey")]
     #[serde(serialize_with = "serialize_option_pubkey")]
     #[serde(default)]
     pub owner: Option<Pubkey>,
-    pub limit: u64,
-    pub offset: u64,
+    #[serde(default)]
+    pub limit: Option<u64>,
+    #[serde(default)]
+    pub offset: Option<u64>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct QueryDecodedAccounts {
     #[serde(deserialize_with = "deserialize_option_pubkey")]
     #[serde(serialize_with = "serialize_option_pubkey")]
@@ -33,12 +39,18 @@ pub struct QueryDecodedAccounts {
     pub key: Option<Pubkey>,
     #[serde(default)]
     pub slot: Option<u64>,
+    #[serde(default)]
+    pub min_slot: Option<u64>,
+    #[serde(default)]
+    pub max_slot: Option<u64>,
     #[serde(serialize_with = "serialize_pubkey")]
     #[serde(deserialize_with = "deserialize_pubkey")]
     pub owner: Pubkey,
     pub discriminant: String,
-    pub limit: u64,
-    pub offset: u64,
+    #[serde(default)]
+    pub limit: Option<u64>,
+    #[serde(default)]
+    pub offset: Option<u64>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

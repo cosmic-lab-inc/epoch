@@ -181,9 +181,9 @@ impl EpochHandler {
     pub async fn borsh_decoded_accounts(
         &self,
         payload: Payload,
-    ) -> anyhow::Result<Vec<DecodedEpochAccount>> {
+    ) -> EpochResult<Vec<DecodedEpochAccount>> {
         let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
-        let archive_accts = self.client.registered_types(&query).await?;
+        let archive_accts = self.client.decoded_accounts(&query).await?;
 
         // TODO: par iter by wrapping ProgramDecoder in Arc
         let decoded_accts: Vec<DecodedEpochAccount> = archive_accts
@@ -229,14 +229,15 @@ impl EpochHandler {
         payload: Payload,
         api_key: T,
         debit_uiamount: f64,
-    ) -> anyhow::Result<Vec<JsonEpochAccount>> {
+    ) -> EpochResult<Vec<JsonEpochAccount>> {
         let debit_amount = Warden::to_real_amount(debit_uiamount);
         let debit_sig = self.debit_vault(api_key, debit_amount).await?;
         info!("Debit transaction signature: {}", debit_sig);
 
         let query = self.parse_query::<QueryDecodedAccounts>(payload).await?;
         info!("Decoded accounts request: {:#?}", query);
-        let archive_accts = self.client.registered_types(&query).await?;
+
+        let archive_accts = self.client.decoded_accounts(&query).await?;
 
         // TODO: par iter by making EpochAccount try from reference. Data must be borrowed Cow (use BytesWrapper)
         let mut decoded_accts: Vec<JsonEpochAccount> = archive_accts
@@ -284,8 +285,8 @@ impl EpochHandler {
     pub async fn registered_types(
         &self,
         payload: Option<Payload>,
-    ) -> anyhow::Result<Vec<RegisteredType>> {
-        match payload {
+    ) -> EpochResult<Vec<RegisteredType>> {
+        let res = match payload {
             None => self.decoder.registered_types(),
             Some(payload) => {
                 let query = self.parse_query::<QueryRegisteredTypes>(payload).await?;
@@ -358,14 +359,15 @@ impl EpochHandler {
                     })
                     .collect())
             }
-        }
+        }?;
+        Ok(res)
     }
 
-    pub async fn highest_slot(&self) -> anyhow::Result<u64> {
-        self.client.highest_slot().await
+    pub async fn highest_slot(&self) -> EpochResult<u64> {
+        Ok(self.client.highest_slot().await?)
     }
 
-    pub async fn lowest_slot(&self) -> anyhow::Result<u64> {
-        self.client.lowest_slot().await
+    pub async fn lowest_slot(&self) -> EpochResult<u64> {
+        Ok(self.client.lowest_slot().await?)
     }
 }

@@ -12,3 +12,4 @@ snapshots
 *.csv
 gcs_snapshots.json
 /keys
+**/*.png

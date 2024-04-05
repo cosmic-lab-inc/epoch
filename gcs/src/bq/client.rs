@@ -179,7 +179,56 @@ impl BigQueryClient {
         Ok(vec.first().cloned())
     }
 
-    fn build_accounts_query(&self, params: &QueryAccounts) -> String {
+    fn build_slot_query(
+        &self,
+        where_added: bool,
+        slot: Option<u64>,
+        min_slot: Option<u64>,
+        max_slot: Option<u64>,
+    ) -> anyhow::Result<Option<String>> {
+        let clause = match where_added {
+            false => "WHERE",
+            true => "AND",
+        };
+        match slot {
+            Some(slot) => Ok(Some(format!("{} slot = {}", clause, slot))),
+            None => match (min_slot, max_slot) {
+                (Some(min_slot), Some(max_slot)) => {
+                    if max_slot - min_slot > 10 {
+                        Err(anyhow::anyhow!("Slot range too large for free demo"))
+                    } else {
+                        Ok(Some(format!(
+                            "{} slot >= {} AND slot <= {}",
+                            clause, min_slot, max_slot
+                        )))
+                    }
+                }
+                (Some(_min_slot), None) => Err(anyhow::anyhow!(
+                    "Missing max slot for query (free demo restriction)"
+                )),
+                (None, Some(_max_slot)) => Err(anyhow::anyhow!(
+                    "Missing min slot for query (free demo restriction)"
+                )),
+                _ => Ok(None),
+            },
+        }
+        // match slot {
+        //     Some(slot) => Ok(Some(format!("{} slot = {}", clause, slot))),
+        //     None => match (min_slot, max_slot) {
+        //         (Some(min_slot), Some(max_slot)) => {
+        //             Ok(Some(format!(
+        //                 "{} slot >= {} AND slot <= {}",
+        //                 clause, min_slot, max_slot
+        //             )))
+        //         },
+        //         (Some(min_slot), None) => Ok(Some(format!("{} slot >= {}", clause, min_slot))),
+        //         (None, Some(max_slot)) => Ok(Some(format!("{} slot <= {}", clause, max_slot))),
+        //         _ => Ok(None),
+        //     },
+        // }
+    }
+
+    fn build_accounts_query(&self, params: &QueryAccounts) -> anyhow::Result<String> {
         let mut query = format!("SELECT * FROM {}", &self.accounts_table);
         let mut where_added = false;
 
@@ -187,14 +236,14 @@ impl BigQueryClient {
             query = format!("{} WHERE key = \"{}\"", &query, key);
             where_added = true;
         }
-        if let Some(slot) = &params.slot {
-            let clause = match where_added {
-                false => "WHERE",
-                true => "AND",
-            };
-            query = format!("{} {} slot = {}", &query, clause, slot);
+
+        if let Some(slot_query) =
+            self.build_slot_query(where_added, params.slot, params.min_slot, params.max_slot)?
+        {
+            query = format!("{} {}", &query, slot_query);
             where_added = true;
         }
+
         if let Some(owner) = &params.owner {
             let clause = match where_added {
                 false => "WHERE",
@@ -204,13 +253,23 @@ impl BigQueryClient {
             where_added = true;
         }
 
-        query = format!("{} LIMIT {} OFFSET {}", &query, params.limit, params.offset);
+        if let Some(limit) = &params.limit {
+            if *limit > 100 {
+                return Err(anyhow::anyhow!("Query limit too large for free demo"));
+            } else {
+                query = format!("{} LIMIT {}", &query, limit);
+            }
+        }
+        if let Some(offset) = &params.offset {
+            query = format!("{} OFFSET {}", &query, offset);
+        }
+
         debug!("accounts query: {:#?}", query);
-        query
+        Ok(query)
     }
 
     pub async fn accounts(&self, params: &QueryAccounts) -> anyhow::Result<Vec<ArchiveAccount>> {
-        let query = self.build_accounts_query(params);
+        let query = self.build_accounts_query(params)?;
         let res = self.client.job().query_all(
             BQ_PROJECT_ID,
             JobConfigurationQuery {
@@ -236,12 +295,11 @@ impl BigQueryClient {
             query = format!("{} WHERE key = \"{}\"", &query, key);
             where_added = true;
         }
-        if let Some(slot) = &params.slot {
-            let clause = match where_added {
-                false => "WHERE",
-                true => "AND",
-            };
-            query = format!("{} {} slot = {}", &query, clause, slot);
+
+        if let Some(slot_query) =
+            self.build_slot_query(where_added, params.slot, params.min_slot, params.max_slot)?
+        {
+            query = format!("{} {}", &query, slot_query);
             where_added = true;
         }
 
@@ -257,15 +315,22 @@ impl BigQueryClient {
             &query, base64_discrim
         );
 
-        query = format!(
-            "{} ORDER BY slot DESC LIMIT {} OFFSET {}",
-            &query, params.limit, params.offset
-        );
+        if let Some(limit) = &params.limit {
+            if *limit > 100 {
+                return Err(anyhow::anyhow!("Query limit too large for free demo"));
+            } else {
+                query = format!("{} LIMIT {}", &query, limit);
+            }
+        }
+        if let Some(offset) = &params.offset {
+            query = format!("{} OFFSET {}", &query, offset);
+        }
+
         debug!("decoded accounts query: {:#?}", query);
         Ok(query)
     }
 
-    pub async fn registered_types(
+    pub async fn decoded_accounts(
         &self,
         params: &QueryDecodedAccounts,
     ) -> anyhow::Result<Vec<ArchiveAccount>> {

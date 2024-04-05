@@ -28,7 +28,6 @@ solana-sdk = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tungstenite = { version = "0.21.0", features = ["native-tls"] }
-futures = { workspace = true }
 lazy_static = { workspace = true }
 derive_more = "0.99.17"
 serde_json = "1.0.114"
@@ -45,3 +44,5 @@ anchor-lang = { verion = "0.25.26", registry = "epoch" }
 nacl = { workspace = true }
 solana-account-decoder = { workspace = true }
 plotters = "0.3.5"
+futures = { workspace = true }
+futures-util = { workspace = true }

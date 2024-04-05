@@ -49,6 +49,9 @@ pub enum EpochError {
 
     #[error("Missing API key header epoch_api_key")]
     ApiKeyError,
+
+    #[error("Query size too large for free demo")]
+    QuerySizeTooLarge,
 }
 
 impl ResponseError for EpochError {
@@ -67,6 +70,7 @@ impl ResponseError for EpochError {
             Self::JoinError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::ApiKeyError => StatusCode::UNAUTHORIZED,
             Self::EnvVarError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::QuerySizeTooLarge => StatusCode::BAD_REQUEST,
         }
     }
 

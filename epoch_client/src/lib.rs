@@ -23,7 +23,7 @@ async fn epoch_demo() -> anyhow::Result<()> {
     // make sure this has devnet SOL, if not you can get some here: https://faucet.solana.com/
     let signer = EpochClient::read_keypair_from_env("WALLET")?;
     let rpc_url = "https://api.devnet.solana.com".to_string();
-    let client = Arc::new(EpochClient::new(signer, rpc_url, None));
+    let client = Arc::new(EpochClient::new(signer, rpc_url, Env::Prod));
 
     // deletes your user from the Epoch database in case you want to start fresh with the same keypair
     client.reset_user().await?;
@@ -56,8 +56,10 @@ async fn epoch_demo() -> anyhow::Result<()> {
                 slot: Some(max), // Only fetch accounts at this slot (point in time)
                 owner: drift_cpi::ID, // Accounts belong to the Drift program
                 discriminant: "User".to_string(), // Only fetch accounts with discriminant "User"
-                limit: users_to_fetch, // There are about 150,000 user accounts on Drift, so this is plenty for a specific slot
-                offset: 0, // This is used for pagination. If the limit you need is >1M you can use this to fetch in chunks
+                limit: Some(users_to_fetch), // There are about 150,000 user accounts on Drift, so this is plenty for a specific slot
+                offset: None, // This is used for pagination. If the limit you need is >1M you can use this to fetch in chunks
+                min_slot: None,
+                max_slot: None,
             },
         )
         .await?;
@@ -104,8 +106,10 @@ async fn epoch_demo() -> anyhow::Result<()> {
                 slot: None, // Slot doesn't matter here, we want all slots to reconstruct the user's history
                 owner: drift_cpi::ID, // Account belongs to the Drift program
                 discriminant: "User".to_string(), // Account is a "User" account
-                limit: 50_000_000, // 50M accounts at unique slots is roughly 9 months of history (78M slots per year) assuming the database has it
-                offset: 0, // This is used for pagination. If the limit you need is >1M you can use this to fetch in chunks
+                min_slot: None,
+                max_slot: None,
+                limit: None,
+                offset: None,
             },
         )
         .await?;
