@@ -250,7 +250,6 @@ impl BigQueryClient {
                 true => "AND",
             };
             query = format!("{} {} owner = \"{}\"", &query, clause, owner);
-            where_added = true;
         }
 
         if let Some(limit) = &params.limit {
@@ -259,6 +258,8 @@ impl BigQueryClient {
             } else {
                 query = format!("{} LIMIT {}", &query, limit);
             }
+        } else {
+            query = format!("{} LIMIT 10", &query);
         }
         if let Some(offset) = &params.offset {
             query = format!("{} OFFSET {}", &query, offset);
@@ -321,6 +322,8 @@ impl BigQueryClient {
             } else {
                 query = format!("{} LIMIT {}", &query, limit);
             }
+        } else {
+            query = format!("{} LIMIT 10", &query);
         }
         if let Some(offset) = &params.offset {
             query = format!("{} OFFSET {}", &query, offset);
