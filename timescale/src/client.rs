@@ -4,7 +4,7 @@ use log::*;
 use native_tls::TlsConnector;
 use postgres_native_tls::MakeTlsConnector;
 use postgres_types::ToSql;
-use tokio_postgres::{Client, Config, Row, Statement};
+use tokio_postgres::{Client, Config, Statement};
 
 use common::{QueryAccountId, QueryAccounts, QueryDecodedAccounts};
 use decoder::ProgramDecoder;
@@ -35,11 +35,10 @@ impl TimescaleClient {
     let pool = Self::connect_to_db(config).await?;
     let client = pool.dedicated_connection().await?;
 
-    let stmt = "
-            INSERT INTO accounts (id, key, slot, lamports, owner, executable, rent_epoch, data)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-        ";
-    let upsert_acct_stmt = client.prepare(stmt).await?;
+    let upsert_acct_stmt = client.prepare("
+        INSERT INTO accounts (id, key, slot, lamports, owner, executable, rent_epoch, data)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+    ").await?;
 
     Ok(Self {
       client,
@@ -114,6 +113,27 @@ impl TimescaleClient {
     ).await?)
   }
 
+  pub async fn upsert_accounts(&mut self, accounts: &[TimescaleAccount]) -> anyhow::Result<()> {
+    let stmt = &self.upsert_acct_stmt;
+    let transaction = self.client.transaction().await?;
+    for account in accounts {
+      transaction.execute(
+        stmt,
+        &[
+          &account.id,
+          &account.key.clone(),
+          &account.slot,
+          &account.lamports,
+          &account.owner,
+          &account.executable,
+          &account.rent_epoch,
+          &account.data,
+        ],
+      ).await?;
+    }
+    Ok(transaction.commit().await?)
+  }
+
   pub async fn account_id(
     &self,
     query: &QueryAccountId,
@@ -172,13 +192,13 @@ impl TimescaleClient {
         }
         (Some(_min_slot), None) => {
           return Err(anyhow::anyhow!(
-                        "Missing max slot for query (free demo restriction)"
-                    ));
+              "Missing max slot for query (free demo restriction)"
+          ));
         }
         (None, Some(_max_slot)) => {
           return Err(anyhow::anyhow!(
-                        "Missing min slot for query (free demo restriction)"
-                    ));
+              "Missing min slot for query (free demo restriction)"
+          ));
         }
         _ => {}
       },
@@ -269,13 +289,13 @@ impl TimescaleClient {
           }
           (Some(_min_slot), None) => {
             return Err(anyhow::anyhow!(
-                            "Missing max slot for query (free demo restriction)"
-                        ));
+                "Missing max slot for query (free demo restriction)"
+            ));
           }
           (None, Some(_max_slot)) => {
             return Err(anyhow::anyhow!(
-                            "Missing min slot for query (free demo restriction)"
-                        ));
+                "Missing min slot for query (free demo restriction)"
+            ));
           }
           _ => {}
         },
