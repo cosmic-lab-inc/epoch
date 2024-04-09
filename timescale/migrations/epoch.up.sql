@@ -17,6 +17,6 @@ ALTER TABLE accounts SET (
     timescaledb.compress_orderby = 'slot ASC',
     timescaledb.compress_segmentby = 'id',
     timescaledb.compress_chunk_time_interval = '24 hours'
-    );
+);
 
 SELECT add_compression_policy('accounts', compress_after => BIGINT '600000');
