@@ -48,6 +48,38 @@ Install cargo make to run pre-configured commands in `Makefile.toml`.
 cargo install cargo-make
 ```
 
+Install PostgreSQL to start database and create superuser
+
+```shell
+# For MacOS
+cargo make install_postgresql_macos && cargo make start_postgresql_macos
+# For Linux
+cargo make install_postgresql_linux && cargo make start_postgresql_linux
+
+# If getting the error: 
+# psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: FATAL
+# run this to debug:
+rm /opt/homebrew/var/postgresql@13/postmaster.pid
+brew services restart postgresql@13
+
+# create supseruser
+createuser -s postgres
+# check that superuser exists
+psql -U postgres -c "SELECT * FROM pg_user;"
+psql -U postgres
+
+# quit psql shell
+\q
+```
+
+Initialize Timescale (postgres) database and migrate tables.
+This resets and recreates database, create migrations, copy migrations to the proper directory, and load migrations to
+the database.
+
+```shell
+cargo make setup-timescale
+```
+
 ### Start Backfill
 
 Epoch reads the `backfill.yaml` config file which defines the snapshots to pull from Google Cloud Storage (GCS), the

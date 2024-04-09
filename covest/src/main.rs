@@ -12,8 +12,8 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use tokio::spawn;
 
-use epoch_client::{drift_cpi, program_helpers, shorten_address, trunc, Env, EpochClient};
-use epoch_client::{init_logger, DecodedEpochAccount, Decoder, QueryDecodedAccounts};
+use epoch_client::{drift_cpi, Env, EpochClient, program_helpers, shorten_address, trunc};
+use epoch_client::{DecodedEpochAccount, Decoder, init_logger, QueryDecodedAccounts};
 use plot::*;
 use trader::*;
 
@@ -25,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
     init_logger();
     dotenv::dotenv().ok();
     let rpc_url = "http://localhost:8899".to_string();
-    let signer = EpochClient::read_keypair_from_env("COVEST")?;
+    let signer = EpochClient::read_keypair_from_env("WALLET")?;
     let key = signer.pubkey();
     let client = Arc::new(EpochClient::new(signer, rpc_url, Env::Dev));
 
@@ -279,7 +279,7 @@ async fn epoch_drift_markets_test() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
     let rpc_url = "http://localhost:8899".to_string();
 
-    let signer = EpochClient::read_keypair_from_env("COVEST")?;
+    let signer = EpochClient::read_keypair_from_env("WALLET")?;
     let key = signer.pubkey();
     let client = Arc::new(EpochClient::new(signer, rpc_url, Env::Dev));
 
@@ -365,7 +365,7 @@ async fn solana_drift_markets_test() -> anyhow::Result<()> {
     init_logger();
     dotenv::dotenv().ok();
     let rpc_url = "https://rpc.hellomoon.io/57dbc69d-7e66-4454-b33e-fa6a4b46170f".to_string();
-    let signer = EpochClient::read_keypair_from_env("COVEST")?;
+    let signer = EpochClient::read_keypair_from_env("WALLET")?;
     let client = Arc::new(EpochClient::new(signer, rpc_url, Env::Dev));
 
     let perp_markets = program_helpers::Drift::perp_markets(&client.rpc).await?;

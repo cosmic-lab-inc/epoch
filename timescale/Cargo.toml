@@ -1,0 +1,45 @@
+[package]
+name = "timescale-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description.workspace = true
+authors.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+common = { path = "../common" }
+base64 = { workspace = true }
+dotenv = { workspace = true }
+decoder = { path = "../decoder" }
+bb8 = "0.8.0"
+bb8-postgres = "0.8.1"
+bincode = { workspace = true }
+bs58 = "0.4.0"
+config = { version = "^0.13", default-features = false, features = ["yaml"] }
+crossbeam-channel = { workspace = true }
+log = { workspace = true }
+postgres-types = { version = "0.2.4", features = ["array-impls", "derive"] }
+serde = { workspace = true }
+serde-aux = "3"
+solana-sdk = { workspace = true }
+tokio = { workspace = true }
+tokio-postgres = { version = "=0.7.6", features = ["array-impls"] }
+
+[dependencies.sqlx]
+version = "0.6.2"
+default-features = false
+features = [
+    "runtime-actix-rustls",
+    "macros",
+    "postgres",
+    "migrate",
+    "uuid"
+]
+
+[dev-dependencies]
+rand = "0.8.5"
+uuid = { version = "^1.2.2", features = ["serde", "v4"] }
+tokio-native-tls = "0.3.1"

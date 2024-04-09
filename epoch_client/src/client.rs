@@ -1,21 +1,20 @@
 use std::str::FromStr;
 
 use anchor_lang::{Discriminator, Owner};
-
 use anchor_lang::Id;
 use borsh::BorshDeserialize;
-use common_utils::prelude::anchor_spl::associated_token;
-use common_utils::prelude::anchor_spl::associated_token::get_associated_token_address_with_program_id;
 use common_utils::prelude::{
     AccountWithRemaining, DynSigner, InstructionWithSigners, RpcClient, RpcClientExt, Token2022,
 };
+use common_utils::prelude::anchor_spl::associated_token;
+use common_utils::prelude::anchor_spl::associated_token::get_associated_token_address_with_program_id;
 use log::{error, info};
 use player_profile::client::AddProfileKey;
 use player_profile::instructions::create_profile_ix;
 use player_profile::state::{Profile, ProfileKey, ProfilePermissions};
 use profile_vault::{create_vault_authority_ix, ProfileVaultPermissions, VaultAuthority};
-use reqwest::header::{HeaderMap, HeaderName};
 use reqwest::{Client, StatusCode};
+use reqwest::header::{HeaderMap, HeaderName};
 use serde::de::DeserializeOwned;
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig};
@@ -518,16 +517,13 @@ impl EpochClient {
     pub async fn account_id<T: ToRedisKey>(
         &self,
         api_key: &T,
-        key: &Pubkey,
-        slot: u64,
+        id: u64,
     ) -> anyhow::Result<Option<EpochAccount>> {
         let res = self
             .client
             .post(format!("{}/{}", &self.epoch_api, "account-id"))
             .headers(Self::build_headers(api_key)?)
-            .json(&QueryAccountId {
-                id: AccountHasher::new().hash_id(key, slot),
-            })
+            .json(&QueryAccountId { id })
             .send()
             .await?;
         Self::parse_response::<Option<EpochAccount>>(res).await

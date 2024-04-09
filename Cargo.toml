@@ -10,7 +10,8 @@ members = [
     "idls/*",
     "snapshot",
     "warden",
-    "covest"
+    "covest",
+    "timescale"
 ]
 
 [workspace.package]
