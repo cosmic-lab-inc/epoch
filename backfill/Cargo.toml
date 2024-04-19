@@ -1,20 +1,14 @@
 [package]
 name = "backfill"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-description.workspace = true
-authors.workspace = true
-categories.workspace = true
-keywords.workspace = true
+version = { workspace = true }
+edition = { workspace = true }
 
 [dependencies]
 anyhow = { workspace = true }
-snapshot = { path = "../snapshot" }
 chrono = { workspace = true }
 clap = { workspace = true }
-common = { path = "../common" }
 cloud-storage = { workspace = true }
+common = { path = "../common" }
 crossbeam-channel = { workspace = true }
 dotenv = { workspace = true }
 gcs = { path = "../gcs" }
@@ -23,7 +17,9 @@ reqwest = { workspace = true }
 serde = { workspace = true }
 serde_yaml = { workspace = true }
 simplelog = { workspace = true }
+snapshot = { path = "../snapshot" }
 solana-sdk = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-retry = { workspace = true }
+timescale-client = { path = "../timescale" }

@@ -19,3 +19,5 @@ gcs_local_file: gcs_snapshots.json
 
 # Google service account credentials. Used to write to BigQuery database.
 gcs_sa_key: epoch_sa_key.json
+
+timescale_db: postgres://tsdbadmin:wtf6fegycrmxta0l@udknb7l6fx.iy6czc8qic.tsdb.cloud.timescale.com:34247/tsdb?sslmode=require

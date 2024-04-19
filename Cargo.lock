@@ -1110,6 +1110,7 @@ dependencies = [
  "snapshot",
  "solana-sdk",
  "thiserror",
+ "timescale-client",
  "tokio",
  "tokio-retry",
 ]

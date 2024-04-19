@@ -1,35 +1,29 @@
 [package]
 name = "decoder"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-description.workspace = true
-authors.workspace = true
-categories.workspace = true
-keywords.workspace = true
-
+version = { workspace = true }
+edition = { workspace = true }
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anchor-lang = ">=0.20.0"
 anyhow = { workspace = true }
 base64 = { workspace = true }
 borsh = { workspace = true }
 chrono = { workspace = true }
 common = { path = "../common" }
+common_utils = { version = "0.2.3", registry = "epoch", features = ["client"] }
 drift-cpi = { path = "../idls/drift" }
 futures = { workspace = true }
 futures-util = { workspace = true }
-log = { workspace = true }
 lazy_static = { workspace = true }
+log = { workspace = true }
 once_cell = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 simplelog = { workspace = true }
-solana-client = { workspace = true }
 sol-chainsaw = { workspace = true }
+solana-client = { workspace = true }
 solana-sdk = { workspace = true }
 tokio = { workspace = true }
-common_utils = { version = "0.2.3", registry = "epoch", features = ["client"] }
-anchor-lang = ">=0.20.0"

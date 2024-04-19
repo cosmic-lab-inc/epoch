@@ -3,16 +3,16 @@ resolver = "2"
 members = [
     "backfill",
     "common",
+    "covest",
     "decoder",
-    "epoch_server",
     "epoch_client",
+    "epoch_server",
     "gcs",
     "idls/*",
     "snapshot",
-    "warden",
-    "covest",
     "timescale"
-]
+,
+    "warden",]
 
 [workspace.package]
 version = "0.1.0"
