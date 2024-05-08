@@ -4,7 +4,7 @@ use log::*;
 use native_tls::TlsConnector;
 use postgres_native_tls::MakeTlsConnector;
 use postgres_types::ToSql;
-use tokio_postgres::{Client, Config, Row, Statement};
+use tokio_postgres::{Client, Config, Statement};
 
 use common::{QueryAccountId, QueryAccounts, QueryDecodedAccounts};
 use decoder::ProgramDecoder;
@@ -98,22 +98,9 @@ impl TimescaleClient {
   /// The row ID is a hash of the account data and key, so if the account state is the same slot to slot,
   /// then the upsert will overwrite the existing row with the same data but whatever slot is in the updated data.
   /// Slots don't really matter if the data is the same across time.
-  pub async fn upsert_account(&self, account: &TimescaleAccount) -> anyhow::Result<Vec<Row>> {
+  pub async fn upsert_account(&self, account: &TimescaleAccount) -> anyhow::Result<u64> {
     let stmt = &self.upsert_acct_stmt;
-    // Ok(self.client.execute(
-    //   stmt,
-    //   &[
-    //     &account.id,
-    //     &account.key.clone(),
-    //     &account.slot,
-    //     &account.lamports,
-    //     &account.owner,
-    //     &account.executable,
-    //     &account.rent_epoch,
-    //     &account.data,
-    //   ],
-    // ).await?)
-    Ok(self.client.query(
+    Ok(self.client.execute(
       stmt,
       &[
         &account.id,
@@ -123,7 +110,7 @@ impl TimescaleClient {
         &account.owner,
         &account.executable,
         &account.rent_epoch,
-        &account.data
+        &account.data,
       ],
     ).await?)
   }
@@ -414,7 +401,7 @@ async fn crud_account() -> anyhow::Result<()> {
   };
   let modified_rows = client.upsert_account(&acct).await?;
   info!("should have created 1 row, and modified 0 because it's a new row");
-  assert!(modified_rows.is_empty());
+  assert_eq!(modified_rows, 0);
 
   // READ
   let read_rows = client.accounts(&QueryAccounts {
@@ -440,7 +427,7 @@ async fn crud_account() -> anyhow::Result<()> {
   // should not update any rows since the ID and slot are the same as first version
   let modified_rows = client.upsert_account(&updated_acct).await?;
   info!("should have updated 0 rows because id-slot index is the same");
-  assert!(modified_rows.is_empty());
+  assert_eq!(modified_rows, 0);
 
   // CREATE second account
   let new_owner = Pubkey::find_program_address(&[&key.to_bytes()], &owner).0;
@@ -456,7 +443,7 @@ async fn crud_account() -> anyhow::Result<()> {
   };
   let modified_rows = client.upsert_account(&acct).await?;
   info!("should have created 0 rows, and modified 0 because it's the same id-slot index");
-  assert!(modified_rows.is_empty());
+  assert_eq!(modified_rows, 0);
 
   // READ two accounts
   let read_rows = client.accounts(&QueryAccounts {
@@ -475,7 +462,7 @@ async fn crud_account() -> anyhow::Result<()> {
   }).await?;
   info!("should have deleted 1 row");
   assert_eq!(deleted, 1);
-  
+
   // check everything was deleted
   let leftover = client.accounts(&QueryAccounts {
     key: Some(key),

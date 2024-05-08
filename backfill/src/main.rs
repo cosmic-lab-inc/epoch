@@ -6,11 +6,13 @@ use std::{
 use clap::Parser;
 use log::*;
 
-use common::{ArchiveAccount, init_logger};
+use common::{ArchiveAccount, ChannelEvent, init_logger, RingBuffer};
 use config::*;
 use gcs::bucket::*;
 use snapshot::stream_archived_accounts;
 use timescale_client::{TimescaleAccount, TimescaleClient};
+
+// use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 mod config;
 mod errors;
@@ -29,20 +31,19 @@ fn main() -> anyhow::Result<()> {
   let args: Args = Args::parse();
   info!("🏗️ Backfill snapshots with args: {:?}", args);
 
+  let config = BackfillConfig::read_config(&args.config_file_path)?;
+
   let rt = tokio::runtime::Builder::new_multi_thread()
-    .worker_threads(8)
     .enable_all()
     .build()?;
 
-  let backfill_config = BackfillConfig::read_config(&args.config_file_path)?;
-
   let mut timescale = rt.block_on(async move {
-    TimescaleClient::new_from_url(backfill_config.timescale_db).await
+    TimescaleClient::new_from_url(config.timescale_db).await
   })?;
 
-  let bucket = backfill_config.gcs_bucket;
+  let bucket = config.gcs_bucket;
   let metas: Vec<SnapshotMeta> = rt.block_on(async move {
-    let metas = match &backfill_config.gcs_local_file {
+    let metas = match &config.gcs_local_file {
       Some(path) => match Path::new(path).exists() {
         false => get_snapshot_metas(GcsObjectsSource::Url(bucket)).await,
         true => get_snapshot_metas(GcsObjectsSource::Path(path.clone())).await,
@@ -58,8 +59,8 @@ fn main() -> anyhow::Result<()> {
   );
 
   // slice SnapshotMetas to range config wants to backfill
-  let start = backfill_config.backfill_start_date;
-  let end = backfill_config.backfill_end_date;
+  let start = config.start_date;
+  let end = config.end_date;
   let metas: Vec<_> = metas
     .into_iter()
     .filter(|m| m.snapshot.time_created >= start && m.snapshot.time_created <= end)
@@ -70,30 +71,39 @@ fn main() -> anyhow::Result<()> {
       metas.last().unwrap().datetime()
   );
 
-  let (tx, rx) = crossbeam_channel::unbounded::<ArchiveAccount>();
-  let programs = Arc::new(backfill_config.programs);
+  let (tx, rx) =
+    crossbeam_channel::unbounded::<ChannelEvent<ArchiveAccount>>();
+  let programs = Arc::new(config.programs);
   rt.spawn(async move {
     let programs = programs.clone();
 
+    let mut total_read = 0;
     const BUFFER_SIZE: usize = 500;
-    let mut buffer = Vec::new();
+    let mut buffer = RingBuffer::new(BUFFER_SIZE);
 
-    while let Ok(account) = rx.recv() {
-      if programs.contains(&account.owner) {
-        // send to Timescale
-        let timescale_acct = TimescaleAccount::new(account);
+    // upsert accounts to Timescale
+    while let Ok(msg) = rx.recv() {
+      match msg {
+        ChannelEvent::Msg(account) => {
+          if programs.contains(&account.owner) {
+            let timescale_acct = TimescaleAccount::new(account);
 
-        if buffer.len() == BUFFER_SIZE {
-          match timescale.upsert_accounts(std::mem::take(&mut buffer)).await {
-            Ok(_) => {
-              debug!("Upserted {} accounts", BUFFER_SIZE);
+            if buffer.full() {
+              let take = buffer.take();
+              assert_eq!(take.len(), BUFFER_SIZE);
+              if let Err(e) = timescale.upsert_accounts(take).await {
+                error!("{:?}", e);
+              }
+              total_read += BUFFER_SIZE;
             }
-            Err(e) => {
-              error!("{:?}", e);
-            }
+            buffer.push(timescale_acct);
           }
-        } else {
-          buffer.push(timescale_acct);
+        }
+        ChannelEvent::Done => {
+          if let Err(e) = timescale.upsert_accounts(buffer.take()).await {
+            error!("{:?}", e);
+          }
+          info!("Total accounts processed: {}", total_read);
         }
       }
     }
@@ -101,7 +111,7 @@ fn main() -> anyhow::Result<()> {
 
   // backfill from the most recent date to the oldest
   let sender = Arc::new(tx);
-  for meta in metas.into_iter().rev() {
+  for meta in metas {
     let source = meta.snapshot.url.clone();
     info!("Backfilling snapshot: {:#?}", &meta.datetime());
     match stream_archived_accounts(source, sender.clone()) {
@@ -117,5 +127,22 @@ fn main() -> anyhow::Result<()> {
       }
     }
   }
+  // metas.into_par_iter().try_for_each(|meta| {
+  //   let source = meta.snapshot.url.clone();
+  //   info!("Backfilling snapshot: {:#?}", &meta.datetime());
+  //   match stream_archived_accounts(source, sender.clone()) {
+  //     Ok(_) => {
+  //       info!(
+  //           "Done snapshot {} for slot {}",
+  //           &meta.datetime(),
+  //           &meta.snapshot.slot
+  //       );
+  //     }
+  //     Err(e) => {
+  //       error!("Error backfilling snapshot: {}", e);
+  //     }
+  //   }
+  //   Result::<_, anyhow::Error>::Ok(())
+  // })
   Ok(())
 }

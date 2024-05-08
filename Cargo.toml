@@ -10,9 +10,9 @@ members = [
     "gcs",
     "idls/*",
     "snapshot",
-    "timescale"
-,
-    "warden",]
+    "timescale",
+    "warden",
+]
 
 [workspace.package]
 version = "0.1.0"
@@ -71,3 +71,4 @@ tokio-retry = "0.3.0"
 tokio-stream = { version = "0.1.14", features = ["net"] }
 zstd = "0.11.2"
 nacl = "0.5.3"
+rand = "0.8.5"

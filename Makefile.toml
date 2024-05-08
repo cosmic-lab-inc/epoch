@@ -2,10 +2,10 @@
 default_to_workspace = false
 
 [tasks.backfill]
-script = "cargo run -p backfill"
+script = "cargo run -r -p backfill"
 
 [tasks.epoch]
-script = "cargo run -p epoch_server"
+script = "cargo run -r -p epoch_server"
 
 [tasks.covest]
 script = "cargo run -p covest"
@@ -24,8 +24,7 @@ script = "rm -rf migrations"
 
 [tasks.create_migrations]
 dependencies = ["install_sqlx_cli"]
-env = { DATABASE_URL = "postgres://tsdbadmin:wtf6fegycrmxta0l@udknb7l6fx.iy6czc8qic.tsdb.cloud.timescale.com:34247/tsdb?sslmode=require" }
-#env = { DATABASE_URL = "postgres://tsdbadmin:wtf6fegycrmxta0l@udknb7l6fx.iy6czc8qic.tsdb.cloud.timescale.com:31751/tsdb?sslmode=require" }
+env = { DATABASE_URL = "postgres://tsdbadmin:uf4eakx5fmlnjmn2@j2ar0fxl57.b5o7u5bwsb.tsdb.cloud.timescale.com:37602/tsdb?sslmode=require" }
 command = "sqlx"
 args = ["migrate", "add", "-r", "epoch"]
 
@@ -34,8 +33,7 @@ script = "chmod +x ./migrate.sh && ./migrate.sh"
 
 [tasks.migrate_database]
 dependencies = ["install_sqlx_cli"]
-env = { DATABASE_URL = "postgres://tsdbadmin:wtf6fegycrmxta0l@udknb7l6fx.iy6czc8qic.tsdb.cloud.timescale.com:34247/tsdb?sslmode=require" }
-#env = { DATABASE_URL = "postgres://tsdbadmin:wtf6fegycrmxta0l@udknb7l6fx.iy6czc8qic.tsdb.cloud.timescale.com:31751/tsdb?sslmode=require" }
+env = { DATABASE_URL = "postgres://tsdbadmin:uf4eakx5fmlnjmn2@j2ar0fxl57.b5o7u5bwsb.tsdb.cloud.timescale.com:37602/tsdb?sslmode=require" }
 script = "sqlx migrate run"
 
 [tasks.setup-timescale]

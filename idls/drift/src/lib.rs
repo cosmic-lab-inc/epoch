@@ -1,8 +1,14 @@
-anchor_gen::generate_cpi_crate!("idl.json");
-anchor_lang::declare_id!("dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH");
+#![allow(non_snake_case)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(clippy::too_many_arguments)]
+
+use once_cell::sync::Lazy;
 
 use common::decode_account;
-use once_cell::sync::Lazy;
+
+anchor_gen::generate_cpi_crate!("idl.json");
+anchor_lang::declare_id!("dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH");
 
 pub static PATH: Lazy<String> = Lazy::new(|| env!("CARGO_MANIFEST_DIR").to_string());
 pub static PROGRAM_NAME: Lazy<String> = Lazy::new(|| PATH.split('/').last().unwrap().to_string());
@@ -22,3 +28,15 @@ decode_account!(
         ReferrerName(ReferrerName),
     }
 );
+
+/// cargo test --package drift-cpi --lib accounts -- --exact --show-output
+#[test]
+fn accounts() {
+  let idl_path = "idl.json";
+  let idl_str = std::fs::read_to_string(idl_path).unwrap();
+  let idl = serde_json::from_str::<serde_json::Value>(&idl_str).unwrap();
+  let accounts = serde_json::from_value::<Vec<serde_json::Value>>(idl["accounts"].clone()).unwrap();
+  for account in accounts {
+    println!("{}", account["name"].as_str().unwrap().to_string());
+  }
+}

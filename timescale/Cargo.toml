@@ -38,5 +38,5 @@ features = [
 ]
 
 [dev-dependencies]
-rand = "0.8.5"
+rand = { workspace = true }
 uuid = { version = "^1.2.2", features = ["serde", "v4"] }

@@ -7,7 +7,7 @@ edition = { workspace = true }
 actix-cors = "0.7.0"
 actix-web = "4.5.1"
 actix-web-httpauth = "0.8.1"
-anchor-lang = { verion = "0.25.26", registry = "epoch" }
+anchor-lang = { version = "0.25.26", registry = "epoch" }
 anyhow = { workspace = true }
 borsh = { workspace = true }
 chrono = { workspace = true }

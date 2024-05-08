@@ -13,10 +13,10 @@ pub struct BackfillConfig {
   pub programs: Vec<Pubkey>,
   /// Earliest date, formatted yyyy-mm-dd, to start backfilling from.
   #[serde(deserialize_with = "BackfillConfig::deserialize_date")]
-  pub backfill_start_date: DateTime<Utc>,
+  pub start_date: DateTime<Utc>,
   /// Latest date, formatted yyyy-mm-dd, to start backfilling from.
   #[serde(deserialize_with = "BackfillConfig::deserialize_date")]
-  pub backfill_end_date: DateTime<Utc>,
+  pub end_date: DateTime<Utc>,
   /// Google cloud storage bucket to pull snapshots from
   pub gcs_bucket: String,
   /// Optional local file path to gcs [`ObjectResponse`]. Primarily for development to speed up iteration.
